@@ -9,12 +9,14 @@ export const Colors = {
   gray700: '#555555',
   gray500: '#888888',
   gray300: '#C0C0C0',
+  gray200: '#F0F0F0',
   gray100: '#F5F5F5',
   gray50: '#FAFAFA',
   white: '#FFFFFF',
 
   error: '#E53E3E',
   errorLight: '#FFF5F5',
+  errorbackground: '#FFE9E9',
   success: '#38A169',
 
   border: '#EBEBEB',

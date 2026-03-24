@@ -10,7 +10,7 @@ import {
   ViewStyle,
 } from 'react-native';
 
-type Variant = 'primary' | 'outline' | 'ghost' | 'danger';
+type Variant = 'primary' | 'outline' | 'ghost' | 'danger' | 'warning' | 'cancel';
 type Size = 'sm' | 'md' | 'lg';
 
 interface ButtonProps {
@@ -110,7 +110,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   danger: {
-    backgroundColor: Colors.error,
+    backgroundColor: Colors.errorbackground,
+  },
+  warning: {
+    backgroundColor: Colors.primaryLight,
+  },
+  cancel: {
+    backgroundColor: Colors.gray200,
   },
 
   // Sizes
@@ -150,7 +156,13 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   text_danger: {
-    color: Colors.white,
+    color: Colors.error,
+  },
+  text_warning: {
+    color: Colors.primary,
+  },
+  text_cancel: {
+    color: Colors.black,
   },
 
   textSize_sm: {

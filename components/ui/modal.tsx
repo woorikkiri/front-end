@@ -1,0 +1,87 @@
+// 화면 위에 떠오르는 팝업
+// ex) 투표를 삭제하시겠습니까? -> 예/아니오
+
+import Button from "@/components/ui/Button";
+import { Colors, Radius, Spacing, Typography } from "@/constants/theme";
+import {
+    Modal as RNModal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+
+interface ModalProps {
+    visible: boolean;
+    message: string;
+    leftBtnText?: string;
+    rightBtnText: string;
+    onLeftBtnPress: () => void;
+    onRightBtnPress: () => void;
+    onBackDropPress?: () => void;
+    leftBtnVariant?: 'primary' | 'danger' | 'warning' | 'cancel';
+    rightBtnVariant?: 'primary' | 'danger' | 'warning' | 'cancel';
+}
+
+export default function Modal({
+    visible,
+    message,
+    rightBtnText,
+    onRightBtnPress,
+    leftBtnText = '취소',
+    onLeftBtnPress,
+    onBackDropPress,
+    leftBtnVariant = 'cancel',
+    rightBtnVariant = 'danger',
+}: ModalProps) {
+    return (
+        <RNModal
+            visible={visible}
+            transparent={true}
+            animationType='fade'// fade, slide, none
+            onRequestClose={onBackDropPress}
+        >
+            <View style={styles.overlay} >
+                {/* 배경 */}
+                <TouchableOpacity
+                    style={StyleSheet.absoluteFillObject}
+                    activeOpacity={1}
+                    onPress={onBackDropPress}
+                />
+
+                {/* 팝업 */} 
+                <View style={styles.modalBox}>
+                    <Text style={styles.modalText}>{message}</Text>
+                    <View style={{ flexDirection: 'row', gap: Spacing.sm, width: '100%', justifyContent: 'center' }}>
+                        <Button label={leftBtnText} onPress={onLeftBtnPress || onBackDropPress} variant={leftBtnVariant} style={{ flex: 1 }}/>
+                        <Button label={rightBtnText} onPress={onRightBtnPress} variant={rightBtnVariant} style={{ flex: 1 }}/>
+                    </View>
+                </View>
+            </View>
+                
+        </RNModal>
+    )
+}
+
+const styles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    modalBox: {
+        width: '80%',
+        padding: Spacing.xl,
+        backgroundColor: Colors.white,
+        borderRadius: Radius.xl,
+        alignItems: 'center',
+        gap: Spacing.lg,
+    },
+    modalText: {
+        fontSize: Typography.base,
+        fontWeight: '600',
+        color: Colors.black,
+        textAlign: 'center',
+    },
+})
