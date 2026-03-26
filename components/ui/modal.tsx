@@ -14,6 +14,7 @@ import {
 interface ModalProps {
     visible: boolean;
     message: string;
+    showLeftBtn?: boolean;
     leftBtnText?: string;
     rightBtnText: string;
     onLeftBtnPress: () => void;
@@ -21,11 +22,13 @@ interface ModalProps {
     onBackDropPress?: () => void;
     leftBtnVariant?: 'primary' | 'danger' | 'warning' | 'cancel';
     rightBtnVariant?: 'primary' | 'danger' | 'warning' | 'cancel';
+    children?: React.ReactNode;
 }
 
 export default function Modal({
     visible,
     message,
+    showLeftBtn = true,  // 기본값 true
     rightBtnText,
     onRightBtnPress,
     leftBtnText = '취소',
@@ -33,32 +36,44 @@ export default function Modal({
     onBackDropPress,
     leftBtnVariant = 'cancel',
     rightBtnVariant = 'danger',
+    children,
 }: ModalProps) {
     return (
         <RNModal
             visible={visible}
             transparent={true}
-            animationType='fade'// fade, slide, none
+            animationType='fade'
             onRequestClose={onBackDropPress}
         >
-            <View style={styles.overlay} >
-                {/* 배경 */}
+            <View style={styles.overlay}>
                 <TouchableOpacity
                     style={StyleSheet.absoluteFillObject}
                     activeOpacity={1}
                     onPress={onBackDropPress}
                 />
 
-                {/* 팝업 */} 
                 <View style={styles.modalBox}>
                     <Text style={styles.modalText}>{message}</Text>
-                    <View style={{ flexDirection: 'row', gap: Spacing.sm, width: '100%', justifyContent: 'center' }}>
-                        <Button label={leftBtnText} onPress={onLeftBtnPress || onBackDropPress} variant={leftBtnVariant} style={{ flex: 1 }}/>
-                        <Button label={rightBtnText} onPress={onRightBtnPress} variant={rightBtnVariant} style={{ flex: 1 }}/>
+                    {children}
+                    <View style={{ flexDirection: 'row', gap: Spacing.sm, width: '100%' }}>
+                        {/* showLeftBtn이 true일 때만 보여줌 */}
+                        {showLeftBtn && (
+                            <Button
+                                label={leftBtnText}
+                                onPress={onLeftBtnPress || onBackDropPress}
+                                variant={leftBtnVariant}
+                                style={{ flex: 1 }}
+                            />
+                        )}
+                        <Button
+                            label={rightBtnText}
+                            onPress={onRightBtnPress}
+                            variant={rightBtnVariant}
+                            style={{ flex: 1 }}
+                        />
                     </View>
                 </View>
             </View>
-                
         </RNModal>
     )
 }

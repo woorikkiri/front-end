@@ -52,7 +52,7 @@ const LoginScreen = () => {
     // TODO: 실제 API 연동
     setTimeout(() => {
       setLoading(false);
-      // router.replace("/(tabs)/home");
+      router.replace("/(tabs)/home");
     }, 1500);
   };
 
