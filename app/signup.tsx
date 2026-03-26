@@ -57,6 +57,7 @@ const SignupScreen = () => {
   };
 
   // ───── 유효성 검사 ─────
+  // 이부분 onBlur 사용할지 이대로 할지 커스텀 훅으로 분리할지 고민해보기.
   const validate = () => {
     const newErrors = {
       nickname: "",
@@ -75,13 +76,24 @@ const SignupScreen = () => {
     }
     if (!password) {
       newErrors.password = "비밀번호를 입력해주세요.";
-    } else if (password.length < 6) {
-      newErrors.password = "비밀번호는 6자리 이상이어야 합니다.";
+    } else if (password.length < 8) {
+        newErrors.password = "비밀번호는 8자리 이상이어야 합니다.";
+    } else if (password.length > 32) {
+        newErrors.password = "비밀번호는 32자리 이하여야 합니다.";
+    } else if (!/[a-z]/.test(password)) {
+        newErrors.password = "영문 소문자를 포함해주세요.";
+    } else if (!/[A-Z]/.test(password)) {
+        newErrors.password = "영문 대문자를 포함해주세요.";
+    } else if (!/[0-9]/.test(password)) {
+        newErrors.password = "숫자를 포함해주세요.";
+    } else if (!/[!@#$%^&*]/.test(password)) {
+        newErrors.password = "특수문자를 포함해주세요.";
     }
+
     if (!confirmPassword) {
       newErrors.confirmPassword = "비밀번호 확인을 입력해주세요.";
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = "비밀번호가 일치하지 않습니다.";
+        newErrors.confirmPassword = "비밀번호가 일치하지 않아요.";
     }
 
     setErrors(newErrors);
@@ -190,7 +202,7 @@ const SignupScreen = () => {
           <TextInput
             ref={passwordRef}
             label="비밀번호"
-            placeholder="6자리 이상 입력해주세요"
+            placeholder="8~32자, 영문 대소문자/숫자/특수문자 조합"
             value={password}
             onChangeText={(v) => {
               setPassword(v);

@@ -16,6 +16,7 @@ interface TextInputProps extends RNTextInputProps {
   rightElement?: React.ReactNode; // 인풋 오른쪽에 들어갈 컴포넌트 (예: 비밀번호 보기 버튼)
   containerStyle?: ViewStyle; // 컨테이너 스타일
   required?: boolean; // 필수 입력 여부
+  editable?: boolean;
 }
 
 const TextInput = forwardRef<RNTextInput, TextInputProps>(
@@ -28,6 +29,7 @@ const TextInput = forwardRef<RNTextInput, TextInputProps>(
       containerStyle,
       required,
       style,
+      editable,
       ...props
     },
     ref
@@ -45,18 +47,19 @@ const TextInput = forwardRef<RNTextInput, TextInputProps>(
         <View
           style={[
             styles.inputWrap,
-            focused && styles.inputWrapFocused,
+            focused && editable !== false && styles.inputWrapFocused,
             !!error && styles.inputWrapError,
           ]}
         >
           <RNTextInput
             ref={ref}
-            style={[styles.input, style]}
+            style={[styles.input, editable === false && styles.inputDisabled, style]}
             placeholderTextColor={Colors.placeholder}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             autoCapitalize="none"
             autoCorrect={false}
+            editable={editable}
             {...props}
           />
           {rightElement && (
@@ -106,6 +109,9 @@ const styles = StyleSheet.create({
   inputWrapError: {
     borderColor: Colors.error,
     backgroundColor: Colors.errorLight,
+  },
+  inputDisabled: {
+    color: Colors.gray500,
   },
   input: {
     flex: 1,
