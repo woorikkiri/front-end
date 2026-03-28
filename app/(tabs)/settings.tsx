@@ -1,69 +1,19 @@
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import Button from '@/components/ui/Button';
+import MenuGroup, { MenuItem } from '@/components/ui/MenuGroup';
+import Modal from '@/components/ui/modal';
+import ProfileCard from '@/components/ui/ProfileCard';
+import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useRouter } from "expo-router";
 import { useState } from 'react';
 import {
-    Image,
     ScrollView,
     StatusBar,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-interface MenuItem {
-    label: string;
-    onPress: () => void;
-}
-
-function ProfileCard({ name, email, profileImage }: {
-    name: string;
-    email: string;
-    profileImage: string | null;
-}) {
-    return (
-        <View style={styles.profileCard}>
-            <View style={styles.avatar}>
-                {profileImage ? (
-                    <Image
-                        source={{ uri: profileImage }}
-                        style={styles.avatarImage}
-                    />
-                ) : (
-                    <Text style={styles.avatarText}>{name[0]}</Text>
-                )}
-            </View>
-            <View>
-                <Text style={styles.profileName}>{name}</Text>
-                <Text style={styles.profileEmail}>{email}</Text>
-            </View>
-        </View>
-    );
-}
-
-function MenuRow({ label, onPress }: { label: string; onPress(): void }) {
-    return (
-        <TouchableOpacity style={styles.menuRow} onPress={onPress} activeOpacity={0.7}>
-            <Text style={styles.menuLabel}>{label}</Text>
-            <Ionicons name="chevron-forward" size={18} color={Colors.gray300} />
-        </TouchableOpacity>
-    );
-}
-
-function MenuGroup({ items }: { items: MenuItem[] }) {
-    return (
-        <View style={styles.menuGroup}>
-            {items.map((item, index) => (
-                <View key={item.label}>
-                    <MenuRow label={item.label} onPress={item.onPress} />
-                    {index < items.length - 1 && <View style={styles.divider} />}
-                </View>
-            ))}
-        </View>
-    );
-}
 
 export default function MyPageScreen() {
     const router = useRouter();
@@ -80,6 +30,8 @@ export default function MyPageScreen() {
         { label: '알림 설정', onPress: () => router.push('/mypage/notification-settings') },
         { label: '비밀번호 변경', onPress: () => router.push('/mypage/change-password') },
     ];
+
+    const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
     return (
         <SafeAreaView style={styles.safe}>
@@ -98,14 +50,25 @@ export default function MyPageScreen() {
 
                 <MenuGroup items={menuItems} />
 
-                <TouchableOpacity
-                    style={styles.logoutBtn}
-                    onPress={() => router.push('/logout')}
-                    activeOpacity={0.7}
-                >
-                    <Text style={styles.logoutText}>로그아웃</Text>
-                </TouchableOpacity>
+                <Button
+                    label='로그아웃'
+                    onPress={() => setLogoutModalVisible(true)}
+                    variant='ghost'
+                    size='md'
+                    textStyle={styles.logoutText}
+                />
             </ScrollView>
+
+            <Modal
+                visible={logoutModalVisible}
+                message='로그아웃 하시겠습니까?'
+                rightBtnText='로그아웃'
+                onLeftBtnPress={() => setLogoutModalVisible(false)}
+                onRightBtnPress={() => {
+                    router.replace("/login");
+                }}
+                rightBtnVariant='warning'
+            />
         </SafeAreaView>
     );
 }
@@ -130,83 +93,12 @@ const styles = StyleSheet.create({
         letterSpacing: -0.5,
     },
     container: {
-        paddingHorizontal: Spacing['2xl'],
+        paddingHorizontal: Spacing['lg'],
         paddingTop: Spacing.xl,
         gap: Spacing.base,
     },
-
-    // 프로필 카드
-    profileCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.md,
-        backgroundColor: Colors.primaryLight,
-        borderRadius: Radius.lg,
-        paddingVertical: Spacing.lg,
-        paddingHorizontal: Spacing.base,
-    },
-    avatar: {
-        width: 44,
-        height: 44,
-        borderRadius: Radius.full,
-        backgroundColor: Colors.gray200,
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-    },
-    avatarImage: {
-        width: 44,
-        height: 44,
-        borderRadius: Radius.full,
-    },
-    avatarText: {
-        fontSize: Typography.base,
-        fontWeight: '700',
-        color: Colors.gray700,
-    },
-    profileName: {
-        fontSize: Typography.base,
-        fontWeight: '700',
-        color: Colors.black,
-    },
-    profileEmail: {
-        fontSize: Typography.sm,
-        color: Colors.gray500,
-        marginTop: 2,
-    },
-
-    // 메뉴 그룹
-    menuGroup: {
-        borderWidth: 2,
-        borderColor: Colors.border,
-        borderRadius: Radius.lg,
-        overflow: 'hidden',
-    },
-    menuRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: Spacing.lg,
-        paddingHorizontal: Spacing.base,
-    },
-    menuLabel: {
-        fontSize: Typography.base,
-        color: Colors.black,
-        fontWeight: '700',
-    },
-    divider: {
-        height: 1,
-        backgroundColor: Colors.border,
-    },
-
-    // 로그아웃
-    logoutBtn: {
-        alignItems: 'center',
-        paddingVertical: Spacing.md,
-        marginTop: Spacing.sm,
-    },
     logoutText: {
-        fontSize: Typography.base,
+        fontWeight: '800',
         color: Colors.gray500,
     },
 });

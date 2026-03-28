@@ -129,7 +129,7 @@ const LoginScreen = () => {
             }
           />
 
-          {/* 비밀번호 찾기 */}
+          {/* 비밀번호 찾기 button으로 바꾸기..? 근데 위치가 좀 달라져서. 일단 내비둠.*/}
           <TouchableOpacity
             onPress={() => router.push("/reset-password")}
             style={styles.forgotBtn}

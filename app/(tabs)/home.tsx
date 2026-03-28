@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing['2xl'],
+    paddingHorizontal: Spacing['lg'],
     paddingVertical: Spacing.base,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
 
   // ───── 컨텐츠 ─────
   container: {
-    paddingHorizontal: Spacing['2xl'],
+    paddingHorizontal: Spacing['lg'],
     paddingBottom: Spacing['5xl'],
   },
   groupCount: {

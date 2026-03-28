@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: -1,
+    pointerEvents: 'none',
   },
   title: {
     fontSize: Typography.lg,
