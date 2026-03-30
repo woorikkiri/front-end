@@ -3,9 +3,11 @@ import Header from "@/components/ui/Header";
 import Modal from "@/components/ui/modal";
 import TextInput from "@/components/ui/TextInput";
 import { Colors, Spacing, Typography } from "@/constants/theme";
+import usePasswordValidation from '@/hooks/usePasswordValidation';
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
+    TextInput as RNTextInput,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -28,9 +30,15 @@ export default function ResetPasswordScreen() {
     const [errors, setErrors] = useState({
         email: "",
         code: "",
-        password: "",
-        confirmPassword: "",
     });
+
+    // 비밀번호 유효성 검사 훅
+    const { errors: pwErrors, validatePassword, validateConfirmPassword } = usePasswordValidation();
+
+
+    // ───── ref ─────
+    const passwordRef = useRef<RNTextInput>(null);
+    const confirmPasswordRef = useRef<RNTextInput>(null);
 
     // ───── 모달 ─────
     const [successModal, setSuccessModal] = useState(false);
@@ -39,54 +47,6 @@ export default function ResetPasswordScreen() {
     // 특정 에러 하나만 바꿀 때 쓰는 함수
     const setError = (field: keyof typeof errors, message: string) => {
         setErrors(prev => ({ ...prev, [field]: message }));
-    };
-
-    // ───── 비밀번호 유효성 검사 ─────
-    const validatePassword = () => {
-        if (!password) {
-            setError("password", "비밀번호를 입력해주세요.");
-            return false;
-        }
-        if (password.length < 8) {
-            setError("password", "비밀번호는 8자리 이상이어야 합니다.");
-            return false;
-        }
-        if (password.length > 32) {
-            setError("password", "비밀번호는 32자리 이하여야 합니다.");
-            return false;
-        }
-        if (!/[a-z]/.test(password)) {
-            setError("password", "영문 소문자를 포함해주세요.");
-            return false;
-        }
-        if (!/[A-Z]/.test(password)) {
-            setError("password", "영문 대문자를 포함해주세요.");
-            return false;
-        }
-        if (!/[0-9]/.test(password)) {
-            setError("password", "숫자를 포함해주세요.");
-            return false;
-        }
-        if (!/[!@#$%^&*]/.test(password)) {
-            setError("password", "특수문자를 포함해주세요.");
-            return false;
-        }
-        setError("password", "");
-        return true;
-    };
-
-    // ───── 비밀번호 확인 유효성 검사 ─────
-    const validateConfirmPassword = () => {
-        if (!confirmPassword) {
-            setError("confirmPassword", "비밀번호를 재입력해주세요.");
-            return false;
-        }
-        if (password !== confirmPassword) {
-            setError("confirmPassword", "비밀번호가 일치하지 않아요.");
-            return false;
-        }
-        setError("confirmPassword", "");
-        return true;
     };
 
     // ───── 다음 버튼 ─────
@@ -116,8 +76,8 @@ export default function ResetPasswordScreen() {
         }
 
         if (step === 3) {
-            if (!validatePassword()) return;
-            if (!validateConfirmPassword()) return;
+            if (!validatePassword(password)) return;
+            if (!validateConfirmPassword(password, confirmPassword)) return;
             // TODO: API 연동 후 교체
             setSuccessModal(true);
         }
@@ -200,6 +160,7 @@ export default function ResetPasswordScreen() {
                 )}
 
                 {/* ── step 3: 새 비밀번호 ── */}
+                {/* 비밀번호 볼 수 있는 눈 아이콘 추가하기 */}
                 {step === 3 && (
                     <View>
                         <View style={styles.titleSection}>
@@ -212,11 +173,13 @@ export default function ResetPasswordScreen() {
                                 value={password}
                                 onChangeText={(text) => {
                                     setPassword(text);
-                                    setError("password", "");
                                 }}
-                                onBlur={validatePassword}
+                                ref={passwordRef}
+                                returnKeyType="next"
+                                onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                                onBlur={() => validatePassword(password)}
                                 secureTextEntry
-                                error={errors.password}
+                                error={pwErrors.password}
                             />
                             <TextInput
                                 label="비밀번호 확인"
@@ -224,11 +187,13 @@ export default function ResetPasswordScreen() {
                                 value={confirmPassword}
                                 onChangeText={(text) => {
                                     setConfirmPassword(text);
-                                    setError("confirmPassword", "");
                                 }}
-                                onBlur={validateConfirmPassword}
+                                ref={confirmPasswordRef}
+                                returnKeyType="done"
+                                onSubmitEditing={handleNext}
+                                onBlur={() => validateConfirmPassword(password, confirmPassword)}
                                 secureTextEntry
-                                error={errors.confirmPassword}
+                                error={pwErrors.confirmPassword}
                             />
                         </View>
                         <View style={styles.infoSection}>
@@ -260,7 +225,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.white,
     },
     container: {
-        paddingHorizontal: Spacing['2xl'],
+        paddingHorizontal: Spacing['lg'],
         paddingBottom: Spacing['5xl'],
     },
     titleSection: {

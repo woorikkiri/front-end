@@ -1,15 +1,60 @@
+import Button from '@/components/ui/Button';
 import Header from '@/components/ui/Header';
-import { Colors, Spacing } from '@/constants/theme';
+import TextInput from '@/components/ui/TextInput';
+import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
-    StatusBar,
+    Image, StatusBar,
     StyleSheet,
-    View,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EditScreen() {
     const router = useRouter();
+
+    const [image, setImage] = useState<string | null>(null);
+    const [nickname, setNickname] = useState("Minji");
+    const [errors, setErrors] = useState({
+        nickname: '',
+    });
+
+    // 이미지 선택
+    const handlePickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],  // 정사각형으로 자르기
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+        }
+    };
+
+    // 유효성 검사
+    const validate = () => {
+        if (!nickname.trim()) {
+            setErrors({ nickname: '닉네임을 입력해주세요.' });
+            return false;
+        }
+
+        setErrors({ nickname: '' });
+        return true;
+    };
+
+    // 저장 버튼 핸들러
+    const handleSave = () => {
+        if (validate()) {
+            router.back();
+        }
+    };
 
     return (
         <SafeAreaView style={styles.safe}>
@@ -17,7 +62,44 @@ export default function EditScreen() {
 
             <Header title='프로필'/>
             <View style={styles.container}>
+                <View style={styles.profileSection}>
+                    <TouchableOpacity
+                        style={styles.profileImage}
+                        onPress={handlePickImage}
+                    >
+                        {image ? (
+                            <Image source={{ uri: image }} style={styles.profileImage} />
+                        ) : (
+                            <Ionicons name="person-outline" size={40} color={Colors.gray500} />
+                        )}
+                        
+                        {/* 카메라 버튼 */}
+                        <View style={styles.cameraButton}>
+                            <Ionicons name="camera-outline" size={20} color={Colors.white} />
+                        </View>
+                    </TouchableOpacity>
+
+                    <Text style={styles.infoText}>프로필 이미지를 변경할 수 있어요.</Text>
+                </View>
                 
+                {/* 전 닉네임 지우기 쉽게 x 버튼 textinput에 추가 */}
+                <View style={styles.formSection}>
+                    <TextInput 
+                    label='닉네임' 
+                    placeholder='닉네임을 입력해주세요.'
+                    value={nickname}
+                    onChangeText={(v) => setNickname(v)}
+                    error={errors.nickname}
+                    required
+                    />
+                </View>
+                
+                <View style={styles.buttonSection}>
+                    <Button 
+                        label='저장'
+                        onPress={handleSave}
+                    />
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -32,5 +114,42 @@ const styles = StyleSheet.create({
         paddingTop: Spacing['2xl'],
         paddingHorizontal: Spacing['lg'],
         paddingBottom: Spacing['3xl'],
-    }
+    },
+    profileSection: {
+        alignSelf: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing['2xl'],
+    },
+    profileImage: {
+        width: 90,
+        height: 90,
+        borderRadius: 45,
+        backgroundColor: Colors.primaryLight,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    cameraButton: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: Colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    infoText: {
+        fontSize: Typography.sm,
+        color: Colors.gray500,
+        lineHeight: 20,
+        marginTop: Spacing.base,
+    },
+    formSection: {
+        gap: Spacing.base,
+        marginBottom: Spacing.lg,
+    },
+    buttonSection: {
+        gap: Spacing.sm,
+    },
 })
