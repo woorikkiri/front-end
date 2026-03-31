@@ -91,27 +91,27 @@ const styles = StyleSheet.create({
     container: {
         paddingHorizontal: Spacing['2xl'],
         paddingBottom: Spacing['3xl'],
-      },
-      titleSection: {
+    },
+    titleSection: {
         marginTop: Spacing.lg,
         marginBottom: Spacing['2xl'],
         alignItems: "flex-start",
         gap: Spacing.xs,
-      },
-      title: {
+    },
+    title: {
         fontSize: Typography['2xl'],
         fontWeight: "900",
         color: Colors.black,
-      },
-      subTitle: {
+    },
+    subTitle: {
         fontSize: Typography.base,
         color: Colors.gray500,
-      },
-      formSection: {
+    },
+    formSection: {
         gap: Spacing.base,
         marginBottom: Spacing.lg,
-      },
-      buttonSection: {
+    },
+    buttonSection: {
         gap: Spacing.sm,
-      },
+    },
 });

@@ -1,4 +1,5 @@
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
     Image,
@@ -9,13 +10,15 @@ import {
 
 interface ProfileCardProps {
     name: string;
-    email: string;
+    email?: string;
+    role?: string; // optional, 관리자/멤버 구분용
     profileImage: string | null;
 }
 
 export default function ProfileCard({
     name,
     email,
+    role,
     profileImage,
 
 }: ProfileCardProps) {
@@ -28,12 +31,13 @@ export default function ProfileCard({
                             style={styles.avatarImage}
                         />
                     ) : (
-                        <Text style={styles.avatarText}>{name[0]}</Text>
+                        <Ionicons name="person" size={30} color={Colors.gray300} />
                     )}
             </View>
             <View>
                 <Text style={styles.profileName}>{name}</Text>
-                <Text style={styles.profileEmail}>{email}</Text>
+                {email && <Text style={styles.profileEmail}>{email}</Text>}
+                {role && <Text style={styles.profileRole}>{role}</Text>}
             </View>
         </View>
     );
@@ -78,4 +82,9 @@ const styles = StyleSheet.create({
         color: Colors.gray500,
         marginTop: 2,
     },
+    profileRole: {
+        fontSize: Typography.sm,
+        color: Colors.gray500,
+        marginTop: 2,
+    }
 })

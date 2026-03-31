@@ -7,7 +7,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    Image, StatusBar,
+    Image,
+    StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -70,7 +71,7 @@ export default function EditScreen() {
                         {image ? (
                             <Image source={{ uri: image }} style={styles.profileImage} />
                         ) : (
-                            <Ionicons name="person-outline" size={40} color={Colors.gray500} />
+                            <Ionicons name="person" size={40} color={Colors.gray300} />
                         )}
                         
                         {/* 카메라 버튼 */}
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
         width: 90,
         height: 90,
         borderRadius: 45,
-        backgroundColor: Colors.primaryLight,
+        backgroundColor: Colors.gray200,
         justifyContent: 'center',
         alignItems: 'center',
     },

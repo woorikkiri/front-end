@@ -16,8 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 // ───── 임시 데이터 ─────
 const DUMMY_GROUPS = [
-  { id: 1, name: '고등학교 동창회', memberCount: 35, lastActive: '1시간 전' },
-  { id: 2, name: '봉친이들', memberCount: 7, lastActive: '어제' },
+  { id: 1, name: '고등학교 동창회', memberCount: 35},
+  { id: 2, name: '봉친이들', memberCount: 7},
 ];
 
 export default function HomeScreen() {
@@ -55,52 +55,71 @@ export default function HomeScreen() {
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        {/* 참여중인 모임 n개 */}
-        <Text style={styles.groupCount}>
-          참여중인 모임 {groups.length}개
-        </Text>
+        {/* 모임이 하나도 없는 경우 */}
+        {groups.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            {/* 아이콘 */}
+            <View style={styles.iconCircle}>
+               <Ionicons name="people" size={60} color={Colors.primary} />
+            </View>
+            
+            {/* 텍스트 그룹 */}
+            <View style={styles.textGroup}>
+              <Text style={styles.emptyTitleText}>아직 참여 중인 모임이 없어요</Text>
+              <Text style={styles.emptySubTitleText}>
+                우리끼리만의 특별한 공간을 만들어볼까요?{"\n"}
+                새로운 모임을 만들거나 초대코드로 참여해보세요!
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View>
+            {/* 참여중인 모임 n개 */}
+            <Text style={styles.groupCount}>참여중인 모임 {groups.length}개</Text>
 
-        {/* 검색창 */}
-        <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={18} color={Colors.gray500} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="그룹 검색"
-            placeholderTextColor={Colors.placeholder}
-            value={searchText}
-            onChangeText={setSearchText}
-          />
-        </View>
+            {/* 검색창 */}
+            <View style={styles.searchBar}>
+              <Ionicons name="search-outline" size={18} color={Colors.gray500} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="그룹 검색"
+                placeholderTextColor={Colors.placeholder}
+                value={searchText}
+                onChangeText={setSearchText}
+              />
+            </View>
 
-        {/* 그룹 목록 */}
-        <View style={styles.groupList}>
-          {filteredGroups.map((group) => (
-            <TouchableOpacity
-              key={group.id}
-              style={styles.groupCard}
-              onPress={() => router.push(`/group/${group.id}`)}
-              activeOpacity={0.7}
-            >
-              {/* 이니셜 아바타 */}
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {group.name.charAt(0)}
-                </Text>
-              </View>
+            {/* 그룹 목록 */}
+            <View style={styles.groupList}>
+              {filteredGroups.map((group) => (
+                <TouchableOpacity
+                  key={group.id}
+                  style={styles.groupCard}
+                  onPress={() => router.push(`/group/${group.id}`)}
+                  activeOpacity={0.7}
+                >
+                  {/* 이니셜 아바타 */}
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {group.name.charAt(0)}
+                    </Text>
+                  </View>
 
-              {/* 모임 정보 */}
-              <View style={styles.groupInfo}>
-                <Text style={styles.groupName}>{group.name}</Text>
-                <Text style={styles.groupSub}>
-                  멤버 {group.memberCount}명 · 최근 {group.lastActive}
-                </Text>
-              </View>
+                  {/* 모임 정보 */}
+                  <View style={styles.groupInfo}>
+                    <Text style={styles.groupName}>{group.name}</Text>
+                    <Text style={styles.groupSub}>
+                      멤버 {group.memberCount}명
+                    </Text>
+                  </View>
 
-              {/* 화살표 */}
-              <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
-            </TouchableOpacity>
-          ))}
-        </View>
+                  {/* 화살표 */}
+                  <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}   
       </ScrollView>
 
       {/* + 버튼 */}
@@ -202,8 +221,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  // 모임 0개
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    paddingBottom: 80,
+  },
+  iconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.lg,
+  },
+  textGroup: {
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  emptyTitleText: {
+    fontSize: Typography.lg,
+    fontWeight: "900",
+    color: Colors.black,
+    textAlign: 'center',
+  },
+  emptySubTitleText: {
+    fontSize: Typography.base,
+    color: Colors.gray500,
+    textAlign: 'center',
+  },
+
   // ───── 컨텐츠 ─────
   container: {
+    flexGrow: 1,
     paddingHorizontal: Spacing['lg'],
     paddingBottom: Spacing['5xl'],
   },
