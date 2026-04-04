@@ -13,6 +13,8 @@ interface ProfileCardProps {
     email?: string;
     role?: string; // optional, 관리자/멤버 구분용
     profileImage: string | null;
+    icon?: React.ReactNode; // optional
+    backgroundColor?: string; // optional
 }
 
 export default function ProfileCard({
@@ -20,10 +22,12 @@ export default function ProfileCard({
     email,
     role,
     profileImage,
+    icon,
+    backgroundColor = Colors.white,
 
 }: ProfileCardProps) {
     return (
-        <View style={styles.profileCard}>
+        <View style={[styles.profileCard, { backgroundColor }]}>
             <View style={styles.avatar}>
                     {profileImage ? (
                         <Image
@@ -34,11 +38,12 @@ export default function ProfileCard({
                         <Ionicons name="person" size={30} color={Colors.gray300} />
                     )}
             </View>
-            <View>
+            <View style={{ flex: 1 }}>
                 <Text style={styles.profileName}>{name}</Text>
                 {email && <Text style={styles.profileEmail}>{email}</Text>}
                 {role && <Text style={styles.profileRole}>{role}</Text>}
             </View>
+            {icon && <View style={{ marginLeft: 'auto' }}>{icon}</View>}
         </View>
     );
 }
@@ -48,10 +53,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.md,
-        backgroundColor: Colors.primaryLight,
+        backgroundColor: Colors.white,
         borderRadius: Radius.lg,
         paddingVertical: Spacing.lg,
         paddingHorizontal: Spacing.base,
+        borderWidth: 1,              
+        borderColor: Colors.gray200, 
     },
     avatar: {
         width: 44,

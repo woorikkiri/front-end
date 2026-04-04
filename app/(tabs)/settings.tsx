@@ -46,6 +46,7 @@ export default function MyPageScreen() {
                     name={user.name}
                     email={user.email}
                     profileImage={user.profileImage}
+                    backgroundColor={Colors.primaryLight}
                 />
 
                 <MenuGroup items={menuItems} />
