@@ -23,13 +23,16 @@ export default function InviteCodeScreen() {
     });
 
     {/* 유효성 검사 */}
+    {/* 초대코드 = 8자리 영대문자+숫자 */}
     const validate = () => {
         const newErrors = {
             code: "",
         };
-        // code 형식 정하고 code 형식이나 글자수?나 쨋든 잘못입력했을때 뜨는것도 해야함.
         if(!code) {
             newErrors.code = "코드를 입력해주세요.";
+        }
+        if(code && !/^[A-Z0-9]{8}$/.test(code)) {
+            newErrors.code = "올바른 초대 코드 형식이 아닙니다.";
         }
 
         setErrors(newErrors);
@@ -60,14 +63,14 @@ export default function InviteCodeScreen() {
                 <View style={styles.formSection}>
                     <TextInput
                         label="초대 코드"
-                        placeholder="예: AB12-CD34"
+                        placeholder="예: AB12CD34"
                         value={code}
                         onChangeText={(v) => {
-                            setCode(v);
+                            setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, ""));
                             setErrors({code: ""});
                         }}
                         error={errors.code}
-                        hint="대소문자를 구분하지 않아요."
+                        autoCapitalize="characters"
                     />
                 </View>
 
