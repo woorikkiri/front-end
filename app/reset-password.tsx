@@ -1,6 +1,7 @@
 import Button from "@/components/ui/Button";
 import Header from "@/components/ui/Header";
 import Modal from "@/components/ui/modal";
+import PasswordToggle from "@/components/ui/PasswordToggle";
 import TextInput from "@/components/ui/TextInput";
 import { Colors, Spacing, Typography } from "@/constants/theme";
 import usePasswordValidation from '@/hooks/usePasswordValidation';
@@ -12,7 +13,7 @@ import {
     StatusBar,
     StyleSheet,
     Text,
-    View,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -35,10 +36,13 @@ export default function ResetPasswordScreen() {
     // 비밀번호 유효성 검사 훅
     const { errors: pwErrors, validatePassword, validateConfirmPassword } = usePasswordValidation();
 
-
     // ───── ref ─────
     const passwordRef = useRef<RNTextInput>(null);
     const confirmPasswordRef = useRef<RNTextInput>(null);
+
+    // ───── 비밀번호 보기 토글 ─────
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // ───── 모달 ─────
     const [successModal, setSuccessModal] = useState(false);
@@ -160,7 +164,6 @@ export default function ResetPasswordScreen() {
                 )}
 
                 {/* ── step 3: 새 비밀번호 ── */}
-                {/* 비밀번호 볼 수 있는 눈 아이콘 추가하기 */}
                 {step === 3 && (
                     <View>
                         <View style={styles.titleSection}>
@@ -178,8 +181,14 @@ export default function ResetPasswordScreen() {
                                 returnKeyType="next"
                                 onSubmitEditing={() => confirmPasswordRef.current?.focus()}
                                 onBlur={() => validatePassword(password)}
-                                secureTextEntry
+                                secureTextEntry={!showPassword}
                                 error={pwErrors.password}
+                                rightElement={
+                                    <PasswordToggle
+                                        show={showPassword}
+                                        onToggle={() => setShowPassword(!showPassword)}
+                                    />
+                                }
                             />
                             <TextInput
                                 label="비밀번호 확인"
@@ -192,8 +201,14 @@ export default function ResetPasswordScreen() {
                                 returnKeyType="done"
                                 onSubmitEditing={handleNext}
                                 onBlur={() => validateConfirmPassword(password, confirmPassword)}
-                                secureTextEntry
+                                secureTextEntry={!showConfirmPassword}
                                 error={pwErrors.confirmPassword}
+                                rightElement={
+                                    <PasswordToggle
+                                        show={showConfirmPassword}
+                                        onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    />
+                                }
                             />
                         </View>
                         <View style={styles.infoSection}>

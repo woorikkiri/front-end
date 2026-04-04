@@ -1,9 +1,9 @@
 import Button from '@/components/ui/Button';
 import Header from '@/components/ui/Header';
+import PasswordToggle from '@/components/ui/PasswordToggle';
 import TextInput from '@/components/ui/TextInput';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import usePasswordValidation from '@/hooks/usePasswordValidation';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
 import { useRef, useState } from 'react';
 import {
@@ -11,8 +11,7 @@ import {
     StatusBar,
     StyleSheet,
     Text,
-    TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -34,23 +33,6 @@ export default function ChangePasswordScreen() {
     const currentPasswordRef = useRef<RNTextInput>(null);
     const newPasswordRef = useRef<RNTextInput>(null);
     const confirmPasswordRef = useRef<RNTextInput>(null);
-
-    // 비밀번호 토글
-    const PasswordToggle = ({
-        show,
-        onToggle,
-    }: {
-        show: boolean;
-        onToggle: () => void;
-    }) => (
-        <TouchableOpacity onPress={onToggle} hitSlop={8}>
-            <Ionicons
-                name={show ? "eye-off-outline" : "eye-outline"}
-                size={20}
-                color={Colors.gray500}
-            />
-        </TouchableOpacity>
-    );
 
     // 유효성 검사
     const handleSubmit = () => {
