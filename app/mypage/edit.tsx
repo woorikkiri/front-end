@@ -83,7 +83,6 @@ export default function EditScreen() {
                     <Text style={styles.infoText}>프로필 이미지를 변경할 수 있어요.</Text>
                 </View>
                 
-                {/* 전 닉네임 지우기 쉽게 x 버튼 textinput에 추가 */}
                 <View style={styles.formSection}>
                     <TextInput 
                     label='닉네임' 
@@ -91,6 +90,7 @@ export default function EditScreen() {
                     value={nickname}
                     onChangeText={(v) => setNickname(v)}
                     error={errors.nickname}
+                    rightElement={nickname.length > 0 ? <Ionicons name="close-circle" size={20} color={Colors.gray300} onPress={() => setNickname('')} /> : undefined}
                     required
                     />
                 </View>
