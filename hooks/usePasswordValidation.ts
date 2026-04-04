@@ -62,5 +62,6 @@ export default function usePasswordValidation() {
         errors,
         validatePassword,
         validateConfirmPassword,
+        setError,
     };
 }

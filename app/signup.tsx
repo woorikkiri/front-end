@@ -1,8 +1,11 @@
+// import { API } from "@/constants/api";
 import Button from "@/components/ui/Button";
 import Header from "@/components/ui/Header";
+import Modal from "@/components/ui/modal";
+import PasswordToggle from "@/components/ui/PasswordToggle";
 import TextInput from "@/components/ui/TextInput";
 import { Colors, Spacing, Typography } from "@/constants/theme";
-import { Ionicons } from '@expo/vector-icons';
+import usePasswordValidation from "@/hooks/usePasswordValidation";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
@@ -11,7 +14,6 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -33,9 +35,9 @@ const SignupScreen = () => {
   const [errors, setErrors] = useState({
     nickname: "",
     email: "",
-    password: "",
-    confirmPassword: "",
   });
+  const { errors: pwErrors, validatePassword, validateConfirmPassword, setError: setPwError } = usePasswordValidation();
+  const [serverErrorModal, setServerErrorModal] = useState(false);
 
   // ───── ref ─────
   const emailRef = useRef<RNTextInput>(null);
@@ -45,11 +47,31 @@ const SignupScreen = () => {
   // ───── 이메일 중복 확인 ─────
   const handleEmailCheck = async () => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setErrors((prev) => ({ ...prev, email: "올바른 이메일을 입력해주세요." }));
+      setErrors((prev) => ({ ...prev, email: "올바른 이메일 형식을 입력해주세요." }));
       return;
     }
     setCheckingEmail(true);
-    // TODO: 실제 API 연동
+    // 실제 API 연동
+    {/*
+     try {
+        // GET은 주소 뒤에 ?email= 붙여서 보냄
+        const response = await fetch(`${API.checkEmail}?email=${email}`);
+        const data = await response.json();
+
+        if (data.available) {
+            setEmailChecked(true);  // 사용 가능
+        } else {
+            setErrors(prev => ({ ...prev, email: "이미 사용 중인 이메일입니다." }));
+            setEmailChecked(null);
+        }
+    } catch (e) {
+        setServerErrorModal(true);
+    } finally {
+        setCheckingEmail(false);
+    }
+    */}
+    
+    // api 연동 후에는 아래 setTimeout 제거
     setTimeout(() => {
       setCheckingEmail(false);
       setEmailChecked(true);
@@ -57,13 +79,11 @@ const SignupScreen = () => {
   };
 
   // ───── 유효성 검사 ─────
-  // 이부분 onBlur 사용할지 이대로 할지 커스텀 훅으로 분리할지 고민해보기.
+  // onBlur 시점에 각 필드별로 에러 메시지 설정, 회원가입 버튼 클릭 시 전체 검증
   const validate = () => {
     const newErrors = {
       nickname: "",
       email: "",
-      password: "",
-      confirmPassword: "",
     };
 
     if (!nickname.trim()) newErrors.nickname = "닉네임을 입력해주세요.";
@@ -74,59 +94,73 @@ const SignupScreen = () => {
     } else if (emailChecked === null) {
       newErrors.email = "이메일 중복 확인을 해주세요.";
     }
-    if (!password) {
-      newErrors.password = "비밀번호를 입력해주세요.";
-    } else if (password.length < 8) {
-        newErrors.password = "비밀번호는 8자리 이상이어야 합니다.";
-    } else if (password.length > 32) {
-        newErrors.password = "비밀번호는 32자리 이하여야 합니다.";
-    } else if (!/[a-z]/.test(password)) {
-        newErrors.password = "영문 소문자를 포함해주세요.";
-    } else if (!/[A-Z]/.test(password)) {
-        newErrors.password = "영문 대문자를 포함해주세요.";
-    } else if (!/[0-9]/.test(password)) {
-        newErrors.password = "숫자를 포함해주세요.";
-    } else if (!/[!@#$%^&*]/.test(password)) {
-        newErrors.password = "특수문자를 포함해주세요.";
-    }
 
-    if (!confirmPassword) {
-      newErrors.confirmPassword = "비밀번호 확인을 입력해주세요.";
-    } else if (password !== confirmPassword) {
-        newErrors.confirmPassword = "비밀번호가 일치하지 않아요.";
-    }
+    // 비밀번호 유효성 검사
+    const isPasswordValid = validatePassword(password);
+    const isConfirmValid = validateConfirmPassword(password, confirmPassword);
 
     setErrors(newErrors);
-    return Object.values(newErrors).every((e) => e === "");
+    return Object.values(newErrors).every((e) => e === "") && isPasswordValid && isConfirmValid;
   };
 
   // ───── 회원가입 ─────
   const handleSignup = async () => {
     if (!validate()) return;
     setLoading(true);
-    // TODO: 실제 API 연동
+    // 실제 API 연동
+    {/*
+    try {
+      const response = await fetch(API.signup, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          passwordConfirm: confirmPassword,
+          nickname,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+
+        switch (errorData.code) {
+          case 'EMAIL_ALREADY_EXISTS':
+            setErrors(prev => ({ ...prev, email: "이미 사용 중인 이메일입니다." }));
+            break;
+
+          case 'PASSWORD_MISMATCH':
+            setPwError('confirmPassword', '비밀번호가 일치하지 않습니다.');
+            break;
+
+          case 'VALIDATION_ERROR':
+            setPwError('password', '비밀번호는 8~32자이며, 대문자/소문자/숫자/특수문자를 포함해야 합니다.');
+            break;
+
+          case 'INTERNAL_SERVER_ERROR':
+          default:
+            setServerErrorModal(true);
+            break;
+        }
+        return;  // ← 에러니까 여기서 멈춤
+      }
+
+      router.replace("/login");
+
+    } catch (e) {
+      // 네트워크 오류 (인터넷 연결 안될 때 등)
+      setServerErrorModal(true);
+    } finally {
+      setLoading(false);
+    }
+    */}
+
+    // api 연동 후에는 아래 setTimeout 제거
     setTimeout(() => {
       setLoading(false);
       router.replace("/login");
     }, 1500);
   };
-
-  // ───── 비밀번호 토글 ─────
-  const PasswordToggle = ({
-    show,
-    onToggle,
-  }: {
-    show: boolean;
-    onToggle: () => void;
-  }) => (
-    <TouchableOpacity onPress={onToggle} hitSlop={8}>
-      <Ionicons
-        name={show ? "eye-off-outline" : "eye-outline"}
-        size={20}
-        color={Colors.gray500}
-      />
-    </TouchableOpacity>
-  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -159,6 +193,11 @@ const SignupScreen = () => {
             }}
             returnKeyType="next"
             onSubmitEditing={() => emailRef.current?.focus()}
+            onBlur={() => {
+              if (!nickname.trim()) {
+                setErrors((prev) => ({ ...prev, nickname: "닉네임을 입력해주세요." }));
+              }
+            }}
             error={errors.nickname}
             required
             hint="모임에서 표시될 이름이에요."
@@ -182,6 +221,13 @@ const SignupScreen = () => {
                   }}
                   keyboardType="email-address"
                   returnKeyType="done"
+                  onBlur={() => {
+                    if (!email) {
+                      setErrors(prev => ({ ...prev, email: "이메일을 입력해주세요." }))
+                    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                      setErrors(prev => ({ ...prev, email: "올바른 이메일 형식을 입력해주세요." }))
+                    }
+                  }}
                   error={errors.email}
                 />
               </View>
@@ -206,12 +252,12 @@ const SignupScreen = () => {
             value={password}
             onChangeText={(v) => {
               setPassword(v);
-              setErrors((prev) => ({ ...prev, password: "" }));
             }}
             secureTextEntry={!showPassword}
             returnKeyType="next"
             onSubmitEditing={() => confirmPasswordRef.current?.focus()}
-            error={errors.password}
+            onBlur={() => validatePassword(password)}
+            error={pwErrors.password}
             required
             rightElement={
               <PasswordToggle
@@ -228,12 +274,12 @@ const SignupScreen = () => {
             value={confirmPassword}
             onChangeText={(v) => {
               setConfirmPassword(v);
-              setErrors((prev) => ({ ...prev, confirmPassword: "" }));
             }}
             secureTextEntry={!showConfirmPassword}
             returnKeyType="done"
             onSubmitEditing={handleSignup}
-            error={errors.confirmPassword}
+            onBlur={() => validateConfirmPassword(password, confirmPassword)}
+            error={pwErrors.confirmPassword}
             required
             rightElement={
               <PasswordToggle
@@ -262,8 +308,17 @@ const SignupScreen = () => {
             />
           </View>
         </View>
-
       </ScrollView>
+      {/* 서버 오류 모달 */}
+      <Modal
+        visible={serverErrorModal}
+        message={"서버 오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
+        showLeftBtn={false}
+        rightBtnText="확인"
+        rightBtnVariant="primary"
+        onRightBtnPress={() => setServerErrorModal(false)}
+        onLeftBtnPress={() => { }}
+      />
     </SafeAreaView>
   );
 };
