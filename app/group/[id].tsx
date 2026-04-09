@@ -3,16 +3,16 @@ import MembersTab from '@/components/group/MembersTab';
 import ScheduleTab from '@/components/group/ScheduleTab';
 import VoteTab from '@/components/group/VoteTab';
 import Header from '@/components/ui/Header';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radius, Shadow, Spacing } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import {
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -49,16 +49,19 @@ export default function GroupScreen() {
         ))}
       </View>
 
-      {/* 탭 컨텐츠 - ScrollView 하나로 단순하게 */}
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
-        {activeTab === '게시판'   && <BoardTab />}
+      {/* 탭 컨텐츠 - View 하나로 단순하게 */}
+      <View style={styles.container}>
+        {activeTab === '게시판' && <BoardTab />}
         {activeTab === '일정조율' && <ScheduleTab />}
-        {activeTab === '투표'     && <VoteTab />}
-        {activeTab === '멤버'     && <MembersTab isLeader={isLeader} meetingId={Number(id)} />}
-      </ScrollView>
+        {activeTab === '투표' && <VoteTab />}
+        {activeTab === '멤버' && <MembersTab isLeader={isLeader} meetingId={Number(id)} />}
+      </View>
+      {/* FAB - 게시판일 때만 */}
+      {activeTab === '게시판' && (
+        <TouchableOpacity style={styles.fab}>
+          <Ionicons name="pencil" size={24} color={Colors.white} />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -97,9 +100,21 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
 
-  // ── ScrollView ──
+  // ── View ──
   container: {
+    flex: 1,
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing['3xl'],
   },
+  
+  // 게시판일때만 보여지는 FAB 버튼 스타일
+  fab: {
+      position: 'absolute',  // 공중에 떠있는 느낌
+      bottom: Spacing.xl,    // 아래에서 얼마나
+      right: Spacing.xl,     // 오른쪽에서 얼마나
+      backgroundColor: Colors.primary,
+      borderRadius: Radius.full,  // 동그랗게
+      padding: Spacing.base,
+      ...Shadow.lg,
+    },
 });

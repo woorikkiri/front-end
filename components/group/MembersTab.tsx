@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import React, { useState } from 'react';
 import {
+  ScrollView,
   Share,
   StyleSheet,
   Text,
@@ -161,7 +162,7 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
     ];
 
   return (
-    <View style={styles.container}>
+    <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       {/* ── 멤버 수 + 초대 버튼 ── */}
       <View style={styles.header}>
         <Text style={styles.titleText}>멤버 {members.length}명</Text>
@@ -295,7 +296,7 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
           </TouchableOpacity>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 }
 
