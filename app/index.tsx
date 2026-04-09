@@ -1,5 +1,6 @@
 import Button from "@/components/ui/Button";
 import { Colors, Radius, Shadow, Spacing, Typography } from "@/constants/theme";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
 import React from "react";
 import { StatusBar, StyleSheet, Text, View } from "react-native";
@@ -7,6 +8,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const SplashScreen = () => {
   const router = useRouter();
+  
+  const handleStart = async () => {
+    await AsyncStorage.setItem('hasLaunched', 'true');
+    router.push("/signup");
+  };
+
+  const handleLogin = async () => {
+    await AsyncStorage.setItem('hasLaunched', 'true');
+    router.push("/login");
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -28,7 +39,7 @@ const SplashScreen = () => {
         <View style={styles.bottomBlock}>
           <Button
             label="시작하기"
-            onPress={() => router.push("/signup")}
+            onPress={handleStart}
           />
 
           <View style={styles.footer}>
@@ -38,7 +49,7 @@ const SplashScreen = () => {
               variant="ghost"
               size="sm"
               fullWidth={false}
-              onPress={() => router.push("/login")}
+              onPress={handleLogin}
             />
           </View>
         </View>
