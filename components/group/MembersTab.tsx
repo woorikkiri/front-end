@@ -1,6 +1,6 @@
 import Button from '@/components/ui/Button';
 import MenuGroup, { MenuItem } from '@/components/ui/MenuGroup';
-import Modal from '@/components/ui/modal';
+import Modal, { ButtonVariant } from '@/components/ui/modal';
 import ProfileCard from '@/components/ui/ProfileCard';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -106,11 +106,11 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
   const modalConfig: Record<ModalType, {
     message: string;
     rightBtnText: string;
-    rightBtnVariant: 'danger' | 'primary' | 'warning' | 'cancel';
+    rightBtnVariant: ButtonVariant;
     onConfirm: () => void;
   }> = {
     kick: { message: '이 멤버를\n강퇴하시겠습니까?', rightBtnText: '강퇴', rightBtnVariant: 'danger', onConfirm: handleKickConfirm },
-    delegate: { message: '이 멤버에게\n방장을 위임할까요?', rightBtnText: '위임', rightBtnVariant: 'primary', onConfirm: handleDelegateConfirm },
+    delegate: { message: '이 멤버에게\n방장을 위임할까요?', rightBtnText: '위임', rightBtnVariant: 'warning', onConfirm: handleDelegateConfirm },
     leave: { message: '모임에서 나가면\n다시 초대받아야 해요.\n나가시겠습니까?', rightBtnText: '나가기', rightBtnVariant: 'warning', onConfirm: handleLeaveConfirm },
     delete: { message: '모임을 삭제하면\n되돌릴 수 없어요.\n삭제하시겠습니까?', rightBtnText: '삭제', rightBtnVariant: 'danger', onConfirm: handleDeleteConfirm },
   };
@@ -162,7 +162,6 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
 
   return (
     <View style={styles.container}>
-
       {/* ── 멤버 수 + 초대 버튼 ── */}
       <View style={styles.header}>
         <Text style={styles.titleText}>멤버 {members.length}명</Text>
@@ -177,7 +176,18 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
       </View>
 
       {/* ── 멤버 목록 ── */}
+      {/* 배경눌러도 menugroup내려가게 하기 */}
       <View style={styles.memberList}>
+
+        {/* memberlist 화면 덮는 레이어 있는게 나을까 없는게 나을까...*/}
+        { selectedMemberId !== null && (
+          <TouchableOpacity
+            style={[StyleSheet.absoluteFillObject, {zIndex: 5}]}
+            activeOpacity={1}
+            onPress={closeMenu}
+          />
+        )}
+        
         {visibleMembers.map((member) => {
           const isMe = member.id === MY_ID;
           const isOwner = member.role === 'owner';
@@ -190,7 +200,7 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
                 onPress={() => isLeader && !isMe && openMemberMenu(member.id)}
               >
                 <ProfileCard
-                  name={isMe ? `${member.nickname} (나)` : member.nickname}
+                  name={member.nickname}
                   role={isOwner ? '방장' : '멤버'}
                   profileImage={member.profileImage}
                   icon={

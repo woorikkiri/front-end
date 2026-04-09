@@ -11,6 +11,8 @@ import {
     View,
 } from 'react-native';
 
+export type ButtonVariant = 'primary' | 'danger' | 'warning' | 'cancel';
+
 interface ModalProps {
     visible: boolean;
     message: string;
@@ -20,8 +22,8 @@ interface ModalProps {
     onLeftBtnPress: () => void;
     onRightBtnPress: () => void;
     onBackDropPress?: () => void;
-    leftBtnVariant?: 'primary' | 'danger' | 'warning' | 'cancel';
-    rightBtnVariant?: 'primary' | 'danger' | 'warning' | 'cancel';
+    leftBtnVariant?: ButtonVariant;
+    rightBtnVariant?: ButtonVariant;
     children?: React.ReactNode;
 }
 
