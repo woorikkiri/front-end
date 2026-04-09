@@ -126,7 +126,7 @@ const SignupScreen = () => {
 
         switch (errorData.code) {
           case 'EMAIL_ALREADY_EXISTS':
-            setErrors(prev => ({ ...prev, email: "이미 사용 중인 이메일입니다." }));
+            setErrors(prev => ({ ...prev, email: '이미 사용 중인 이메일입니다.' }));
             break;
 
           case 'PASSWORD_MISMATCH':
@@ -137,7 +137,7 @@ const SignupScreen = () => {
             setPwError('password', '비밀번호는 8~32자이며, 대문자/소문자/숫자/특수문자를 포함해야 합니다.');
             break;
 
-          case 'INTERNAL_SERVER_ERROR':
+          case 'INTERNAL_SERVER_ERROR': // 없어도 될듯.
           default:
             setServerErrorModal(true);
             break;
