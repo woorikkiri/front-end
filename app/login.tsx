@@ -1,7 +1,10 @@
 import Button from "@/components/ui/Button";
 import Header from "@/components/ui/Header";
+import Modal from "@/components/ui/modal";
 import TextInput from "@/components/ui/TextInput";
+//import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from "@/constants/theme";
+import useAuth from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
@@ -18,6 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const LoginScreen = () => {
   const router = useRouter();
+  const { login } = useAuth(); //훅은 컴포넌트 맨 위에서만 써야 함
 
   // ───── 상태 관리 ─────
   const [email, setEmail] = useState("");
@@ -28,6 +32,7 @@ const LoginScreen = () => {
     email: "",
     password: "",
   });
+  const [serverErrorModal, setServerErrorModal] = useState(false);
 
   // ───── ref ─────
   const passwordRef = useRef<RNTextInput>(null);
@@ -49,7 +54,51 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     if (!validate()) return;
     setLoading(true);
-    // TODO: 실제 API 연동
+    // 실제 API 연동
+    {/*
+    try {
+      const response = await fetch(API.login, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+        })
+      });
+
+      if (!response.ok) {
+      // 서버가 에러 응답 보냈을 때 (비번틀림, 이메일 없음.)
+        const errorData = await response.json();
+
+        switch (errorData.code) {
+          case 'INVALID_PASSWORD':
+            setErrors(prev => ({...prev, password: '이메일 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.'}));
+            break;
+          
+          case 'USER_NOT_FOUND':
+            setErrors(prev => ({...prev, password: '이메일 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.'}));
+            break;
+
+          default:
+            setServerErrorModal(true);
+            break;
+        }
+        return; // 에러면 여기서 멈추기
+      }
+      // 성공했을 때
+      const data = await response.json();
+
+      // data.accessToken 을 저장하고 화면 이동
+      await login(data.accessToken);
+    } catch (e) {
+      // 네트워크 오류
+      setServerErrorModal(true);
+    } finally {
+      setLoading(false); // 무조건 로딩 꺼야함.
+    }
+    */}
+    
+    // api 연동하면 여기 지우기
     setTimeout(() => {
       setLoading(false);
       router.replace("/(tabs)/home");
@@ -158,6 +207,17 @@ const LoginScreen = () => {
         </View>
 
       </ScrollView>
+
+      {/* 서버 오류 모달 */}
+      <Modal
+        visible={serverErrorModal}
+        message={"서버 오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
+        showLeftBtn={false}
+        rightBtnText="확인"
+        rightBtnVariant="primary"
+        onRightBtnPress={() => setServerErrorModal(false)}
+        onLeftBtnPress={() => { }}
+      />
     </SafeAreaView>
   );
 };
