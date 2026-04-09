@@ -2,8 +2,11 @@ import Button from '@/components/ui/Button';
 import MenuGroup, { MenuItem } from '@/components/ui/MenuGroup';
 import Modal from '@/components/ui/modal';
 import ProfileCard from '@/components/ui/ProfileCard';
+import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from '@/constants/theme';
+import useAuth from '@/hooks/useAuth';
 import { useRouter } from "expo-router";
+//import * as SecureStore from 'expo-secure-store';
 import { useState } from 'react';
 import {
     ScrollView,
@@ -17,8 +20,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function MyPageScreen() {
     const router = useRouter();
+    const { logout, userToken} = useAuth();
 
-    // TODO: API 연동 후 GET /api/users/me 응답으로 교체
+    // API 연동 후 GET /api/users/me 응답으로 교체 (현재 임시 데이터)
     const [user] = useState({
         name: 'Minji',
         email: 'minji@example.com',
@@ -32,7 +36,7 @@ export default function MyPageScreen() {
     ];
 
     const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-
+    
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
@@ -65,8 +69,21 @@ export default function MyPageScreen() {
                 message='로그아웃 하시겠습니까?'
                 rightBtnText='로그아웃'
                 onLeftBtnPress={() => setLogoutModalVisible(false)}
-                onRightBtnPress={() => {
-                    router.replace("/login");
+                onRightBtnPress={async () => {
+                    // 서버에 요청
+                    try {
+                        await fetch(API.logout, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${userToken}`,
+                            }
+                        });
+                    } catch (e) {
+                        // 서버 오류가 나도 그냥 넘어가기
+                    } finally {
+                        // 성공하든 실패하든 무조건 토큰 지우고 로그인화면으로
+                        await logout();
+                    }
                 }}
                 rightBtnVariant='warning'
             />
