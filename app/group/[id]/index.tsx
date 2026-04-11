@@ -5,7 +5,7 @@ import VoteTab from '@/components/group/VoteTab';
 import Header from '@/components/ui/Header';
 import { Colors, Radius, Shadow, Spacing } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import {
   StatusBar,
@@ -58,7 +58,10 @@ export default function GroupScreen() {
       </View>
       {/* FAB - 게시판일 때만 */}
       {activeTab === '게시판' && (
-        <TouchableOpacity style={styles.fab}>
+        <TouchableOpacity 
+          style={styles.fab}
+          onPress={() => router.push(`/group/${id}/create-post`)}
+        >
           <Ionicons name="pencil" size={24} color={Colors.white} />
         </TouchableOpacity>
       )}
@@ -110,7 +113,7 @@ const styles = StyleSheet.create({
   // 게시판일때만 보여지는 FAB 버튼 스타일
   fab: {
       position: 'absolute',  // 공중에 떠있는 느낌
-      bottom: Spacing.xl,    // 아래에서 얼마나
+      bottom: Spacing['5xl'],    // 아래에서 얼마나
       right: Spacing.xl,     // 오른쪽에서 얼마나
       backgroundColor: Colors.primary,
       borderRadius: Radius.full,  // 동그랗게
