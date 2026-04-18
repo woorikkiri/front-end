@@ -89,7 +89,7 @@ const LoginScreen = () => {
       const data = await response.json();
 
       // data.accessToken 을 저장하고 화면 이동
-      await login(data.accessToken);
+      await login(data.accessToken, data.id);
     } catch (e) {
       // 네트워크 오류
       setServerErrorModal(true);

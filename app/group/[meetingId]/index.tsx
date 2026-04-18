@@ -24,14 +24,14 @@ const meeting = { createdBy: 1 };
 const isLeader = currentUserId === meeting.createdBy;
 
 export default function GroupScreen() {
-  const { id } = useLocalSearchParams();
+  const { meetingId } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('게시판');
 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
 
-      <Header title={`그룹 ${id}`} />
+      <Header title={`그룹 ${meetingId}`} />
 
       {/* 탭바 */}
       <View style={styles.tabBar}>
@@ -51,16 +51,16 @@ export default function GroupScreen() {
 
       {/* 탭 컨텐츠 - View 하나로 단순하게 */}
       <View style={styles.container}>
-        {activeTab === '게시판' && <BoardTab />}
+        {activeTab === '게시판' && <BoardTab meetingId={Number(meetingId)} />}
         {activeTab === '일정조율' && <ScheduleTab />}
         {activeTab === '투표' && <VoteTab />}
-        {activeTab === '멤버' && <MembersTab isLeader={isLeader} meetingId={Number(id)} />}
+        {activeTab === '멤버' && <MembersTab isLeader={isLeader} meetingId={Number(meetingId)} />}
       </View>
       {/* FAB - 게시판일 때만 */}
       {activeTab === '게시판' && (
         <TouchableOpacity 
           style={styles.fab}
-          onPress={() => router.push(`/group/${id}/create-post`)}
+          onPress={() => router.push(`/group/${meetingId}/create-post`)}
         >
           <Ionicons name="pencil" size={24} color={Colors.white} />
         </TouchableOpacity>
@@ -114,9 +114,9 @@ const styles = StyleSheet.create({
   fab: {
       position: 'absolute',  // 공중에 떠있는 느낌
       bottom: Spacing['5xl'],    // 아래에서 얼마나
-      right: Spacing.xl,     // 오른쪽에서 얼마나
+      right: Spacing.xl,
       backgroundColor: Colors.primary,
-      borderRadius: Radius.full,  // 동그랗게
+      borderRadius: Radius.full, 
       padding: Spacing.base,
       ...Shadow.lg,
     },

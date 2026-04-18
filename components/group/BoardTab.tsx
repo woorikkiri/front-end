@@ -1,7 +1,11 @@
 // BoardTab.tsx
 import PostCard from '@/components/board/PostCard';
+import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { formatTimeAgo } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -9,13 +13,30 @@ import {
   View
 } from 'react-native';
 
+interface BoardTabProps {
+  meetingId: number;
+}
+
+interface Post {
+  postId: number;
+  title: string;
+  contentPreview: string;  // ← content 아니고 contentPreview!
+  notice: boolean;
+  writerNickname: string;
+  writerId: number;
+  createdAt: string;
+  commentCount: number;
+  imageUrl: null | string;
+}
+
+// 나중에 API로 받아올 데이터
 const DUMMY_POSTS = [
   {
     id: 1,
     title: '회비 미납자 분들 확인 부탁드려요',
     content: '이번 주까지 미납자 확인 부탁드려요.',
     author: '방장',
-    createdAt: '10분 전',
+    createdAt: '2026-04-05T00:06:54',
     commentCount: 3,
     isNotice: true,
   },
@@ -24,14 +45,29 @@ const DUMMY_POSTS = [
     title: '확인 부탁드려요',
     content: '확인 부탁드려요.',
     author: 'sora',
-    createdAt: '1시간 전',
+    createdAt: '2026-04-13T00:06:54',
     commentCount: 1,
   },
 
 ]
 
-export default function BoardTab() {
-  const noticePost = DUMMY_POSTS.find(post => post.isNotice);
+export default function BoardTab({ meetingId }: BoardTabProps) {
+  const router = useRouter();
+  const noticePost = DUMMY_POSTS.find(post => post.isNotice); // const noticePost = posts.find(post => post.notice);
+  const [posts, setPosts] = useState<Post[]>([]);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+        try {
+            const response = await fetch(API.getPosts(meetingId));
+            const data = await response.json();
+            setPosts(data.posts);  // ← data.posts 안에 있어!
+        } catch (e) {
+            // 에러 처리
+        }
+    };
+    fetchPosts();
+}, []);
 
   return (
     <>
@@ -55,17 +91,18 @@ export default function BoardTab() {
           </>
         )}
         data={DUMMY_POSTS}
+        // data={posts}  // ← API로 받아온 데이터로 바꿔주기
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id.toString()} // ← item.postId로 바꿔주기
         renderItem={({ item }) => (
           <PostCard
             title={item.title}
-            content={item.content}
-            author={item.author}
-            createdAt={item.createdAt}
+            content={item.content} // ← contentPreview로 바꿔주기
+            author={item.author} // ← writerNickname으로 바꿔주기
+            createdAt={formatTimeAgo(item.createdAt)}
             commentsCount={item.commentCount}
-            isNotice={item.isNotice}
-            onPress={() => console.log('게시글 클릭')}
+            isNotice={item.isNotice} //notice로 바꿔주기
+            onPress={() => router.push(`/group/${meetingId}/${item.id}`)} // ← item.postId로 바꿔주기
           />
         )}
       />

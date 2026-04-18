@@ -9,6 +9,7 @@ export default function useAuth() {
     const [loading, setLoading] = useState(true);
     const [hasLaunched, setHasLaunched] = useState<boolean | null>(null);
     const [userToken, setUserToken] = useState<string | null>(null);
+    const [userId, setUserId] = useState<number | null>(null);
 
     useEffect(() => {
         const checkToken = async () => {
@@ -20,10 +21,16 @@ export default function useAuth() {
                 setHasLaunched(true);
                 // 1. AsyncStorage에서 토큰 꺼내기
                 const token = await AsyncStorage.getItem('accessToken');
+                const storedUserId = await AsyncStorage.getItem('userId');
 
                 // 2. 토큰 있으면 userToken에 저장
                 if (token) {
                     setUserToken(token);
+                }
+
+                // 3. userId 있으면 userId에 저장
+                if (storedUserId) {
+                    setUserId(Number(storedUserId));
                 }
             }
             // 3. 확인 끝나면 loading false로
@@ -33,16 +40,20 @@ export default function useAuth() {
     }, []);
 
     // 로그인
-    const login = async (token: string) => {
+    const login = async (token: string, userId: number) => {
         await AsyncStorage.setItem('accessToken', token);
+        await AsyncStorage.setItem('userId', String(userId));
         setUserToken(token);
+        setUserId(userId);
     }
 
     // 로그아웃
     const logout =  async () => {
         await AsyncStorage.removeItem('accessToken');
+        await AsyncStorage.removeItem('userId');
         setUserToken(null);
+        setUserId(null);
     }
 
-    return { loading, userToken, hasLaunched, login, logout };
+    return { loading, userToken, userId, hasLaunched, login, logout };
 }

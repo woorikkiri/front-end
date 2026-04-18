@@ -18,7 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreatePostScreen() {
-    const { id: meetingId } = useLocalSearchParams();
+    const { meetingId } = useLocalSearchParams();
     
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
