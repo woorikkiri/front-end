@@ -1,11 +1,11 @@
 import Button from "@/components/ui/Button";
 import Header from "@/components/ui/Header";
 import Modal from "@/components/ui/modal";
+import PasswordToggle from "@/components/ui/PasswordToggle";
 import TextInput from "@/components/ui/TextInput";
 //import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from "@/constants/theme";
 import useAuth from "@/hooks/useAuth";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
@@ -104,23 +104,6 @@ const LoginScreen = () => {
       router.replace("/(tabs)/home");
     }, 1500);
   };
-
-  // ───── 비밀번호 토글 ─────
-  const PasswordToggle = ({
-    show,
-    onToggle,
-  }: {
-    show: boolean;
-    onToggle: () => void;
-  }) => (
-    <TouchableOpacity onPress={onToggle} hitSlop={8}>
-      <Ionicons
-        name={show ? "eye-off-outline" : "eye-outline"}
-        size={20}
-        color={Colors.gray500}
-      />
-    </TouchableOpacity>
-  );
 
   return (
     <SafeAreaView style={styles.safe}>

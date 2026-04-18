@@ -80,11 +80,11 @@ const styles = StyleSheet.create({
     },
     container: {
         paddingTop: Spacing['2xl'],
-        paddingHorizontal: Spacing['lg'],
+        paddingHorizontal: Spacing.lg,
         paddingBottom: Spacing['3xl']
     },
     infoText: {
-        marginTop: Spacing['base'],
+        marginTop: Spacing.base,
         fontSize: Typography.sm,
         color: Colors.gray500,
         lineHeight: 20,

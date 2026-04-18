@@ -83,11 +83,11 @@ const styles = StyleSheet.create({
     noticeText: {
         color: Colors.primary,
         fontSize: Typography.sm,
-        fontWeight: 'bold',
+        fontWeight: '700',
     },
     title: {
         fontSize: Typography.base,
-        fontWeight: 'bold',
+        fontWeight: '700',
         flex: 1,
     },
     content: {
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     },
     footerText: {
         fontSize: Typography.sm,
-        fontWeight: 'bold',
+        fontWeight: '700',
         color: Colors.gray500,
     },
 });

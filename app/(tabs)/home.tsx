@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing['lg'],
+    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.base,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   },
   emptyTitleText: {
     fontSize: Typography.lg,
-    fontWeight: "900",
+    fontWeight: "800",
     color: Colors.black,
     textAlign: 'center',
   },
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   // ───── 컨텐츠 ─────
   container: {
     flexGrow: 1,
-    paddingHorizontal: Spacing['lg'],
+    paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing['5xl'],
   },
   groupCount: {
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   },
   groupInfo: {
     flex: 1,
-    gap: 4,
+    gap: Spacing.xs,
   },
   groupName: {
     fontSize: Typography.base,

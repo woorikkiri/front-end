@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontSize: Typography.sm,
-        fontWeight: 'bold',
+        fontWeight: '700',
         color: Colors.gray500,
     },
     commentSection: {
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     },
     commentTitle: {
         fontSize: Typography.md,
-        fontWeight: 'bold',
+        fontWeight: '700',
     },
 
     commentInputWrap: {

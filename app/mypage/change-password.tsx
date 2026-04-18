@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     },
     container: {
         paddingTop: Spacing['2xl'],
-        paddingHorizontal: Spacing['lg'],
+        paddingHorizontal: Spacing.lg,
         paddingBottom: Spacing['3xl'],
     },
     formSection: {

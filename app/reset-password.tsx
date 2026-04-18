@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.white,
     },
     container: {
-        paddingHorizontal: Spacing['lg'],
+        paddingHorizontal: Spacing['2xl'],
         paddingBottom: Spacing['5xl'],
     },
     titleSection: {

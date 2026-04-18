@@ -3,7 +3,7 @@ import MembersTab from '@/components/group/MembersTab';
 import ScheduleTab from '@/components/group/ScheduleTab';
 import VoteTab from '@/components/group/VoteTab';
 import Header from '@/components/ui/Header';
-import { Colors, Radius, Shadow, Spacing } from '@/constants/theme';
+import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   tabText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: Typography.md,
+    fontWeight: '700',
     color: Colors.gray500,
   },
   tabTextActive: {

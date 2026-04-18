@@ -2,7 +2,7 @@ import Button from '@/components/ui/Button';
 import Header from '@/components/ui/Header';
 import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -100,11 +100,11 @@ export default function CreatePostScreen() {
 
                 {/* 공지사항 올리는 check박스 */}
                 <TouchableOpacity style={styles.checkboxContainer} onPress={() => setIsNotice(!isNotice)}>
-                    <Ionicons name="pin" size={24} color={Colors.primary} style={styles.checkboxIcon} />
+                    <Ionicons name="pin" size={22} color={Colors.primary} style={styles.checkboxIcon} />
                     <Text style={styles.checkboxText}>공지사항으로 올리기</Text>
                     {isNotice
-                        ? <Ionicons name="checkbox" size={24} color={Colors.primary} style={{ marginLeft: 'auto' }} />
-                        : <Ionicons name="square-outline" size={24} color={Colors.gray500} style={{ marginLeft: 'auto' }} />
+                        ? <Ionicons name="checkbox" size={22} color={Colors.primary} style={{ marginLeft: 'auto' }} />
+                        : <Ionicons name="square-outline" size={22} color={Colors.gray500} style={{ marginLeft: 'auto' }} />
                     }
                 </TouchableOpacity>
 
@@ -157,8 +157,8 @@ const styles = StyleSheet.create({
         marginRight: Spacing.sm,
     },
     checkboxText: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: Typography.base,
+        fontWeight: '700',
     },
     buttonSection: {
         flexDirection: 'row',

@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
         letterSpacing: -0.5,
     },
     container: {
-        paddingHorizontal: Spacing['lg'],
+        paddingHorizontal: Spacing.lg,
         paddingTop: Spacing.xl,
         gap: Spacing.base,
     },

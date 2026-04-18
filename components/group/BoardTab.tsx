@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   },
   noticeBannerText: {
     fontSize: Typography.base,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   titleText: {
     fontSize: Typography.xl,
