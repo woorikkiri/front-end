@@ -52,7 +52,7 @@ export default function GroupScreen() {
       {/* 탭 컨텐츠 - View 하나로 단순하게 */}
       <View style={styles.container}>
         {activeTab === '게시판' && <BoardTab meetingId={Number(meetingId)} />}
-        {activeTab === '일정조율' && <ScheduleTab />}
+        {activeTab === '일정조율' && <ScheduleTab meetingId={Number(meetingId)}/>}
         {activeTab === '투표' && <VoteTab />}
         {activeTab === '멤버' && <MembersTab isLeader={isLeader} meetingId={Number(meetingId)} />}
       </View>

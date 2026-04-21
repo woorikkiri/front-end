@@ -58,55 +58,59 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
 
   useEffect(() => {
     const fetchPosts = async () => {
-        try {
-            const response = await fetch(API.getPosts(meetingId));
-            const data = await response.json();
-            setPosts(data.posts);  // ← data.posts 안에 있어!
-        } catch (e) {
-            // 에러 처리
-        }
+      try {
+        const response = await fetch(API.getPosts(meetingId));
+        const data = await response.json();
+        setPosts(data.posts);  // ← data.posts 안에 있어!
+      } catch (e) {
+        // 에러 처리
+      }
     };
     fetchPosts();
-}, []);
+  }, []);
 
   return (
-    <>
-      {/* 게시글 목록 - 스크롤 됨 */}
-      <FlatList
-        ListHeaderComponent={() => (
-          <>
-            {/* 공지 배너 - 항상 고정 */}
-            {/* noticePost가 있을 때만 배너 보여주기 */}
-            {noticePost && (
-              <View style={styles.noticeBanner}>
-                <View style={styles.noticeBannerIcon}>
-                  <Ionicons name="alert-circle-outline" size={20} color={Colors.primary} />
-                </View>
-                <Text style={styles.noticeBannerText}>{noticePost.title}</Text>
-              </View>
-            )}
+    <FlatList
+      // 1. 데이터
+      data={DUMMY_POSTS}
+      // data={posts}  // ← API로 받아온 데이터로 바꿔주기
 
-            {/* 게시판 텍스트 */}
-            <Text style={styles.titleText}>게시판</Text>
-          </>
-        )}
-        data={DUMMY_POSTS}
-        // data={posts}  // ← API로 받아온 데이터로 바꿔주기
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        keyExtractor={(item) => item.id.toString()} // ← item.postId로 바꿔주기
-        renderItem={({ item }) => (
-          <PostCard
-            title={item.title}
-            content={item.content} // ← contentPreview로 바꿔주기
-            author={item.author} // ← writerNickname으로 바꿔주기
-            createdAt={formatTimeAgo(item.createdAt)}
-            commentsCount={item.commentCount}
-            isNotice={item.isNotice} //notice로 바꿔주기
-            onPress={() => router.push(`/group/${meetingId}/${item.id}`)} // ← item.postId로 바꿔주기
-          />
-        )}
-      />
-    </>
+      // 2. 각 항목 렌더링
+      keyExtractor={(item) => item.id.toString()} // ← item.postId로 바꿔주기
+      renderItem={({ item }) => (
+        <PostCard
+          title={item.title}
+          content={item.content} // ← contentPreview로 바꿔주기
+          author={item.author} // ← writerNickname으로 바꿔주기
+          createdAt={formatTimeAgo(item.createdAt)}
+          commentsCount={item.commentCount}
+          isNotice={item.isNotice} //notice로 바꿔주기
+          onPress={() => router.push(`/group/${meetingId}/${item.id}`)} // ← item.postId로 바꿔주기
+        />
+      )}
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+
+      // 3. 헤더/빈상태
+      ListHeaderComponent={() => (
+        <>
+          {/* 공지 배너 - 항상 고정 */}
+          {/* noticePost가 있을 때만 배너 보여주기 */}
+          {noticePost && (
+            <View style={styles.noticeBanner}>
+              <View style={styles.noticeBannerIcon}>
+                <Ionicons name="alert-circle-outline" size={20} color={Colors.primary} />
+              </View>
+              <Text style={styles.noticeBannerText}>{noticePost.title}</Text>
+            </View>
+          )}
+          {/* 게시판 텍스트 */}
+          <Text style={styles.titleText}>게시판</Text>
+        </>
+      )}
+
+      // 4. 스타일/옵션
+      showsVerticalScrollIndicator={false}
+    />
   );
 }
 
