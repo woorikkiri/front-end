@@ -61,7 +61,7 @@ export default function EditScreen() {
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
 
-            <Header title='프로필'/>
+            <Header title='프로필' />
             <View style={styles.container}>
                 <View style={styles.profileSection}>
                     <TouchableOpacity
@@ -73,7 +73,7 @@ export default function EditScreen() {
                         ) : (
                             <Ionicons name="person" size={40} color={Colors.gray300} />
                         )}
-                        
+
                         {/* 카메라 버튼 */}
                         <View style={styles.cameraButton}>
                             <Ionicons name="camera-outline" size={20} color={Colors.white} />
@@ -82,21 +82,21 @@ export default function EditScreen() {
 
                     <Text style={styles.infoText}>프로필 이미지를 변경할 수 있어요.</Text>
                 </View>
-                
+
                 <View style={styles.formSection}>
-                    <TextInput 
-                    label='닉네임' 
-                    placeholder='닉네임을 입력해주세요.'
-                    value={nickname}
-                    onChangeText={(v) => setNickname(v)}
-                    error={errors.nickname}
-                    rightElement={nickname.length > 0 ? <Ionicons name="close-circle" size={20} color={Colors.gray300} onPress={() => setNickname('')} /> : undefined}
-                    required
+                    <TextInput
+                        label='닉네임'
+                        placeholder='닉네임을 입력해주세요.'
+                        value={nickname}
+                        onChangeText={(v) => setNickname(v)}
+                        error={errors.nickname}
+                        rightElement={nickname.length > 0 ? <Ionicons name="close-circle" size={20} color={Colors.gray300} onPress={() => setNickname('')} /> : undefined}
+                        required
                     />
                 </View>
-                
+
                 <View style={styles.buttonSection}>
-                    <Button 
+                    <Button
                         label='저장'
                         onPress={handleSave}
                     />
@@ -148,9 +148,9 @@ const styles = StyleSheet.create({
     },
     formSection: {
         gap: Spacing.base,
-        marginBottom: Spacing.lg,
     },
     buttonSection: {
         gap: Spacing.sm,
+        marginTop: Spacing.lg,
     },
 })
