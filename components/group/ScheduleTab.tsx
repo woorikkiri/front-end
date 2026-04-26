@@ -42,15 +42,15 @@ export default function ScheduleTab({ meetingId }: ScheduleTabProps) {
 
       {/* 탭 내용 */}
       <View style={styles.content}>
-        {activeTab === '확정일정' && <FinalScheduleTab />}
-        {activeTab === '조율중' && <SchedulePollsTab />}
+        {activeTab === '확정일정' && <FinalScheduleTab meetingId={meetingId} />}
+        {activeTab === '조율중' && <SchedulePollsTab meetingId={meetingId}/>}
       </View>
 
       {/* 하단 버튼 */}
       <View style={styles.buttonSection}>
         <Button
           label="일정 생성"
-          onPress={() => { }}
+          onPress={() => {router.push(`/group/${meetingId}/create-final-schedule`)}}
           variant='cancel'
           style={{flex: 1}}
         />

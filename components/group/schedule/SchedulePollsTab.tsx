@@ -2,7 +2,7 @@
 import EmptyState from '@/components/ui/EmptyState';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     FlatList,
     StyleSheet,
@@ -10,8 +10,31 @@ import {
     View,
 } from 'react-native';
 
-export default function SchedulePollsTab() {
-    const [polls, setPolls] = useState([]);
+interface SchedulePollsTabProps {
+    meetingId: number;
+}
+
+interface SchedulePoll {
+    schedulePollId: number;
+    title: string;
+    startDate: string;
+    endDate: string;
+    deadlineAt: string;
+    status: string;
+}
+
+export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
+    const [polls, setPolls] = useState<SchedulePoll[]>([]);
+
+    useEffect(() => {
+        // 나중에 API 연동할 때
+        // const fetchPolls = async () => {
+        //     const response = await fetch(API.getSchedulePolls(meetingId));
+        //     const data = await response.json();
+        //     setPolls(data.schedulePolls);
+        // };
+        // fetchPolls();
+    }, [meetingId]);
 
     return (
         <FlatList
@@ -19,10 +42,10 @@ export default function SchedulePollsTab() {
             data={polls}
 
             // 2. 각 항목 렌더링
-            keyExtractor={(item, index) => index.toString()} // ← 나중에 item.pollId.toString()으로 바꿔주기
+            keyExtractor={(item) => item.schedulePollId.toString()}
             renderItem={({ item }) => (
                 // 나중에 일정 카드
-                <Text>{item}</Text>
+                <Text>{item.title}</Text>
             )}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
 

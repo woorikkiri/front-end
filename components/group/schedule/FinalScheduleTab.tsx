@@ -2,7 +2,7 @@
 import EmptyState from '@/components/ui/EmptyState';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     FlatList,
     StyleSheet,
@@ -10,8 +10,22 @@ import {
     View,
 } from 'react-native';
 
-export default function FinalScheduleTab() {
+interface FinalScheduleTabProps {
+    meetingId: number;
+}
+
+export default function FinalScheduleTab({ meetingId }: FinalScheduleTabProps) {
     const [schedules, setSchedules] = useState([]);
+
+    useEffect(() => {
+        // 나중에 API 연동할 때
+        // const fetchSchedules = async () => {
+        //     const response = await fetch(API.getFinalSchedules(meetingId));
+        //     const data = await response.json();
+        //     setSchedules(data);
+        // };
+        // fetchSchedules();
+    }, [meetingId]);
     
     return (
         <FlatList
