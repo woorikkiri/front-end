@@ -2,46 +2,49 @@ const BASE_URL = "https://api.woorikkiri.com";
 
 export const API = {
   // ───── 인증 ─────
-  signup: `${BASE_URL}/api/auth/signup`,          // POST-
-  checkEmail: `${BASE_URL}/api/auth/check-email`, // GET-
-  login: `${BASE_URL}/api/auth/login`,            // POST-
-  logout: `${BASE_URL}/api/auth/logout`,          // POST-
+  signup: `${BASE_URL}/api/auth/signup`,          // POST
+  checkEmail: (email: string) => `${BASE_URL}/api/auth/check-email?email=${email}`, // GET
+  login: `${BASE_URL}/api/auth/login`,            // POST
+  logout: `${BASE_URL}/api/auth/logout`,          // POST
+  sendResetEmail: `${BASE_URL}/api/auth/password-reset/email`, // POST
+  verifyResetCode: `${BASE_URL}/api/auth/password-reset/verify`, // POST
+  confirmResetPassword: `${BASE_URL}/api/auth/password-reset/confirm`, // POST
 
   // ───── 유저 ─────
   updatePassword: `${BASE_URL}/api/users/password`, // PATCH
-  mypage: `${BASE_URL}/api/users/mypage`,         // GET-
-  getMe: `${BASE_URL}/api/users/me`,              // GET-
+  mypage: `${BASE_URL}/api/users/mypage`,         // GET
+  getMe: `${BASE_URL}/api/users/me`,              // GET
   updateMe: `${BASE_URL}/api/users/me`,           // PATCH
-
 
   // ───── 모임 ─────
   createMeeting: `${BASE_URL}/api/meetings`,          // POST
   getMyMeetings: `${BASE_URL}/api/meetings/my`,       // GET
   joinMeeting: `${BASE_URL}/api/meetings/join`,       // POST
   deleteMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}`,  // DELETE
-  leaveMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/leave`, // DELETE
+  getMeetingInviteCode: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/invite-code`,  // POST
+  leaveMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/members/me`, // DELETE
   updateMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}`,  // PATCH
-  //모임검색도 추가해야함. 엔드포인트? 주소가 없음.
-  getMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}`,     // GET
+  // 모임검색 프론트에서
+  getMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/home`,     // GET
   getMembers: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/members`, // GET
 
   // ───── 일정 조율 ─────
   createSchedulePoll: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/schedule-polls`,  // POST
   getSchedulePolls: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/schedule-polls`,    // GET
-  getSchedulePoll: (pollId: number) => `${BASE_URL}/api/schedule-polls/${pollId}`,     // GET
-  updateSchedulePoll: (pollId: number) => `${BASE_URL}/api/schedule-polls/${pollId}`,  // PATCH
-  deleteSchedulePoll: (pollId: number) => `${BASE_URL}/api/schedule-polls/${pollId}`,  // PATCH
-  submitAvailability: (pollId: number) => `${BASE_URL}/api/schedule-polls/${pollId}/availabilities`, // POST
-  closeSchedulePoll: (pollId: number) => `${BASE_URL}/api/schedule-polls/${pollId}/close`,           // PATCH
-  getDateMembers: (pollId: number, date: string) => `${BASE_URL}/api/schedule-polls/${pollId}/dates/${date}/members`, // GET
-  getRequiredMembers: (pollId: number, userId: number) => `${BASE_URL}/api/schedule-polls/${pollId}/members/${userId}`, // GET
+  getSchedulePoll: (meetingId: number, schedulePollId: number) => `${BASE_URL}/api/meetings/${meetingId}/schedule-polls/${schedulePollId}`,     // GET
+  updateSchedulePoll: (meetingId: number, schedulePollId: number) => `${BASE_URL}/api/meetings/${meetingId}/schedule-polls/${schedulePollId}`,  // PATCH
+  deleteSchedulePoll: (meetingId: number, schedulePollId: number) => `${BASE_URL}/api/meetings/${meetingId}/schedule-polls/${schedulePollId}`,  // DELETE
+  submitAvailability: (meetingId: number, schedulePollId: number) => `${BASE_URL}/api/meetings/${meetingId}/schedule-polls/${schedulePollId}/availabilities/me`, // PUT
+  closeSchedulePoll: (meetingId: number, schedulePollId: number) => `${BASE_URL}/api/meetings/${meetingId}/schedule-polls/${schedulePollId}/close`,           // PATCH
+  getDateMembers: (meetingId: number, schedulePollId: number, date: string) => `${BASE_URL}/api/meetings/${meetingId}/schedule-polls/${schedulePollId}/available-dates/${date}/members`, // GET
+  getRequiredMembers: (meetingId: number, schedulePollId: number, userId: number) => `${BASE_URL}/api/meetings/${meetingId}/schedule-polls/${schedulePollId}/members/${userId}/availabilities`, // GET
 
   // ───── 확정 일정 ─────
-  createFinalSchedule: (pollId: number) => `${BASE_URL}/api/schedule-polls/${pollId}/final-schedules`,      // POST
-  getFinalSchedules: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules`,        // GET
-  getFinalSchedule: (scheduleId: number) => `${BASE_URL}/api/final-schedules/${scheduleId}`,                // GET
-  updateFinalSchedule: (scheduleId: number) => `${BASE_URL}/api/final-schedules/${scheduleId}`,             // PATCH
-  deleteFinalSchedule: (scheduleId: number) => `${BASE_URL}/api/final-schedules/${scheduleId}`,             // DELETE
+  createFinalSchedule: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules`,  // POST
+  getFinalSchedules: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules`,  // GET
+  getFinalSchedule: (meetingId: number, scheduleId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules/${scheduleId}`,  // GET
+  updateFinalSchedule: (meetingId: number, scheduleId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules/${scheduleId}`,  // PATCH
+  deleteFinalSchedule: (meetingId: number, scheduleId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules/${scheduleId}`,  // DELETE
 
   // ───── 알림 ─────
   updateNotificationSettings: `${BASE_URL}/api/users/me/notification-settings`, // PATCH
