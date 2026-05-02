@@ -1,4 +1,5 @@
 import Button from '@/components/ui/Button';
+import DatePicker from '@/components/ui/DatePicker';
 import Header from '@/components/ui/Header';
 import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
@@ -27,7 +28,6 @@ export default function CreateSchedulePollScreen() {
 
     const [title, setTitle] = useState('');
     const [showCalendar, setShowCalendar] = useState(false);    // 시작/종료용
-    const [showDeadlineCalendar, setShowDeadlineCalendar] = useState(false);  // 마감일용
 
     const [startDate, setStartDate] = useState<string | null>(null);
     const [endDate, setEndDate] = useState<string | null>(null);
@@ -201,60 +201,28 @@ export default function CreateSchedulePollScreen() {
 
                     <Text style={styles.dateHint}>기간 밖 날짜는 선택할 수 없어요.</Text>
                 </View>
-
+                
+                {/* 마감일이랑 조율기간 같이 네모안에 넣어둘까 아님 다 뺄까.? 아님 지금처럼? */}
                 {/* 마감일 섹션 */}
                 <View style={styles.deadlineSection}>
                     <Text style={styles.dateLabel}>마감일</Text>
-
-                    {/* 마감일 버튼 */}
-                    <TouchableOpacity
-                        style={[
-                            styles.dateButton,
-                            showDeadlineCalendar && styles.dateButtonActive  // ← showDeadlineCalendar로!
-                        ]}
-                        onPress={() => {
-                            setShowDeadlineCalendar(!showDeadlineCalendar);  // ← 따로 열고 닫기
-                        }}
-                    >
-                        <Ionicons name="calendar-outline" size={16} color={Colors.gray500} />
-                        <View>
-                            <Text style={styles.dateBtnLabel}>마감</Text>
-                            <Text style={styles.dateBtnValue}>
-                                {deadlineDate ?? '날짜 선택'}
-                            </Text>
-                        </View>
-                        <Ionicons
-                            name={showDeadlineCalendar ? 'chevron-up' : 'chevron-down'}
-                            size={16}
-                            color={Colors.gray500}
-                            style={{ marginLeft: 'auto' }}
-                        />
-                    </TouchableOpacity>
-
-                    {/* 마감일 캘린더 */}
-                    {showDeadlineCalendar && (
-                        <Calendar
-                            onDayPress={(day) => {
-                                setDeadlineDate(day.dateString);
-                                setShowDeadlineCalendar(false); // 선택하면 닫기
-                            }}
-                            minDate={TODAY}
-                            maxDate={
-                                startDate
-                                    ? new Date(new Date(startDate).setDate(new Date(startDate).getDate() - 1))
-                                        .toISOString().split('T')[0]
-                                    : undefined
-                            }
-                            markedDates={{
-                                ...(deadlineDate ? { [deadlineDate]: { selected: true, selectedColor: Colors.primary } } : {}),
-                            }}
-                            theme={{
-                                todayTextColor: Colors.primary,
-                                selectedDayBackgroundColor: Colors.primary,
-                                arrowColor: Colors.primary,
-                            }}
-                        />
-                    )}
+                    <DatePicker
+                        label="마감"
+                        value={deadlineDate}
+                        onChange={(date) => setDeadlineDate(date)}
+                        minDate={TODAY}
+                        maxDate={
+                            startDate
+                                ? new Date(new Date(startDate).setDate(new Date(startDate).getDate() - 1))
+                                    .toISOString().split('T')[0]
+                                : undefined
+                        }
+                        markedDates={
+                            deadlineDate
+                                ? { [deadlineDate]: { selected: true, selectedColor: Colors.primary } }
+                                : undefined
+                        }
+                    />
                 </View>
 
                 {/* 버튼 */}
@@ -347,10 +315,6 @@ const styles = StyleSheet.create({
     },
 
     deadlineSection: {
-        borderWidth: 1,
-        borderColor: Colors.border,
-        borderRadius: Radius.xl,
-        padding: Spacing.lg,
         gap: Spacing.sm,
         marginTop: Spacing.lg,
     },

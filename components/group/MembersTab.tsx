@@ -173,6 +173,7 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
           size="sm"
           fullWidth={false}
           icon={<Ionicons name="person-add" size={16} color={Colors.primary} />}
+          style={{ borderRadius: Radius.full }}
         />
       </View>
 
