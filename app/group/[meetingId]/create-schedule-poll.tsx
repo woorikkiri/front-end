@@ -1,11 +1,11 @@
 import Button from '@/components/ui/Button';
 import DatePicker from '@/components/ui/DatePicker';
+import DateRangePicker from '@/components/ui/DateRangePicker';
 import Header from '@/components/ui/Header';
 import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import useError from '@/hooks/useError';
-import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -13,10 +13,8 @@ import {
     StatusBar,
     StyleSheet,
     Text,
-    TouchableOpacity,
-    View,
+    View
 } from 'react-native';
-import { Calendar } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const TODAY = new Date().toISOString().split('T')[0];
@@ -27,28 +25,10 @@ export default function CreateSchedulePollScreen() {
     const [loading, setLoading] = useState(false);
 
     const [title, setTitle] = useState('');
-    const [showCalendar, setShowCalendar] = useState(false);    // 시작/종료용
-
     const [startDate, setStartDate] = useState<string | null>(null);
     const [endDate, setEndDate] = useState<string | null>(null);
     const [deadlineDate, setDeadlineDate] = useState<string | null>(null);
-    const [selecting, setSelecting] = useState<'start' | 'end' | null>(null);
-
     const { showError } = useError();
-
-    // 날짜 선택됐을 때
-    const handleDateSelect = (date: string) => {
-        if (selecting === 'start') {
-            setStartDate(date);
-            // 시작일 바꿨는데 종료일이 시작일보다 이전이면 종료일 초기화
-            if (endDate && endDate < date) setEndDate(null);
-            if (deadlineDate && deadlineDate >= date) setDeadlineDate(null);
-        } else if (selecting === 'end') {
-            setEndDate(date);
-        }
-        setShowCalendar(false);
-        setSelecting(null);
-    };
 
     const handleSubmit = async () => {
         try {
@@ -103,105 +83,22 @@ export default function CreateSchedulePollScreen() {
                     placeholder='조율 제목을 입력해주세요.'
                     value={title}
                     onChangeText={setTitle}
-                    error={''}
                 />
 
                 {/* 조율 기간 받는 곳 */}
                 <View style={styles.dateSection}>
                     <Text style={styles.dateLabel}>조율 기간</Text>
+                    <DateRangePicker
+                        startDate={startDate}
+                        endDate={endDate}
+                        onStartChange={setStartDate}
+                        onEndChange={setEndDate}
+                    />
 
-                    {/* 시작/종료 날짜 버튼 */}
-                    <View style={styles.dateRow}>
-                        {/* 시작일 버튼 */}
-                        <TouchableOpacity
-                            style={[
-                                styles.dateButton,
-                                selecting === 'start' && styles.dateButtonActive  // 선택중이면 강조
-                            ]}
-                            onPress={() => {
-                                // 이미 열려있고 시작일 선택중이면 닫기
-                                if (showCalendar && selecting === 'start') {
-                                    setShowCalendar(false);
-                                    setSelecting(null);
-                                } else {
-                                    setSelecting('start');
-                                    setShowCalendar(true);
-                                }
-                            }}
-                        >
-                            <Ionicons name="calendar-outline" size={16} color={Colors.gray500} />
-                            <View>
-                                <Text style={styles.dateBtnLabel}>시작</Text>
-                                <Text style={styles.dateBtnValue}>
-                                    {startDate ?? '날짜 선택'}
-                                </Text>
-                            </View>
-                            {/* 열려있으면 위 화살표, 닫혀있으면 아래 화살표 */}
-                            <Ionicons
-                                name={showCalendar && selecting === 'start' ? 'chevron-up' : 'chevron-down'}
-                                size={16}
-                                color={Colors.gray500}
-                                style={{ marginLeft: 'auto' }}
-                            />
-                        </TouchableOpacity>
-
-                        {/* 종료일 버튼 */}
-                        <TouchableOpacity
-                            style={[
-                                styles.dateButton,
-                                selecting === 'end' && styles.dateButtonActive
-                            ]}
-                            onPress={() => {
-                                if (showCalendar && selecting === 'end') {
-                                    setShowCalendar(false);
-                                    setSelecting(null);
-                                } else {
-                                    setSelecting('end');
-                                    setShowCalendar(true);
-                                }
-                            }}
-                        >
-                            <Ionicons name="calendar-outline" size={16} color={Colors.gray500} />
-                            <View>
-                                <Text style={styles.dateBtnLabel}>종료</Text>
-                                <Text style={styles.dateBtnValue}>
-                                    {endDate ?? '날짜 선택'}
-                                </Text>
-                            </View>
-                            <Ionicons
-                                name={showCalendar && selecting === 'end' ? 'chevron-up' : 'chevron-down'}
-                                size={16}
-                                color={Colors.gray500}
-                                style={{ marginLeft: 'auto' }}
-                            />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* 캘린더 - showCalendar가 true일 때만 보여줌 */}
-                    {showCalendar && (
-                        <Calendar
-                            onDayPress={(day) => handleDateSelect(day.dateString)}
-                            // 선택된 날짜 표시
-                            minDate={
-                                selecting === 'end' && startDate
-                                    ? startDate
-                                    : TODAY
-                            }
-                            markedDates={{
-                                ...(startDate ? { [startDate]: { selected: true, selectedColor: Colors.primary } } : {}),
-                                ...(endDate ? { [endDate]: { selected: true, selectedColor: Colors.primary } } : {}),
-                            }}
-                            theme={{
-                                todayTextColor: Colors.primary,
-                                selectedDayBackgroundColor: Colors.primary,
-                                arrowColor: Colors.primary,
-                            }}
-                        />
-                    )}
 
                     <Text style={styles.dateHint}>기간 밖 날짜는 선택할 수 없어요.</Text>
                 </View>
-                
+
                 {/* 마감일이랑 조율기간 같이 네모안에 넣어둘까 아님 다 뺄까.? 아님 지금처럼? */}
                 {/* 마감일 섹션 */}
                 <View style={styles.deadlineSection}>
@@ -280,34 +177,6 @@ const styles = StyleSheet.create({
         fontSize: Typography.sm,
         fontWeight: '600',
         color: Colors.gray900,
-    },
-    dateRow: {
-        flexDirection: 'row',
-        gap: Spacing.sm,
-    },
-    dateButton: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.sm,
-        backgroundColor: Colors.inputBg,
-        borderRadius: Radius.lg,
-        padding: Spacing.md,
-        borderWidth: 1.5,
-        borderColor: 'transparent',
-    },
-    dateButtonActive: {
-        borderColor: Colors.primary,      // 선택중이면 주황 테두리
-        backgroundColor: Colors.white,
-    },
-    dateBtnLabel: {
-        fontSize: Typography.xs,
-        color: Colors.gray500,
-    },
-    dateBtnValue: {
-        fontSize: Typography.base,
-        fontWeight: '600',
-        color: Colors.black,
     },
     dateHint: {
         fontSize: Typography.xs,

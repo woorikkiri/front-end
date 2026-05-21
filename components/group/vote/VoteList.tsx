@@ -1,3 +1,4 @@
+import VoteCard, { VoteItem } from '@/components/group/vote/VoteCard';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
@@ -16,7 +17,28 @@ interface VoteListProps {
 
 export default function VoteList({ onCreatePress }: VoteListProps) {
 
-    const [vote, setVote] = useState([]);
+    // 나중에 api 연동후에 바꿔야함. 지금은 테스트용 더미 데이터
+    const [vote, setVote] = useState<VoteItem[]>([
+        {
+            voteId: 1,
+            title: '저녁 메뉴',
+            deadline: '2일 뒤에 종료됩니다',
+            options: [
+                { optionId: 1, text: '마라탕', count: 2 },
+                { optionId: 2, text: '돼지고기', count: 0 },
+            ]
+        }
+    ]);
+    
+    /* 나중에 (API 연동 후)
+    const [vote, setVote] = useState<VoteItem[]>([]);  // 빈 배열로 시작
+
+    useEffect(() => {
+        // 서버에서 투표 목록 가져오기
+        fetch(API.getVotes(meetingId))
+            .then(res => res.json())
+            .then(data => setVote(data));
+    }, []); */
 
     return (
         <FlatList
@@ -24,10 +46,9 @@ export default function VoteList({ onCreatePress }: VoteListProps) {
             data={vote}
 
             // 2. 각 항목 렌더링
-            keyExtractor={(item, index) => index.toString()} // ← 나중에 item.scheduleId.toString()으로 바꿔주기
+            keyExtractor={(item) => item.voteId.toString()}
             renderItem={({ item }) => (
-                // 나중에 일정 카드
-                <Text>{item}</Text>
+                <VoteCard item={item} onPress={() => { }} />
             )}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
 
