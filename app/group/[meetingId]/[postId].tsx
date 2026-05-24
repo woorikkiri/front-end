@@ -1,3 +1,4 @@
+import CommentItem, { Comment } from '@/components/board/CommentItem';
 import Header from '@/components/ui/Header';
 import MenuGroup from '@/components/ui/MenuGroup';
 import TextInput from '@/components/ui/TextInput';
@@ -47,6 +48,26 @@ export default function PostDetailScreen() {
         writerNickname: "test1"
     });
 
+    const [commentText, setCommentText] = useState('');
+    const [comments, setComments] = useState<Comment[]>([
+        {
+            commentId: 1,
+            content: '저도 오늘 중으로 입금할게요!',
+            writerNickname: 'Sora',
+            writerId: 2,
+            createdAt: '2026-04-05T00:11:54',
+            profileImageUrl: null,
+        },
+        {
+            commentId: 2,
+            content: '확인했어! 미납자는 톡도 남길게.',
+            writerNickname: 'Jihun',
+            writerId: 3,
+            createdAt: '2026-04-05T00:15:54',
+            profileImageUrl: null,
+        },
+    ]);
+
     const isMyPost = post?.writerId === userId;
     const isLeader = false; // 나중에 API로 받아오기
     const isNotice = post?.notice ?? false;
@@ -92,6 +113,23 @@ export default function PostDetailScreen() {
         </Popover>
     );
 
+    // 댓글 추가 함수 (다른 함수들 옆에)
+    const handleAddComment = () => {
+        if (!commentText.trim()) return;  // 빈 댓글 방지
+
+        const newComment: Comment = {
+            commentId: Date.now(),  // 임시 id (나중에 API로 받아오면 됨)
+            content: commentText,
+            writerNickname: '나',  // 나중에 userId로 받아오면 됨
+            writerId: userId ?? 0,
+            createdAt: new Date().toISOString(),
+            profileImageUrl: null,
+        };
+
+        setComments([...comments, newComment]);
+        setCommentText('');  // 입력창 초기화
+    };
+
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
@@ -117,6 +155,17 @@ export default function PostDetailScreen() {
                 <View style={styles.commentSection}>
                     <Text style={styles.commentTitle}>댓글</Text>
                     {/* 댓글 목록 */}
+                    {comments.map((comment) => (
+                        <CommentItem
+                            key={comment.commentId}
+                            comment={comment}
+                            isMyComment={comment.writerId === userId}
+                            onDelete={(commentId) => {
+                                // 나중에 API 연동
+                                setComments(comments.filter(c => c.commentId !== commentId));
+                            }}
+                        />
+                    ))}
                 </View>
 
             </ScrollView>
@@ -129,11 +178,12 @@ export default function PostDetailScreen() {
                     <TextInput
                         placeholder="댓글을 입력하세요"
                         containerStyle={{ flex: 1 }}
-                    // value, onChangeText 등 추가
+                        value={commentText}
+                        onChangeText={setCommentText}
                     />
                     <TouchableOpacity
                         style={styles.sendBtn}
-                        onPress={() => { }}
+                        onPress={handleAddComment}
                     >
                         <Ionicons name="paper-plane-outline" size={20} color={Colors.white} />
                     </TouchableOpacity>
@@ -143,6 +193,7 @@ export default function PostDetailScreen() {
         </SafeAreaView>
     );
 }
+
 const styles = StyleSheet.create({
     safe: {
         flex: 1,

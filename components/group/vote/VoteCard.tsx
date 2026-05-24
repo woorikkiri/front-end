@@ -20,6 +20,7 @@ export interface VoteOption {
     optionId: number;
     text: string;    // 선택지
     count: number;   // 투표수
+    voters?: string[]; // 투표한 사람 목록 (나중에 API에서 받아올 때 추가)
 }
 
 interface VoteCardProps {

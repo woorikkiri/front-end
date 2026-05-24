@@ -3,11 +3,13 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import useAuth from '@/hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from "react";
 import { Text, View } from 'react-native';
+import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import Toast from 'react-native-toast-message';
@@ -67,6 +69,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <BottomSheetModalProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack screenOptions={{ headerShown: false }}>
           {/* 1. 첫 화면 (랜딩 페이지) */}
@@ -90,6 +93,7 @@ export default function RootLayout() {
         <StatusBar style="auto" />
       </ThemeProvider>
       <Toast config={toastConfig} />
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }
