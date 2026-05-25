@@ -60,7 +60,7 @@ export default function HomeScreen() {
           <View style={styles.emptyContainer}>
             {/* 아이콘 */}
             <View style={styles.iconCircle}>
-               <Ionicons name="people" size={60} color={Colors.primary} />
+               <Ionicons name="people" size={60} color={Colors.primaryAlpha} />
             </View>
             
             {/* 텍스트 그룹 */}
