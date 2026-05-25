@@ -1,4 +1,4 @@
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { CalendarTheme, Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
@@ -57,11 +57,7 @@ export default function DatePicker({
                     minDate={minDate}
                     maxDate={maxDate}
                     markedDates={markedDates}
-                    theme={{
-                        todayTextColor: Colors.primary,
-                        selectedDayBackgroundColor: Colors.primary,
-                        arrowColor: Colors.primary,
-                    }}
+                    theme={CalendarTheme}
                 />
             )}
         </View>

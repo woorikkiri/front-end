@@ -1,4 +1,4 @@
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { CalendarTheme, Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
@@ -33,11 +33,12 @@ export default function DateRangePicker({
         if (selecting === 'start') {
             onStartChange(date);
             if (endDate && endDate < date) onEndChange('');
+            setSelecting('end');
         } else if (selecting === 'end') {
             onEndChange(date);
+            setShowCalendar(false);
+            setSelecting(null);
         }
-        setShowCalendar(false);
-        setSelecting(null);
     };
 
     return (
@@ -109,14 +110,10 @@ export default function DateRangePicker({
                     onDayPress={(day) => handleDateSelect(day.dateString)}
                     minDate={selecting === 'end' && startDate ? startDate : minDate}
                     markedDates={{
-                        ...(startDate ? { [startDate]: { selected: true, selectedColor: Colors.primary } } : {}),
-                        ...(endDate ? { [endDate]: { selected: true, selectedColor: Colors.primary } } : {}),
+                        ...(startDate ? { [startDate]: { selected: true } } : {}),
+                        ...(endDate ? { [endDate]: { selected: true } } : {}),
                     }}
-                    theme={{
-                        todayTextColor: Colors.primary,
-                        selectedDayBackgroundColor: Colors.primary,
-                        arrowColor: Colors.primary,
-                    }}
+                    theme={CalendarTheme}
                 />
             )}
         </View>

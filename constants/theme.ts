@@ -96,3 +96,21 @@ export const Shadow = {
     elevation: 8,
   },
 } as const;
+
+// ─── Calendar Theme ───────────────────────────────────────────
+export const CalendarTheme = {
+    todayBackgroundColor: Colors.primary,
+    todayTextColor: Colors.white,
+    selectedDayBackgroundColor: Colors.primaryLight,
+    selectedDayTextColor: Colors.primary,
+    arrowColor: Colors.primary,
+    monthTextColor: Colors.black,
+    textDayFontSize: 13,
+    textMonthFontSize: 15,
+    textDayFontWeight: '500' as const,
+    textMonthFontWeight: '700' as const,
+    selectedDayBorderColor: Colors.primary,  
+    dotColor: Colors.primary,                
+    textSectionTitleColor: Colors.gray500,
+    textDisabledColor: Colors.gray300, 
+} as const;
