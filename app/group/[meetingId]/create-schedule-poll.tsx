@@ -116,7 +116,7 @@ export default function CreateSchedulePollScreen() {
                         }
                         markedDates={
                             deadlineDate
-                                ? { [deadlineDate]: { selected: true, selectedColor: Colors.primary } }
+                                ? { [deadlineDate]: { selected: true } }
                                 : undefined
                         }
                     />
