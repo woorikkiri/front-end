@@ -4,18 +4,18 @@ import MenuGroup from '@/components/ui/MenuGroup';
 import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import useAuth from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/useAuthStore';
 import { formatTimeAgo } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ScrollView,
+    KeyboardAvoidingView, Platform, ScrollView,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import Popover from 'react-native-popover-view';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -34,7 +34,7 @@ interface Post {
 }
 
 export default function PostDetailScreen() {
-    const { userId } = useAuth();
+    const { userId } = useAuthStore();
     const [post, setPost] = useState<Post | null>({
         content: "안녕하세요. 게시글 테스트입니다.",
         createdAt: "2026-04-05T00:06:54",
@@ -137,59 +137,62 @@ export default function PostDetailScreen() {
             <Header
                 title={`그룹 ${meetingId} - 게시글 ${postId}`}
                 rightElement={menuButton} />
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+                <ScrollView style={styles.container}>
+                    <View style={styles.titleSection}>
+                        <Text style={styles.title}>{post?.title}</Text>
+                    </View>
+                    <View style={styles.infoSection}>
+                        <Text style={styles.infoText}>{post?.writerNickname}</Text>
+                        <Text style={styles.infoText}>·</Text>
+                        <Text style={styles.infoText}>{formatTimeAgo(post?.createdAt ?? '')}</Text>
+                    </View>
+                    <Text style={styles.subTitle}>{post?.content}</Text>
+                    {post?.notice && <Text>공지</Text>}
 
-            <ScrollView style={styles.container}>
-                <View style={styles.titleSection}>
-                    <Text style={styles.title}>{post?.title}</Text>
-                </View>
-                <View style={styles.infoSection}>
-                    <Text style={styles.infoText}>{post?.writerNickname}</Text>
-                    <Text style={styles.infoText}>·</Text>
-                    <Text style={styles.infoText}>{formatTimeAgo(post?.createdAt ?? '')}</Text>
-                </View>
-                <Text style={styles.subTitle}>{post?.content}</Text>
-                {post?.notice && <Text>공지</Text>}
+                    <View style={styles.inputDivider} />
+
+                    <View style={styles.commentSection}>
+                        <Text style={styles.commentTitle}>댓글</Text>
+                        {/* 댓글 목록 */}
+                        {comments.map((comment) => (
+                            <CommentItem
+                                key={comment.commentId}
+                                comment={comment}
+                                isMyComment={comment.writerId === userId}
+                                onDelete={(commentId) => {
+                                    // 나중에 API 연동
+                                    setComments(comments.filter(c => c.commentId !== commentId));
+                                }}
+                            />
+                        ))}
+                    </View>
+
+                </ScrollView>
 
                 <View style={styles.divider} />
 
-                <View style={styles.commentSection}>
-                    <Text style={styles.commentTitle}>댓글</Text>
-                    {/* 댓글 목록 */}
-                    {comments.map((comment) => (
-                        <CommentItem
-                            key={comment.commentId}
-                            comment={comment}
-                            isMyComment={comment.writerId === userId}
-                            onDelete={(commentId) => {
-                                // 나중에 API 연동
-                                setComments(comments.filter(c => c.commentId !== commentId));
-                            }}
+                <View>
+                    {/* 댓글 입력 창 */}
+                    <View style={styles.commentInputWrap}>
+                        <TextInput
+                            placeholder="댓글을 입력하세요"
+                            containerStyle={{ flex: 1 }}
+                            value={commentText}
+                            onChangeText={setCommentText}
                         />
-                    ))}
+                        <TouchableOpacity
+                            style={styles.sendBtn}
+                            onPress={handleAddComment}
+                        >
+                            <Ionicons name="paper-plane-outline" size={20} color={Colors.white} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
-
-            </ScrollView>
-
-            <View style={styles.divider} />
-
-            <View>
-                {/* 댓글 입력 창 */}
-                <View style={styles.commentInputWrap}>
-                    <TextInput
-                        placeholder="댓글을 입력하세요"
-                        containerStyle={{ flex: 1 }}
-                        value={commentText}
-                        onChangeText={setCommentText}
-                    />
-                    <TouchableOpacity
-                        style={styles.sendBtn}
-                        onPress={handleAddComment}
-                    >
-                        <Ionicons name="paper-plane-outline" size={20} color={Colors.white} />
-                    </TouchableOpacity>
-
-                </View>
-            </View>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -204,7 +207,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.lg,
         paddingBottom: Spacing['3xl'],
     },
-    divider: {
+    inputDivider: {
         height: 1,
         backgroundColor: Colors.border,
         marginVertical: Spacing.lg,
@@ -236,6 +239,11 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: Colors.gray500,
     },
+    divider: {
+        height: 1,
+        backgroundColor: Colors.border,
+        marginBottom: Spacing.md,
+    },
     commentSection: {
         marginBottom: Spacing.md,
     },
@@ -243,14 +251,11 @@ const styles = StyleSheet.create({
         fontSize: Typography.md,
         fontWeight: '700',
     },
-
     commentInputWrap: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.sm,
         paddingHorizontal: Spacing.lg,
-        paddingVertical: Spacing.md,
-        paddingBottom: Spacing['3xl'],
     },
     sendBtn: {
         backgroundColor: Colors.primary,

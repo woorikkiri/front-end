@@ -1,9 +1,9 @@
-// import { API } from "@/constants/api";
 import Button from "@/components/ui/Button";
 import Header from "@/components/ui/Header";
 import Modal from "@/components/ui/modal";
 import PasswordToggle from "@/components/ui/PasswordToggle";
 import TextInput from "@/components/ui/TextInput";
+import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from "@/constants/theme";
 import usePasswordValidation from "@/hooks/usePasswordValidation";
 import { useRouter } from "expo-router";
@@ -51,11 +51,9 @@ const SignupScreen = () => {
       return;
     }
     setCheckingEmail(true);
-    // 실제 API 연동
-    {/*
+
      try {
-        // GET은 주소 뒤에 ?email= 붙여서 보냄
-        const response = await fetch(`${API.checkEmail}?email=${email}`);
+        const response = await fetch(API.checkEmail(email));
         const data = await response.json();
 
         if (data.available) {
@@ -69,13 +67,6 @@ const SignupScreen = () => {
     } finally {
         setCheckingEmail(false);
     }
-    */}
-    
-    // api 연동 후에는 아래 setTimeout 제거
-    setTimeout(() => {
-      setCheckingEmail(false);
-      setEmailChecked(true);
-    }, 800);
   };
 
   // ───── 유효성 검사 ─────
@@ -108,7 +99,7 @@ const SignupScreen = () => {
     if (!validate()) return;
     setLoading(true);
     // 실제 API 연동
-    {/*
+    
     try {
       const response = await fetch(API.signup, {
         method: 'POST',
@@ -153,13 +144,6 @@ const SignupScreen = () => {
     } finally {
       setLoading(false);
     }
-    */}
-
-    // api 연동 후에는 아래 setTimeout 제거
-    setTimeout(() => {
-      setLoading(false);
-      router.replace("/login");
-    }, 1500);
   };
 
   return (
@@ -232,9 +216,8 @@ const SignupScreen = () => {
                 />
               </View>
               <Button
-                label={
-                  checkingEmail ? "확인 중" : emailChecked === true ? "✓ 확인됨" : "중복 확인"
-                }
+                label={checkingEmail ? "확인 중" : emailChecked === true ? "✓ 확인됨" : "중복 확인"}
+                loading={checkingEmail}
                 variant={emailChecked === true ? "ghost" : "outline"}
                 size="md"
                 fullWidth={false}

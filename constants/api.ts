@@ -1,4 +1,4 @@
-const BASE_URL = "https://api.woorikkiri.com";
+const BASE_URL = "http://3.38.27.229:8080";
 
 export const API = {
   // ───── 인증 ─────

@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Popover from 'react-native-popover-view';
 
 // ───── 타입 ─────
 type Role = 'owner' | 'member';
@@ -48,6 +49,8 @@ const PREVIEW_COUNT = 5;
 export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
   const [members, setMembers] = useState<Member[]>(DUMMY_MEMBERS);
   const [expanded, setExpanded] = useState(false);
+
+  // 어떤 멤버에 대해 모달을 열지 기억하는 state
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
   const [modalType, setModalType] = useState<ModalType | null>(null);
 
@@ -58,21 +61,20 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
   const hiddenCount = members.length - PREVIEW_COUNT;
   const hasMore = members.length > PREVIEW_COUNT;
 
+  // selectedMemberId로 실제 멤버 객체 찾기
   const selectedMember = members.find((m) => m.id === selectedMemberId) ?? null;
 
-  // ───── 메뉴 핸들러 ─────
-  const openMemberMenu = (memberId: number) => {
-    setSelectedMemberId((prev) => (prev === memberId ? null : memberId));
-  };
-
-  const closeMenu = () => setSelectedMemberId(null);
-
-  const openModal = (type: ModalType) => {
-    setSelectedMemberId(null);
+  // ───── 모달 핸들러 ─────
+  // memberId: 어떤 멤버인지, type: 어떤 액션인지
+  const openModal = (memberId: number, type: ModalType) => {
+    setSelectedMemberId(memberId);
     setModalType(type);
   };
 
-  const closeModal = () => setModalType(null);
+  const closeModal = () => {
+    setModalType(null);
+    setSelectedMemberId(null);
+  };
 
   // ───── 확정 핸들러 ─────
   const handleKickConfirm = () => {
@@ -116,18 +118,20 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
     delete: { message: '모임을 삭제하면\n되돌릴 수 없어요.\n삭제하시겠습니까?', rightBtnText: '삭제', rightBtnVariant: 'danger', onConfirm: handleDeleteConfirm },
   };
 
-  // ───── 카드별 컨텍스트 메뉴 아이템 ─────
-  const memberMenuItems: MenuItem[] = [
+  // ───── 카드별 팝오버 메뉴 아이템 ─────
+  // memberId를 받아서 그 멤버에 맞는 메뉴 아이템을 반환하는 함수
+  // 배열이 아닌 함수인 이유: 각 멤버마다 다른 onPress를 가져야 하기 때문
+  const getMemberMenuItems = (memberId: number): MenuItem[] => [
     {
       label: '방장 위임',
-      onPress: () => openModal('delegate'),
+      onPress: () => openModal(memberId, 'delegate'),
       labelStyle: { color: Colors.primary },
       rightIcon: <Ionicons name="ribbon-outline" size={20} color={Colors.primary} />,
       showChevron: false,
     },
     {
       label: '멤버 강퇴',
-      onPress: () => openModal('kick'),
+      onPress: () => openModal(memberId, 'kick'),
       labelStyle: { color: Colors.error },
       rightIcon: <Ionicons name="person-remove-outline" size={20} color={Colors.error} />,
       showChevron: false,
@@ -145,7 +149,7 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
       },
       {
         label: '모임 삭제',
-        onPress: () => openModal('delete'),
+        onPress: () => openModal(MY_ID, 'delete'),
         labelStyle: { color: Colors.error },
         rightIcon: <Ionicons name="trash-outline" size={20} color={Colors.error} />,
         showChevron: false,
@@ -154,7 +158,7 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
     : [
       {
         label: '모임 나가기',
-        onPress: () => openModal('leave'),
+        onPress: () => openModal(MY_ID, 'leave'),
         labelStyle: { color: Colors.error },
         rightIcon: <Ionicons name="exit-outline" size={20} color={Colors.error} />,
         showChevron: false,
@@ -178,56 +182,40 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
       </View>
 
       {/* ── 멤버 목록 ── */}
-      {/* 배경눌러도 menugroup내려가게 하기 */}
       <View style={styles.memberList}>
-
-        {/* memberlist 화면 덮는 레이어 있는게 나을까 없는게 나을까...*/}
-        { selectedMemberId !== null && (
-          <TouchableOpacity
-            style={[StyleSheet.absoluteFillObject, {zIndex: 5}]}
-            activeOpacity={1}
-            onPress={closeMenu}
-          />
-        )}
-        
         {visibleMembers.map((member) => {
           const isMe = member.id === MY_ID;
           const isOwner = member.role === 'owner';
-          const isMenuOpen = selectedMemberId === member.id;
 
           return (
-            <View key={member.id} style={[styles.memberWrapper, isMenuOpen && styles.memberWrapperActive]}>
-              <TouchableOpacity
-                activeOpacity={isLeader && !isMe ? 0.7 : 1}
-                onPress={() => isLeader && !isMe && openMemberMenu(member.id)}
-              >
-                <ProfileCard
-                  name={member.nickname}
-                  role={isOwner ? '방장' : '멤버'}
-                  profileImage={member.profileImage}
-                  icon={
-                    isLeader && !isMe
-                      ? <Ionicons name="ellipsis-vertical" size={18} color={Colors.gray300} />
-                      : undefined
-                  }
-                />
-              </TouchableOpacity>
-
-              {/* 메뉴: 카드 기준 absolute */}
-              {isMenuOpen && (
-                <>
-                  <TouchableOpacity
-                    style={StyleSheet.absoluteFillObject}
-                    activeOpacity={1}
-                    onPress={closeMenu}
-                  />
-                  <View style={styles.menuSheet}>
-                    <Text style={styles.menuHeader}>{member.nickname}</Text>
-                    <View style={styles.menuDivider} />
-                    <MenuGroup items={memberMenuItems} />
-                  </View>
-                </>
-              )}
+            <View key={member.id} style={styles.memberWrapper}>
+              <ProfileCard
+                name={member.nickname}
+                role={isOwner ? '방장' : '멤버'}
+                profileImage={member.profileImage}
+                // 방장이고 내가 아닌 멤버에게만 ··· 팝오버 표시
+                icon={
+                  isLeader && !isMe ? (
+                    <Popover
+                      arrowSize={{ width: 0, height: 0 }}
+                      backgroundStyle={{ backgroundColor: 'transparent' }}
+                      from={(
+                        <TouchableOpacity>
+                          <Ionicons name="ellipsis-vertical" size={18} color={Colors.gray300} />
+                        </TouchableOpacity>
+                      )}
+                    >
+                      <View style={styles.menu}>
+                        <Text style={styles.menuHeader}>
+                          {member.nickname}님
+                        </Text>
+                        <View style={styles.menuDivider} />
+                        <MenuGroup items={getMemberMenuItems(member.id)} />
+                      </View>
+                    </Popover>
+                  ) : undefined
+                }
+              />
             </View>
           );
         })}
@@ -269,8 +257,8 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
           onBackDropPress={closeModal}
         />
       )}
-      
-      {/* 초대코드 팝업 */}
+
+      {/* ── 초대코드 모달 ── */}
       <Modal
         visible={showInviteModal}
         message="초대코드를 공유해보세요!"
@@ -322,36 +310,18 @@ const styles = StyleSheet.create({
   // ── 멤버 목록 ──
   memberList: {
     gap: Spacing.md,
-    zIndex: 10,
   },
-
-  // relative 컨테이너
   memberWrapper: {
     position: 'relative',
-    zIndex: 1,
-  },
-  // 메뉴 열린 카드만 zIndex 높임 → 아래 카드들 위에 메뉴가 뜸
-  memberWrapperActive: {
-    zIndex: 10,
   },
 
-  // ── 컨텍스트 메뉴 팝업 ──
-  menuSheet: {
-    position: 'absolute',
-    top: '20%',
-    right: 40,
-    width: 200,
-    backgroundColor: Colors.white,
+  // ── 팝오버 메뉴 ──
+  menu: {
+    width: 160,
     borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    zIndex: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 8,
     overflow: 'hidden',
+    borderWidth: 1,           
+    borderColor: Colors.border,
   },
   menuHeader: {
     fontSize: Typography.sm,
@@ -385,10 +355,9 @@ const styles = StyleSheet.create({
   bottomSection: {
     marginTop: Spacing.xl,
     marginBottom: Spacing.lg,
-    zIndex: 1,
   },
 
-  // ── 초대코드 팝업 ──
+  // ── 초대코드 모달 ──
   inviteBox: {
     flexDirection: 'row',
     alignItems: 'center',

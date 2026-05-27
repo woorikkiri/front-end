@@ -4,10 +4,9 @@ import Modal from '@/components/ui/modal';
 import ProfileCard from '@/components/ui/ProfileCard';
 import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from '@/constants/theme';
-import useAuth from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from "expo-router";
-//import * as SecureStore from 'expo-secure-store';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ScrollView,
     StatusBar,
@@ -17,17 +16,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+interface User {
+    id: number;
+    email: string;
+    nickname: string;
+    profileImageUrl: string | null;
+}
 
 export default function MyPageScreen() {
     const router = useRouter();
-    const { logout, userToken} = useAuth();
-
-    // API 연동 후 GET /api/users/me 응답으로 교체 (현재 임시 데이터)
-    const [user] = useState({
-        name: 'Minji',
-        email: 'minji@example.com',
-        profileImage: null as string | null,
-    });
+    const { logout, userToken } = useAuthStore();
+    const [user, setUser] = useState<User | null>(null);
+    const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
     const menuItems: MenuItem[] = [
         { label: '내 정보 수정', onPress: () => router.push('/mypage/edit') },
@@ -35,8 +35,24 @@ export default function MyPageScreen() {
         { label: '비밀번호 변경', onPress: () => router.push('/mypage/change-password') },
     ];
 
-    const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-    
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const response = await fetch(API.mypage, {
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`,
+                    }
+                });
+                const data = await response.json();
+                console.log('유저 정보:', data);
+                setUser(data);
+            } catch (e) {
+                console.error('유저 정보 불러오기 실패', e);
+            }
+        };
+        fetchUser();
+    }, []);
+
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
@@ -47,9 +63,9 @@ export default function MyPageScreen() {
 
             <ScrollView contentContainerStyle={styles.container}>
                 <ProfileCard
-                    name={user.name}
-                    email={user.email}
-                    profileImage={user.profileImage}
+                    name={user?.nickname ?? ''}
+                    email={user?.email ?? '없음'}
+                    profileImage={user?.profileImageUrl ?? null}
                     backgroundColor={Colors.primaryLight}
                 />
 
@@ -83,6 +99,7 @@ export default function MyPageScreen() {
                     } finally {
                         // 성공하든 실패하든 무조건 토큰 지우고 로그인화면으로
                         await logout();
+                        router.replace('/login')
                     }
                 }}
                 rightBtnVariant='warning'

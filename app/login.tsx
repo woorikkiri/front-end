@@ -3,9 +3,9 @@ import Header from "@/components/ui/Header";
 import Modal from "@/components/ui/modal";
 import PasswordToggle from "@/components/ui/PasswordToggle";
 import TextInput from "@/components/ui/TextInput";
-//import { API } from "@/constants/api";
+import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from "@/constants/theme";
-import useAuth from "@/hooks/useAuth";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
@@ -21,7 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const LoginScreen = () => {
   const router = useRouter();
-  const { login } = useAuth(); //훅은 컴포넌트 맨 위에서만 써야 함
+  const { login } = useAuthStore();
 
   // ───── 상태 관리 ─────
   const [email, setEmail] = useState("");
@@ -54,8 +54,7 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     if (!validate()) return;
     setLoading(true);
-    // 실제 API 연동
-    {/*
+    
     try {
       const response = await fetch(API.login, {
         method: 'POST',
@@ -90,19 +89,13 @@ const LoginScreen = () => {
 
       // data.accessToken 을 저장하고 화면 이동
       await login(data.accessToken, data.id);
+      router.replace('/(tabs)/home');
     } catch (e) {
       // 네트워크 오류
       setServerErrorModal(true);
     } finally {
       setLoading(false); // 무조건 로딩 꺼야함.
     }
-    */}
-    
-    // api 연동하면 여기 지우기
-    setTimeout(() => {
-      setLoading(false);
-      router.replace("/(tabs)/home");
-    }, 1500);
   };
 
   return (

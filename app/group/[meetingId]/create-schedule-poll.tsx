@@ -4,7 +4,7 @@ import DateRangePicker from '@/components/ui/DateRangePicker';
 import Header from '@/components/ui/Header';
 import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Spacing, Typography } from '@/constants/theme';
 import useError from '@/hooks/useError';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -168,10 +168,6 @@ const styles = StyleSheet.create({
     dateSection: {
         marginTop: Spacing.lg,
         gap: Spacing.sm,
-        borderWidth: 1,
-        borderColor: Colors.border,
-        borderRadius: Radius.xl,
-        padding: Spacing.lg,
     },
     dateLabel: {
         fontSize: Typography.sm,

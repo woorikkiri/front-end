@@ -2,6 +2,7 @@
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import useAuth from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
@@ -19,37 +20,38 @@ export const unstable_settings = {
 };
 
 const toastConfig = {
-    error: ({ text1 }: { text1?: string }) => (
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.white,
-        borderRadius: Radius.xl,
-        padding: Spacing.md,
-        paddingHorizontal: Spacing.lg,
-        gap: Spacing.sm,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 4,
-        marginHorizontal: Spacing.lg,
-      }}>
-        <Ionicons name="alert-circle" size={22} color={Colors.error} />
-        <Text style={{
-          fontSize: Typography.sm,
-          fontWeight: '600',
-          color: Colors.black,
-          flex: 1,
-        }}>{text1}</Text>
-      </View>
-    )
-  };
-  
+  error: ({ text1 }: { text1?: string }) => (
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: Colors.white,
+      borderRadius: Radius.xl,
+      padding: Spacing.md,
+      paddingHorizontal: Spacing.lg,
+      gap: Spacing.sm,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 4,
+      marginHorizontal: Spacing.lg,
+    }}>
+      <Ionicons name="alert-circle" size={22} color={Colors.error} />
+      <Text style={{
+        fontSize: Typography.sm,
+        fontWeight: '600',
+        color: Colors.black,
+        flex: 1,
+      }}>{text1}</Text>
+    </View>
+  )
+};
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
-  const { loading, userToken, hasLaunched } = useAuth();
+  const { loading, hasLaunched } = useAuth();
+  const { userToken } = useAuthStore(); 
 
   useEffect(() => {
     // 화면 이동 로직
@@ -70,29 +72,21 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          {/* 1. 첫 화면 (랜딩 페이지) */}
-          <Stack.Screen name="index" />
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }}>
+            {/* 첫 화면 */}
+            <Stack.Screen name="index" />
 
-          {/* 2. 로그인 화면 등록 */}
-          <Stack.Screen name="login" />
+            {/* 인증 화면 */}
+            <Stack.Screen name="login" />
+            <Stack.Screen name="signup" />
 
-          {/* 3. 회원가입 화면 등록 */}
-          <Stack.Screen name="signup" />
-
-          {/* 3. 홈 화면 */}
-          <Stack.Screen name="home" />
-
-          {/* 4. 메인 탭 화면 */}
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
-          {/* 5. 기타 모달 창 */}
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-      <Toast config={toastConfig} />
+            {/* 메인 탭 */}
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+        <Toast config={toastConfig} />
       </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );

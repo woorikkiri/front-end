@@ -1,7 +1,9 @@
+import { API } from "@/constants/api";
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   ScrollView,
@@ -14,21 +16,43 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// ───── 임시 데이터 ─────
-const DUMMY_GROUPS = [
-  { id: 1, name: '고등학교 동창회', memberCount: 35},
-  { id: 2, name: '봉친이들', memberCount: 7},
-];
+interface Meeting {
+  meetingId: number;
+  meetingName: string;
+  description: string;
+  totalMemberCount: number;
+  createdAt: string;
+}
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [groups, setGroups] = useState(DUMMY_GROUPS);
+  const [groups, setGroups] = useState<Meeting[]>([]);
   const [searchText, setSearchText] = useState('');
   const [showBottomSheet, setShowBottomSheet] = useState(false);
+  const { userToken } = useAuthStore();
+
+  useEffect(() => {
+    const fetchMeetings = async () => {
+      try {
+        const response = await fetch(API.getMyMeetings, {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+          }
+        });
+        const data = await response.json();
+        console.log('API 응답:', data);
+        setGroups(data);
+      } catch (e) {
+        // 네트워크 오류 등
+        console.error('모임 목록 불러오기 실패', e);
+      }
+    };
+    fetchMeetings();
+  }, []);
 
   // ───── 검색 필터 ─────
   const filteredGroups = groups.filter((g) =>
-    g.name.includes(searchText)
+    g.meetingName.includes(searchText)
   );
 
   return (
@@ -60,9 +84,9 @@ export default function HomeScreen() {
           <View style={styles.emptyContainer}>
             {/* 아이콘 */}
             <View style={styles.iconCircle}>
-               <Ionicons name="people" size={60} color={Colors.primaryAlpha} />
+              <Ionicons name="people" size={60} color={Colors.primaryAlpha} />
             </View>
-            
+
             {/* 텍스트 그룹 */}
             <View style={styles.textGroup}>
               <Text style={styles.emptyTitleText}>아직 참여 중인 모임이 없어요</Text>
@@ -93,23 +117,23 @@ export default function HomeScreen() {
             <View style={styles.groupList}>
               {filteredGroups.map((group) => (
                 <TouchableOpacity
-                  key={group.id}
+                  key={group.meetingId}
                   style={styles.groupCard}
-                  onPress={() => router.push(`/group/${group.id}`)}
+                  onPress={() => router.push(`/group/${group.meetingId}`)}
                   activeOpacity={0.7}
                 >
                   {/* 이니셜 아바타 */}
                   <View style={styles.avatar}>
                     <Text style={styles.avatarText}>
-                      {group.name.charAt(0)}
+                      {group.meetingName.charAt(0)}
                     </Text>
                   </View>
 
                   {/* 모임 정보 */}
                   <View style={styles.groupInfo}>
-                    <Text style={styles.groupName}>{group.name}</Text>
+                    <Text style={styles.groupName}>{group.meetingName}</Text>
                     <Text style={styles.groupSub}>
-                      멤버 {group.memberCount}명
+                      멤버 {group.totalMemberCount}명
                     </Text>
                   </View>
 
@@ -119,7 +143,7 @@ export default function HomeScreen() {
               ))}
             </View>
           </View>
-        )}   
+        )}
       </ScrollView>
 
       {/* + 버튼 */}
