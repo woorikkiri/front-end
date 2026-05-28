@@ -2,8 +2,10 @@ import Button from '@/components/ui/Button';
 import Header from '@/components/ui/Header';
 import PasswordToggle from '@/components/ui/PasswordToggle';
 import TextInput from '@/components/ui/TextInput';
+import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import usePasswordValidation from '@/hooks/usePasswordValidation';
+import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "expo-router";
 import { useRef, useState } from 'react';
 import {
@@ -17,7 +19,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ChangePasswordScreen() {
     const router = useRouter();
-    
+    const { userToken } = useAuthStore();
+
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,7 +28,7 @@ export default function ChangePasswordScreen() {
     const [showPassword, setShowPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    
+
     const [currentPasswordError, setCurrentPasswordError] = useState("");
     const { errors: pwErrors, validatePassword, validateConfirmPassword } = usePasswordValidation();
 
@@ -34,8 +37,9 @@ export default function ChangePasswordScreen() {
     const newPasswordRef = useRef<RNTextInput>(null);
     const confirmPasswordRef = useRef<RNTextInput>(null);
 
+
     // 유효성 검사
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!currentPassword.trim()) {
             setCurrentPasswordError('현재 비밀번호를 입력해주세요.');
             return;
@@ -43,22 +47,43 @@ export default function ChangePasswordScreen() {
         if (!validatePassword(newPassword)) return;
         if (!validateConfirmPassword(newPassword, confirmPassword)) return;
 
-        // TODO: API 연동
-        router.back();
+        try {
+            const response = await fetch(API.updatePassword, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${userToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    currentPassword,
+                    newPassword,
+                    newPasswordConfirm: confirmPassword,
+                }),
+            });
+            const data = await response.json();
+
+            if (data.code === 'PASSWORD_CHANGED') {
+                router.back();
+            } else if (data.code === 'INVALID_CURRENT_PASSWORD') {
+                setCurrentPasswordError('현재 비밀번호가 일치하지 않습니다.');
+            }
+        } catch (e) {
+            console.error('비밀번호 변경 실패', e);
+        }
     };
-    
+
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
 
-            <Header title='비밀번호 변경'/>
+            <Header title='비밀번호 변경' />
             <View style={styles.container}>
                 <View style={styles.infoSection}>
                     <Text style={styles.infoText}>• 안전한 비밀번호로 내정보를 보호하세요.</Text>
                     <Text style={styles.infoText}>• 다른 사이트와 동일하거나 쉬운 비밀번호는 사용하지 마세요.</Text>
                     <Text style={styles.infoText}>• 안전한 계정 사용을 위해 주기적으로 변경해주세요.</Text>
                 </View>
-                
+
                 <View style={styles.formSection}>
                     <TextInput
                         label="현재 비밀번호"

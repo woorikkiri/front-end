@@ -5,8 +5,8 @@ import ProfileCard from '@/components/ui/ProfileCard';
 import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useRouter } from "expo-router";
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from 'react';
 import {
     ScrollView,
     StatusBar,
@@ -35,23 +35,24 @@ export default function MyPageScreen() {
         { label: '비밀번호 변경', onPress: () => router.push('/mypage/change-password') },
     ];
 
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const response = await fetch(API.mypage, {
-                    headers: {
-                        'Authorization': `Bearer ${userToken}`,
-                    }
-                });
-                const data = await response.json();
-                console.log('유저 정보:', data);
-                setUser(data);
-            } catch (e) {
-                console.error('유저 정보 불러오기 실패', e);
-            }
-        };
-        fetchUser();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            const fetchUser = async () => {
+                try {
+                    const response = await fetch(API.mypage, {
+                        headers: {
+                            'Authorization': `Bearer ${userToken}`,
+                        }
+                    });
+                    const data = await response.json();
+                    setUser(data);
+                } catch (e) {
+                    console.error('유저 정보 불러오기 실패', e);
+                }
+            };
+            fetchUser();
+        }, [])
+    );
 
     return (
         <SafeAreaView style={styles.safe}>

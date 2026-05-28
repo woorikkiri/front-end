@@ -1,11 +1,13 @@
 import Button from '@/components/ui/Button';
 import Header from '@/components/ui/Header';
 import TextInput from '@/components/ui/TextInput';
+import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from '@/constants/theme';
+import { useAuthStore } from "@/store/useAuthStore";
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Image,
     StatusBar,
@@ -18,12 +20,30 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EditScreen() {
     const router = useRouter();
-
+    const { userToken } = useAuthStore();
     const [image, setImage] = useState<string | null>(null);
-    const [nickname, setNickname] = useState("Minji");
+    const [nickname, setNickname] = useState("");
     const [errors, setErrors] = useState({
         nickname: '',
     });
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const response = await fetch(API.getMe, {
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`,
+                    }
+                });
+                const data = await response.json();
+                setNickname(data.nickname);
+                setImage(data.profileImageUrl);
+            } catch (e) {
+                console.error('프로필 불러오기 실패', e);
+            }
+        };
+        fetchUser();
+    }, []);
 
     // 이미지 선택
     const handlePickImage = async () => {
@@ -51,9 +71,20 @@ export default function EditScreen() {
     };
 
     // 저장 버튼 핸들러
-    const handleSave = () => {
-        if (validate()) {
+    const handleSave = async () => {
+        if (!validate()) return;
+        try {
+            await fetch(API.updateMe, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${userToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ nickname }),
+            });
             router.back();
+        } catch (e) {
+            console.error('프로필 수정 실패', e);
         }
     };
 

@@ -23,10 +23,15 @@ export default function VoteList({ onCreatePress, onVotePress }: VoteListProps) 
         {
             voteId: 1,
             title: '저녁 메뉴',
+            multipleChoice: false,
+            status: 'IN_PROGRESS',
             deadline: '2일 뒤에 종료됩니다',
+            remainingDays: 2,
+            totalVoteCount: 2,
+            participated: false,
             options: [
-                { optionId: 1, text: '마라탕', count: 2, voters: ['Minji', 'Sora', 'Yujin', 'Eunji', 'Seulbi'] },
-                { optionId: 2, text: '돼지고기', count: 0, voters: [] },
+                { optionId: 1, content: '마라탕', voteCount: 2 },
+                { optionId: 2, content: '돼지고기', voteCount: 0 },
             ]
         }
     ]);

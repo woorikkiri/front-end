@@ -3,9 +3,9 @@ import Button from '@/components/ui/Button';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import {
-    BottomSheetBackdrop,
-    BottomSheetModal,
-    BottomSheetScrollView,
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
 import { forwardRef, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -32,7 +32,7 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
       }
     };
 
-    const totalCount = vote?.options.reduce((sum, o) => sum + o.count, 0) ?? 0;
+    const totalCount = vote?.options.reduce((sum, o) => sum + o.voteCount, 0) ?? 0;
 
     // 배경 렌더링 함수
     const renderBackdrop = useCallback(
@@ -84,7 +84,7 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
                         <View style={[styles.radio, isSelected && styles.radioSelected]}>
                           {isSelected && <View style={styles.radioDot} />}
                         </View>
-                        <Text style={styles.optionText}>{option.text}</Text>
+                        <Text style={styles.optionText}>{option.content}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -103,7 +103,7 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
                   {vote.options.map((option) => {
                     const isMyChoice = selectedOptions.includes(option.optionId);
                     const percent = totalCount > 0
-                      ? Math.round((option.count / totalCount) * 100)
+                      ? Math.round((option.voteCount / totalCount) * 100)
                       : 0;
                     return (
                       <View key={option.optionId} style={styles.resultItem}>
@@ -113,11 +113,11 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
                               <Ionicons name="checkmark-circle" size={15} color={Colors.primary} />
                             )}
                             <Text style={[styles.optionText, !isMyChoice && { color: Colors.gray500 }]}>
-                              {option.text}
+                              {option.content}
                             </Text>
                           </View>
                           <Text style={[styles.countBadge, !isMyChoice && styles.countBadgeDim]}>
-                            {option.count}표
+                            {option.voteCount}표
                           </Text>
                         </View>
 
