@@ -1,11 +1,15 @@
 import Button from '@/components/ui/Button';
 import MenuGroup, { MenuItem } from '@/components/ui/MenuGroup';
-import Modal, { ButtonVariant } from '@/components/ui/modal';
+import Modal, { ButtonVariant } from '@/components/ui/Modal';
 import ProfileCard from '@/components/ui/ProfileCard';
+import ServerErrorModal from '@/components/ui/ServerErrorModal';
+import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import React, { useState } from 'react';
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from 'react';
 import {
   ScrollView,
   Share,
@@ -17,52 +21,76 @@ import {
 import Popover from 'react-native-popover-view';
 
 // ───── 타입 ─────
-type Role = 'owner' | 'member';
+type Role = 'HOST' | 'MEMBER';
 type ModalType = 'kick' | 'delegate' | 'leave' | 'delete';
 
 interface Member {
-  id: number;
+  userId: number;
   nickname: string;
   role: Role;
-  profileImage: string | null;
+  profileImageUrl: string | null;
 }
 
 interface MembersTabProps {
-  isLeader: boolean;
   meetingId?: number;
 }
 
-// ───── 임시 데이터 ─────
-const DUMMY_MEMBERS: Member[] = [
-  { id: 1, nickname: '홍길동', role: 'owner', profileImage: null },
-  { id: 2, nickname: '김철수', role: 'member', profileImage: null },
-  { id: 3, nickname: '박영희', role: 'member', profileImage: null },
-  { id: 4, nickname: '이민준', role: 'member', profileImage: null },
-  { id: 5, nickname: '최수아', role: 'member', profileImage: null },
-  { id: 6, nickname: '정다은', role: 'member', profileImage: null },
-  { id: 7, nickname: '한지수', role: 'member', profileImage: null },
-];
-
-const MY_ID = 1;
 const PREVIEW_COUNT = 5;
 
-export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
-  const [members, setMembers] = useState<Member[]>(DUMMY_MEMBERS);
+export default function MembersTab({ meetingId }: MembersTabProps) {
+  const router = useRouter();
+  const { userToken, userId } = useAuthStore();
+
+  const [members, setMembers] = useState<Member[]>([]);
   const [expanded, setExpanded] = useState(false);
+
+  const [serverErrorModal, setServerErrorModal] = useState(false);
+
+  const [myRole, setMyRole] = useState<Role>('MEMBER');
+  const amILeader = myRole === 'HOST';
 
   // 어떤 멤버에 대해 모달을 열지 기억하는 state
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
   const [modalType, setModalType] = useState<ModalType | null>(null);
 
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const inviteCode = "AB12CD34"; // api에서 받아오기
+  const [inviteCode, setInviteCode] = useState("");
 
   const visibleMembers = expanded ? members : members.slice(0, PREVIEW_COUNT);
   const hiddenCount = members.length - PREVIEW_COUNT;
   const hasMore = members.length > PREVIEW_COUNT;
 
   // selectedMemberId로 실제 멤버 객체 찾기
-  const selectedMember = members.find((m) => m.id === selectedMemberId) ?? null;
+  const selectedMember = members.find((m) => m.userId === selectedMemberId) ?? null;
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchMembers = async () => {
+        if (!meetingId) return;
+
+        try {
+          const response = await fetch(API.getMembers(meetingId), {
+            headers: {
+              "Authorization": `Bearer ${userToken}`,
+            }
+          });
+          const data = await response.json();
+          setMembers(data.members);
+          setMyRole(data.myRole);
+
+          const inviteResponse = await fetch(API.getMeetingInviteCode(meetingId), {
+            headers: { "Authorization": `Bearer ${userToken}` }
+          });
+          const inviteData = await inviteResponse.json();
+          setInviteCode(inviteData.inviteCode);
+          
+        } catch (error) {
+          console.error('Error fetching members:', error);
+        }
+      };
+      fetchMembers();
+    }, [])
+  );
 
   // ───── 모달 핸들러 ─────
   // memberId: 어떤 멤버인지, type: 어떤 액션인지
@@ -79,7 +107,7 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
   // ───── 확정 핸들러 ─────
   const handleKickConfirm = () => {
     if (!selectedMember) return;
-    setMembers((prev) => prev.filter((m) => m.id !== selectedMember.id));
+    setMembers((prev) => prev.filter((m) => m.userId !== selectedMember.userId));
     closeModal();
   };
 
@@ -87,22 +115,42 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
     if (!selectedMember) return;
     setMembers((prev) =>
       prev.map((m) => {
-        if (m.id === MY_ID) return { ...m, role: 'member' as Role };
-        if (m.id === selectedMember.id) return { ...m, role: 'owner' as Role };
+        if (m.userId === userId) return { ...m, role: 'MEMBER' as Role };
+        if (m.userId === selectedMember.userId) return { ...m, role: 'HOST' as Role };
         return m;
       })
     );
     closeModal();
   };
 
-  const handleLeaveConfirm = () => {
+  const handleLeaveConfirm = async () => {
     // TODO: DELETE /api/meetings/{meetingId}/leave → router.replace('/(tabs)/home')
     closeModal();
   };
 
-  const handleDeleteConfirm = () => {
-    // TODO: DELETE /api/meetings/{meetingId} → router.replace('/(tabs)/home')
-    closeModal();
+  const handleDeleteConfirm = async () => {
+    if (!meetingId) return;
+
+    try {
+      const response = await fetch(API.deleteMeeting(meetingId), {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${userToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        // 실패
+        setServerErrorModal(true);
+        return;
+      }
+      // 성공
+      router.replace('/(tabs)/home');
+
+    } catch (error) {
+      // 네트워크 오류 등 예외 처리
+      setServerErrorModal(true);
+    }
   };
 
   // ───── 모달 설정 ─────
@@ -139,7 +187,7 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
   ];
 
   // ───── 하단 메뉴 아이템 ─────
-  const bottomMenuItems: MenuItem[] = isLeader
+  const bottomMenuItems: MenuItem[] = amILeader
     ? [
       {
         label: '모임 수정',
@@ -149,7 +197,7 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
       },
       {
         label: '모임 삭제',
-        onPress: () => openModal(MY_ID, 'delete'),
+        onPress: () => openModal(userId ?? 0, 'delete'),
         labelStyle: { color: Colors.error },
         rightIcon: <Ionicons name="trash-outline" size={20} color={Colors.error} />,
         showChevron: false,
@@ -158,7 +206,7 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
     : [
       {
         label: '모임 나가기',
-        onPress: () => openModal(MY_ID, 'leave'),
+        onPress: () => openModal(userId ?? 0, 'leave'),
         labelStyle: { color: Colors.error },
         rightIcon: <Ionicons name="exit-outline" size={20} color={Colors.error} />,
         showChevron: false,
@@ -184,18 +232,18 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
       {/* ── 멤버 목록 ── */}
       <View style={styles.memberList}>
         {visibleMembers.map((member) => {
-          const isMe = member.id === MY_ID;
-          const isOwner = member.role === 'owner';
+          const isMe = member.userId === userId;
+          const isOwner = member.role === 'HOST';
 
           return (
-            <View key={member.id} style={styles.memberWrapper}>
+            <View key={member.userId} style={styles.memberWrapper}>
               <ProfileCard
                 name={member.nickname}
                 role={isOwner ? '방장' : '멤버'}
-                profileImage={member.profileImage}
+                profileImage={member.profileImageUrl}
                 // 방장이고 내가 아닌 멤버에게만 ··· 팝오버 표시
                 icon={
-                  isLeader && !isMe ? (
+                  amILeader && !isMe ? (
                     <Popover
                       arrowSize={{ width: 0, height: 0 }}
                       backgroundStyle={{ backgroundColor: 'transparent' }}
@@ -210,7 +258,7 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
                           {member.nickname}님
                         </Text>
                         <View style={styles.menuDivider} />
-                        <MenuGroup items={getMemberMenuItems(member.id)} />
+                        <MenuGroup items={getMemberMenuItems(member.userId)} />
                       </View>
                     </Popover>
                   ) : undefined
@@ -285,6 +333,11 @@ export default function MembersTab({ isLeader, meetingId }: MembersTabProps) {
           </TouchableOpacity>
         </View>
       </Modal>
+      {/* 서버 오류 모달 */}
+      <ServerErrorModal
+        visible={serverErrorModal}
+        onClose={() => setServerErrorModal(false)}
+      />
     </ScrollView>
   );
 }
@@ -320,7 +373,7 @@ const styles = StyleSheet.create({
     width: 160,
     borderRadius: Radius.lg,
     overflow: 'hidden',
-    borderWidth: 1,           
+    borderWidth: 1,
     borderColor: Colors.border,
   },
   menuHeader: {

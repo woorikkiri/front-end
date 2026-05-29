@@ -1,6 +1,6 @@
 import Button from '@/components/ui/Button';
 import MenuGroup, { MenuItem } from '@/components/ui/MenuGroup';
-import Modal from '@/components/ui/modal';
+import Modal from '@/components/ui/Modal';
 import ProfileCard from '@/components/ui/ProfileCard';
 import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from '@/constants/theme';

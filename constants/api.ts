@@ -21,7 +21,7 @@ export const API = {
   getMyMeetings: `${BASE_URL}/api/meetings/my`,       // GET
   joinMeeting: `${BASE_URL}/api/meetings/join`,       // POST
   deleteMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}`,  // DELETE
-  getMeetingInviteCode: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/invite-code`,  // POST
+  getMeetingInviteCode: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/invite-code`,  // GET
   leaveMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/members/me`, // DELETE
   updateMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}`,  // PATCH
   // 모임검색 프론트에서

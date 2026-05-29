@@ -1,6 +1,6 @@
 import Button from "@/components/ui/Button";
 import Header from "@/components/ui/Header";
-import Modal from "@/components/ui/modal";
+import Modal from "@/components/ui/Modal";
 import PasswordToggle from "@/components/ui/PasswordToggle";
 import TextInput from "@/components/ui/TextInput";
 import { Colors, Spacing, Typography } from "@/constants/theme";

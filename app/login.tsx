@@ -1,7 +1,7 @@
 import Button from "@/components/ui/Button";
 import Header from "@/components/ui/Header";
-import Modal from "@/components/ui/modal";
 import PasswordToggle from "@/components/ui/PasswordToggle";
+import ServerErrorModal from "@/components/ui/ServerErrorModal";
 import TextInput from "@/components/ui/TextInput";
 import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from "@/constants/theme";
@@ -54,7 +54,7 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     if (!validate()) return;
     setLoading(true);
-    
+
     try {
       const response = await fetch(API.login, {
         method: 'POST',
@@ -66,16 +66,16 @@ const LoginScreen = () => {
       });
 
       if (!response.ok) {
-      // 서버가 에러 응답 보냈을 때 (비번틀림, 이메일 없음.)
+        // 서버가 에러 응답 보냈을 때 (비번틀림, 이메일 없음.)
         const errorData = await response.json();
 
         switch (errorData.code) {
           case 'INVALID_PASSWORD':
-            setErrors(prev => ({...prev, password: '이메일 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.'}));
+            setErrors(prev => ({ ...prev, password: '이메일 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.' }));
             break;
-          
+
           case 'USER_NOT_FOUND':
-            setErrors(prev => ({...prev, password: '이메일 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.'}));
+            setErrors(prev => ({ ...prev, password: '이메일 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.' }));
             break;
 
           default:
@@ -185,14 +185,9 @@ const LoginScreen = () => {
       </ScrollView>
 
       {/* 서버 오류 모달 */}
-      <Modal
+      <ServerErrorModal
         visible={serverErrorModal}
-        message={"서버 오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
-        showLeftBtn={false}
-        rightBtnText="확인"
-        rightBtnVariant="primary"
-        onRightBtnPress={() => setServerErrorModal(false)}
-        onLeftBtnPress={() => { }}
+        onClose={() => setServerErrorModal(false)}
       />
     </SafeAreaView>
   );

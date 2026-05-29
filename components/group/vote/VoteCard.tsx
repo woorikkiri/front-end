@@ -1,5 +1,5 @@
 import MenuGroup from '@/components/ui/MenuGroup';
-import Modal from '@/components/ui/modal';
+import Modal from '@/components/ui/Modal';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
@@ -37,7 +37,8 @@ interface VoteCardProps {
 
 export default function VoteCard({ item, onPress }: VoteCardProps) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-
+    const [showCloseModal, setShowCloseModal] = useState(false);
+    const [popoverVisible, setPopoverVisible] = useState(false);
     return (
         <>
             <TouchableOpacity onPress={onPress} style={styles.card}>
@@ -52,10 +53,12 @@ export default function VoteCard({ item, onPress }: VoteCardProps) {
                 <View style={styles.titleRow}>
                     <Text style={styles.title}>{item.title}</Text>
                     <Popover
+                        isVisible={popoverVisible}
+                        onRequestClose={() => setPopoverVisible(false)}
                         arrowSize={{ width: 0, height: 0 }}
                         backgroundStyle={{ backgroundColor: 'transparent' }}
                         from={(
-                            <TouchableOpacity>
+                            <TouchableOpacity onPress={() => setPopoverVisible(true)}>
                                 <Ionicons name="ellipsis-horizontal" size={20} color={Colors.gray500} />
                             </TouchableOpacity>
                         )}
@@ -70,8 +73,21 @@ export default function VoteCard({ item, onPress }: VoteCardProps) {
                                     showChevron: false
                                 },
                                 {
+                                    label: '투표 종료',
+                                    onPress: () => {
+                                        setPopoverVisible(false);  // 팝오버 닫기
+                                        setShowCloseModal(true);   // 모달 열기
+                                    },
+                                    labelStyle: { fontSize: Typography.sm },
+                                    rightIcon: <Ionicons name="timer-outline" size={18} color={Colors.gray500} />,
+                                    showChevron: false
+                                },
+                                {
                                     label: '투표 삭제',
-                                    onPress: () => setShowDeleteModal(true),
+                                     onPress: () => {
+                                        setPopoverVisible(false);  // 팝오버 닫기
+                                        setShowDeleteModal(true);   // 모달 열기
+                                    },
                                     labelStyle: { fontSize: Typography.sm, color: Colors.error },
                                     rightIcon: <Ionicons name="trash-outline" size={18} color={Colors.error} />,
                                     showChevron: false
@@ -100,6 +116,16 @@ export default function VoteCard({ item, onPress }: VoteCardProps) {
                     setShowDeleteModal(false);
                 }}
                 rightBtnVariant='danger'
+            />
+            <Modal
+                visible={showCloseModal}
+                message='투표를 종료하시겠습니까?'
+                rightBtnText='종료'
+                onLeftBtnPress={() => setShowCloseModal(false)}
+                onRightBtnPress={() => {
+                    setShowCloseModal(false);
+                }}
+                rightBtnVariant='warning'
             />
         </>
     );

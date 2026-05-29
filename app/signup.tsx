@@ -1,7 +1,7 @@
 import Button from "@/components/ui/Button";
 import Header from "@/components/ui/Header";
-import Modal from "@/components/ui/modal";
 import PasswordToggle from "@/components/ui/PasswordToggle";
+import ServerErrorModal from "@/components/ui/ServerErrorModal";
 import TextInput from "@/components/ui/TextInput";
 import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from "@/constants/theme";
@@ -52,20 +52,20 @@ const SignupScreen = () => {
     }
     setCheckingEmail(true);
 
-     try {
-        const response = await fetch(API.checkEmail(email));
-        const data = await response.json();
+    try {
+      const response = await fetch(API.checkEmail(email));
+      const data = await response.json();
 
-        if (data.available) {
-            setEmailChecked(true);  // 사용 가능
-        } else {
-            setErrors(prev => ({ ...prev, email: "이미 사용 중인 이메일입니다." }));
-            setEmailChecked(null);
-        }
+      if (data.available) {
+        setEmailChecked(true);  // 사용 가능
+      } else {
+        setErrors(prev => ({ ...prev, email: "이미 사용 중인 이메일입니다." }));
+        setEmailChecked(null);
+      }
     } catch (e) {
-        setServerErrorModal(true);
+      setServerErrorModal(true);
     } finally {
-        setCheckingEmail(false);
+      setCheckingEmail(false);
     }
   };
 
@@ -98,8 +98,7 @@ const SignupScreen = () => {
   const handleSignup = async () => {
     if (!validate()) return;
     setLoading(true);
-    // 실제 API 연동
-    
+
     try {
       const response = await fetch(API.signup, {
         method: 'POST',
@@ -293,14 +292,9 @@ const SignupScreen = () => {
         </View>
       </ScrollView>
       {/* 서버 오류 모달 */}
-      <Modal
+      <ServerErrorModal
         visible={serverErrorModal}
-        message={"서버 오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
-        showLeftBtn={false}
-        rightBtnText="확인"
-        rightBtnVariant="primary"
-        onRightBtnPress={() => setServerErrorModal(false)}
-        onLeftBtnPress={() => { }}
+        onClose={() => setServerErrorModal(false)}
       />
     </SafeAreaView>
   );

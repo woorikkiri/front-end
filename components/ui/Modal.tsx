@@ -1,6 +1,4 @@
 // 화면 위에 떠오르는 팝업
-// ex) 투표를 삭제하시겠습니까? -> 예/아니오
-
 import Button from "@/components/ui/Button";
 import { Colors, Radius, Spacing, Typography } from "@/constants/theme";
 import {

@@ -1,8 +1,11 @@
 import Button from "@/components/ui/Button";
 import Header from "@/components/ui/Header";
-import Modal from "@/components/ui/modal";
+import Modal from "@/components/ui/Modal";
+import ServerErrorModal from "@/components/ui/ServerErrorModal";
 import TextInput from "@/components/ui/TextInput";
+import { API } from "@/constants/api";
 import { Colors, Radius, Spacing, Typography } from "@/constants/theme";
+import { useAuthStore } from '@/store/useAuthStore';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -18,36 +21,64 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CreateGroupScreen() {
     const router = useRouter();
+    const { userToken } = useAuthStore();
 
-    const [groupName, setGroupName] = useState("");
-    const [groupDescription, setGroupDescription] = useState("");
+    const [meetingName, setMeetingName] = useState("");
+    const [description, setDescription] = useState("");
     const [loading, setLoading] = useState(false);
 
     const [showInviteModal, setShowInviteModal] = useState(false); //이거
-    const [inviteCode, setInviteCode] = useState(""); //이거
+    const [inviteCode, setInviteCode] = useState("");
+    const [serverErrorModal, setServerErrorModal] = useState(false);
 
     const [errors, setErrors] = useState({
-        groupName: "",
+        meetingName: "",
     })
 
+    const handleCreateMeeting = async () => {
+        if (!validate()) return;
+        setLoading(true);
+
+        try {
+            const response = await fetch(API.createMeeting, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`,
+                },
+                body: JSON.stringify({
+                    meetingName,
+                    description,
+                }),
+            });
+
+            // 실패
+            if (!response.ok) {
+                setServerErrorModal(true);
+                return;
+            }
+            // 성공
+            const data = await response.json();
+            setInviteCode(data.inviteCode);  // 응답에서 초대코드 꺼내기
+            setShowInviteModal(true);
+
+        } catch (e) {
+            // 네트워크 오류
+            setServerErrorModal(true);
+        } finally {  // 성공이든 실패든 로딩 끝
+            setLoading(false);
+        }
+
+    };
+
     const validate = () => {
-        const newErrors = { groupName: "" };
-        if(!groupName.trim()) newErrors.groupName = "모임 이름을 입력해주세요.";
+        const newErrors = { meetingName: "" };
+        if (!meetingName.trim()) newErrors.meetingName = "모임 이름을 입력해주세요.";
         setErrors(newErrors);
         return Object.values(newErrors).every((e) => e === "");
     }
 
-    const handleConfirm = () => {
-        if(!validate()) return;
-        setLoading(true);
-        setTimeout(() => {
-            setShowInviteModal(false);
-            setInviteCode("AB12-CD34");  // 임시 초대코드
-            setShowInviteModal(true);     // ← true로 바꿔야 팝업 뜸!
-        }, 1500);
-    }
-
-    return(
+    return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
 
@@ -63,17 +94,17 @@ export default function CreateGroupScreen() {
                         label="모임 이름"
                         placeholder="예: 고등학교 동창회"
                         required
-                        value={groupName}
+                        value={meetingName}
                         onChangeText={(v) => {
-                            setGroupName(v);
-                            setErrors({groupName: ""});
+                            setMeetingName(v);
+                            setErrors({ meetingName: "" });
                         }}
-                        error={errors.groupName}
+                        error={errors.meetingName}
                     />
                     <TextInput
                         label="모임 설명(선택)"
                         placeholder="모임에 대한 간단한 설명을 입력해주세요."
-                        onChangeText={(v) => setGroupDescription(v)}
+                        onChangeText={(v) => setDescription(v)}
                     />
                 </View>
 
@@ -82,7 +113,7 @@ export default function CreateGroupScreen() {
                      하면서 초대코드 뜨는 팝업창만들기 */}
                     <Button
                         label="생성하기"
-                        onPress={handleConfirm}
+                        onPress={handleCreateMeeting}
                         loading={loading}
                     />
                 </View>
@@ -93,7 +124,7 @@ export default function CreateGroupScreen() {
                 message="모임이 생성됐어요!"
                 rightBtnText="확인"
                 showLeftBtn={false}
-                onLeftBtnPress={() => {}}
+                onLeftBtnPress={() => { }}
                 onRightBtnPress={() => {
                     setShowInviteModal(false);
                     router.replace("/(tabs)/home");
@@ -112,13 +143,18 @@ export default function CreateGroupScreen() {
                     {/* 공유 버튼 */}
                     <TouchableOpacity onPress={async () => {
                         await Share.share({
-                        message: `우리끼리 초대코드: ${inviteCode}`,
+                            message: `우리끼리 초대코드: ${inviteCode}`,
                         });
                     }}>
                         <Text style={styles.icon}>📤</Text>
                     </TouchableOpacity>
                 </View>
             </Modal>
+            {/* 서버 오류 모달 */}
+            <ServerErrorModal
+                visible={serverErrorModal}
+                onClose={() => setServerErrorModal(false)}
+            />
         </SafeAreaView>
     )
 }

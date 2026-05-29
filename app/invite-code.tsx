@@ -1,7 +1,10 @@
 import Button from "@/components/ui/Button";
 import Header from "@/components/ui/Header";
+import ServerErrorModal from "@/components/ui/ServerErrorModal";
 import TextInput from "@/components/ui/TextInput";
+import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from "@/constants/theme";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -14,7 +17,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function InviteCodeScreen() {
     const router = useRouter();
-    
+    const { userToken } = useAuthStore();
+
     const [code, setCode] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -22,32 +26,69 @@ export default function InviteCodeScreen() {
         code: "",
     });
 
-    {/* 유효성 검사 */}
-    {/* 초대코드 = 8자리 영대문자+숫자 */}
+    const [serverErrorModal, setServerErrorModal] = useState(false);
+
+    {/* 유효성 검사 */ }
+    {/* 초대코드 = 8자리 영대문자+숫자 */ }
     const validate = () => {
         const newErrors = {
             code: "",
         };
-        if(!code) {
+        if (!code) {
             newErrors.code = "코드를 입력해주세요.";
         }
-        if(code && !/^[A-Z0-9]{8}$/.test(code)) {
+        if (code && !/^[A-Z0-9]{8}$/.test(code)) {
             newErrors.code = "올바른 초대 코드 형식이 아닙니다.";
         }
 
         setErrors(newErrors);
         return Object.values(newErrors).every((e) => e === "");
     }
-    
-    {/* 확인 버튼 눌렀을 때*/}
-    const handleConfirm = async () => {
-        if(!validate()) return;
+
+    {/* 확인 버튼 눌렀을 때*/ }
+    const handleJoin = async () => {
+        if (!validate()) return;
         setLoading(true);
-        setTimeout(() => {
+        console.log(code);
+
+        try {
+            const response = await fetch(API.joinMeeting, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`,
+                },
+                body: JSON.stringify({
+                    inviteCode: code,
+                }),
+            });
+            // 실패
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.log(errorData);
+                switch (errorData.code) {
+                    case 'MEETING_NOT_FOUND':
+                        setErrors({ code: '유효하지 않은 초대코드입니다.' });
+                        break;
+                    case 'ALREDEAY_JOINED':
+                        setErrors({ code: '이미 참여 중인 모임입니다.' });
+                        break;
+                    default:
+                        setServerErrorModal(true);
+                        break;
+                }
+                return;
+            }
+            // 성공 처리
+            router.replace('/(tabs)/home');
+
+        } catch (error) {
+            // 네트워크 오류
+            setServerErrorModal(true);
+        } finally {
             setLoading(false);
-            router.replace("/(tabs)/home");
-        }, 1500);
-    }
+        }
+    };
 
     return (
         <SafeAreaView style={styles.safe}>
@@ -67,7 +108,7 @@ export default function InviteCodeScreen() {
                         value={code}
                         onChangeText={(v) => {
                             setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, ""));
-                            setErrors({code: ""});
+                            setErrors({ code: "" });
                         }}
                         error={errors.code}
                         autoCapitalize="characters"
@@ -77,11 +118,16 @@ export default function InviteCodeScreen() {
                 <View style={styles.buttonSection}>
                     <Button
                         label="확인"
-                        onPress={handleConfirm}
+                        onPress={handleJoin}
                         loading={loading}
                     />
                 </View>
             </View>
+            {/* 서버 오류 모달 */}
+            <ServerErrorModal
+                visible={serverErrorModal}
+                onClose={() => setServerErrorModal(false)}
+            />
         </SafeAreaView>
     )
 }
