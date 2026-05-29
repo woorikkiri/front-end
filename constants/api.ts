@@ -27,6 +27,8 @@ export const API = {
   // 모임검색 프론트에서
   getMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/home`,     // GET
   getMembers: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/members`, // GET
+  transferOwnership: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/transfer-ownership`,  // POST
+  kickMember: (meetingId: number, memberId: number) => `${BASE_URL}/api/meetings/${meetingId}/members/${memberId}`,  // DELETE
 
   // ───── 일정 조율 ─────
   createSchedulePoll: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/schedule-polls`,  // POST

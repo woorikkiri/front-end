@@ -33,66 +33,74 @@ interface Member {
 
 interface MembersTabProps {
   meetingId?: number;
+  meetingName?: string;
 }
 
 const PREVIEW_COUNT = 5;
 
-export default function MembersTab({ meetingId }: MembersTabProps) {
+export default function MembersTab({ meetingId, meetingName }: MembersTabProps) {
+  // ───── 라우터 / 인증 ─────
   const router = useRouter();
   const { userToken, userId } = useAuthStore();
 
+  // ───── 멤버 데이터 ─────
   const [members, setMembers] = useState<Member[]>([]);
-  const [expanded, setExpanded] = useState(false);
-
-  const [serverErrorModal, setServerErrorModal] = useState(false);
-
   const [myRole, setMyRole] = useState<Role>('MEMBER');
   const amILeader = myRole === 'HOST';
 
-  // 어떤 멤버에 대해 모달을 열지 기억하는 state
+  // ───── UI 상태 ─────
+  const [expanded, setExpanded] = useState(false);
+  const [openPopoverId, setOpenPopoverId] = useState<number | null>(null);
+
+  // ───── 모달 ─────
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
   const [modalType, setModalType] = useState<ModalType | null>(null);
-
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [serverErrorModal, setServerErrorModal] = useState(false);
+
+  // ───── 초대코드 ─────
   const [inviteCode, setInviteCode] = useState("");
 
+  // ───── 파생 값 ─────
   const visibleMembers = expanded ? members : members.slice(0, PREVIEW_COUNT);
   const hiddenCount = members.length - PREVIEW_COUNT;
   const hasMore = members.length > PREVIEW_COUNT;
+  const selectedMember = members.find((m) => m.userId === selectedMemberId) ?? null; // selectedMemberId로 실제 멤버 객체 찾기
 
-  // selectedMemberId로 실제 멤버 객체 찾기
-  const selectedMember = members.find((m) => m.userId === selectedMemberId) ?? null;
+  // ───── 데이터 fetch ─────
+  const fetchMembers = async () => {
+    if (!meetingId) return;
+    try {
+      const response = await fetch(API.getMembers(meetingId), {
+        headers: { "Authorization": `Bearer ${userToken}` }
+      });
+      const data = await response.json();
+      const sorted = [...data.members].sort((a, b) => {
+        if (a.role === 'HOST') return -1;
+        if (b.role === 'HOST') return 1;
+        return 0;
+      });
+      setMembers(sorted);
+      setMyRole(data.myRole);
+
+      const inviteResponse = await fetch(API.getMeetingInviteCode(meetingId), {
+        headers: { "Authorization": `Bearer ${userToken}` }
+      });
+      const inviteData = await inviteResponse.json();
+      setInviteCode(inviteData.inviteCode);
+
+    } catch (error) {
+      console.error('Error fetching members:', error);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
-      const fetchMembers = async () => {
-        if (!meetingId) return;
-
-        try {
-          const response = await fetch(API.getMembers(meetingId), {
-            headers: {
-              "Authorization": `Bearer ${userToken}`,
-            }
-          });
-          const data = await response.json();
-          setMembers(data.members);
-          setMyRole(data.myRole);
-
-          const inviteResponse = await fetch(API.getMeetingInviteCode(meetingId), {
-            headers: { "Authorization": `Bearer ${userToken}` }
-          });
-          const inviteData = await inviteResponse.json();
-          setInviteCode(inviteData.inviteCode);
-          
-        } catch (error) {
-          console.error('Error fetching members:', error);
-        }
-      };
       fetchMembers();
     }, [])
   );
 
-  // ───── 모달 핸들러 ─────
+  // ───── 모달 제어 ─────
   // memberId: 어떤 멤버인지, type: 어떤 액션인지
   const openModal = (memberId: number, type: ModalType) => {
     setSelectedMemberId(memberId);
@@ -104,30 +112,89 @@ export default function MembersTab({ meetingId }: MembersTabProps) {
     setSelectedMemberId(null);
   };
 
-  // ───── 확정 핸들러 ─────
-  const handleKickConfirm = () => {
+  // ───── 멤버 관리  ─────
+  const handleKickConfirm = async () => {
     if (!selectedMember) return;
-    setMembers((prev) => prev.filter((m) => m.userId !== selectedMember.userId));
-    closeModal();
+    try {
+      const response = await fetch(API.kickMember(meetingId ?? 0, selectedMember.userId), {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${userToken}`,
+        },
+      });
+
+      // 실패
+      if (!response.ok) {
+        setServerErrorModal(true);
+        return;
+      }
+      // 성공
+      await fetchMembers();
+      closeModal();
+
+    } catch (error) {
+      // 네트워크 오류
+      setServerErrorModal(true);
+    }
   };
 
-  const handleDelegateConfirm = () => {
-    if (!selectedMember) return;
-    setMembers((prev) =>
-      prev.map((m) => {
-        if (m.userId === userId) return { ...m, role: 'MEMBER' as Role };
-        if (m.userId === selectedMember.userId) return { ...m, role: 'HOST' as Role };
-        return m;
-      })
-    );
-    closeModal();
+  const handleDelegateConfirm = async () => {
+    if (!selectedMember || !meetingId) return;
+
+    try {
+      const response = await fetch(API.transferOwnership(meetingId), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({
+          newOwnerId: selectedMember.userId,
+        }),
+      });
+
+      // 실패
+      if (!response.ok) {
+        setServerErrorModal(true);
+        return;
+      }
+      // 성공
+      await fetchMembers();
+      closeModal();
+
+    } catch (error) {
+      // 네트워크 오류
+      setServerErrorModal(true);
+    }
   };
 
+  // ───── 모임 관리 ─────
+  // 나가기
   const handleLeaveConfirm = async () => {
-    // TODO: DELETE /api/meetings/{meetingId}/leave → router.replace('/(tabs)/home')
-    closeModal();
-  };
+    if (!meetingId) return;
 
+    try {
+      const response = await fetch(API.leaveMeeting(meetingId), {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${userToken}`,
+        },
+      });
+      if (!response.ok) {
+        // 실패
+        setServerErrorModal(true);
+        return;
+      }
+      // 성공
+      router.replace('/(tabs)/home');
+
+    } catch (error) {
+      // 네트워크 오류 등 예외 처리
+      setServerErrorModal(true);
+      return;
+    }
+  };
+  // 삭제
   const handleDeleteConfirm = async () => {
     if (!meetingId) return;
 
@@ -166,27 +233,31 @@ export default function MembersTab({ meetingId }: MembersTabProps) {
     delete: { message: '모임을 삭제하면\n되돌릴 수 없어요.\n삭제하시겠습니까?', rightBtnText: '삭제', rightBtnVariant: 'danger', onConfirm: handleDeleteConfirm },
   };
 
-  // ───── 카드별 팝오버 메뉴 아이템 ─────
-  // memberId를 받아서 그 멤버에 맞는 메뉴 아이템을 반환하는 함수
-  // 배열이 아닌 함수인 이유: 각 멤버마다 다른 onPress를 가져야 하기 때문
+  // ───── 메뉴 아이템 ─────
+  // 멤버 카드
   const getMemberMenuItems = (memberId: number): MenuItem[] => [
     {
       label: '방장 위임',
-      onPress: () => openModal(memberId, 'delegate'),
+      onPress: () => {
+        setOpenPopoverId(null);
+        openModal(memberId, 'delegate');
+      },
       labelStyle: { color: Colors.primary },
       rightIcon: <Ionicons name="ribbon-outline" size={20} color={Colors.primary} />,
       showChevron: false,
     },
     {
       label: '멤버 강퇴',
-      onPress: () => openModal(memberId, 'kick'),
+      onPress: () => {
+        setOpenPopoverId(null);
+        openModal(memberId, 'kick');
+      },
       labelStyle: { color: Colors.error },
       rightIcon: <Ionicons name="person-remove-outline" size={20} color={Colors.error} />,
       showChevron: false,
     },
   ];
-
-  // ───── 하단 메뉴 아이템 ─────
+  // 하단 메뉴
   const bottomMenuItems: MenuItem[] = amILeader
     ? [
       {
@@ -245,10 +316,12 @@ export default function MembersTab({ meetingId }: MembersTabProps) {
                 icon={
                   amILeader && !isMe ? (
                     <Popover
+                      isVisible={openPopoverId === member.userId}  
+                      onRequestClose={() => setOpenPopoverId(null)}
                       arrowSize={{ width: 0, height: 0 }}
                       backgroundStyle={{ backgroundColor: 'transparent' }}
                       from={(
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => setOpenPopoverId(member.userId)}>
                           <Ionicons name="ellipsis-vertical" size={18} color={Colors.gray300} />
                         </TouchableOpacity>
                       )}
@@ -325,8 +398,9 @@ export default function MembersTab({ meetingId }: MembersTabProps) {
             <Text style={styles.icon}>📋</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={async () => {
+            // 공유 메시지에 모임 설명도 추가하면 좋을듯
             await Share.share({
-              message: `우리끼리 초대코드: ${inviteCode}`,
+              message: `🎉 우리끼리 모임 초대\n\n모임명: ${meetingName}\n초대코드: ${inviteCode}\n\n우리끼리 앱에서 코드를 입력하면 바로 참여할 수 있어요!`,
             });
           }}>
             <Text style={styles.icon}>📤</Text>

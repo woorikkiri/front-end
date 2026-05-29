@@ -71,7 +71,7 @@ export default function GroupScreen() {
         {activeTab === '게시판' && <BoardTab meetingId={Number(meetingId)} />}
         {activeTab === '일정조율' && <ScheduleTab meetingId={Number(meetingId)} />}
         {activeTab === '투표' && <VoteTab meetingId={Number(meetingId)} />}
-        {activeTab === '멤버' && <MembersTab meetingId={Number(meetingId)} />}
+        {activeTab === '멤버' && <MembersTab meetingId={Number(meetingId)} meetingName={meetingName} />}
       </View>
       {/* FAB - 게시판일 때만 */}
       {activeTab === '게시판' && (
