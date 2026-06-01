@@ -5,6 +5,7 @@ import ProfileCard from '@/components/ui/ProfileCard';
 import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useMeetingStore } from '@/store/MeetingStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -46,6 +47,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
   // ───── 멤버 데이터 ─────
   const [members, setMembers] = useState<Member[]>([]);
   const [myRole, setMyRole] = useState<Role>('MEMBER');
+  const { setMeeting } = useMeetingStore();
   const amILeader = myRole === 'HOST';
 
   // ───── UI 상태 ─────
@@ -82,6 +84,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
       });
       setMembers(sorted);
       setMyRole(data.myRole);
+      setMeeting(meetingId, data.myRole);
 
       const inviteResponse = await fetch(API.getMeetingInviteCode(meetingId), {
         headers: { "Authorization": `Bearer ${userToken}` }
@@ -262,7 +265,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
     ? [
       {
         label: '모임 수정',
-        onPress: () => {/* TODO: router.push(`/edit-meeting/${meetingId}`) */ },
+        onPress: () => router.push(`/group/${meetingId}/edit-meeting`),
         rightIcon: <Ionicons name="pencil-outline" size={20} color={Colors.gray500} />,
         showChevron: false,
       },

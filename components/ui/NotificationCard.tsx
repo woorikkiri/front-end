@@ -1,5 +1,6 @@
 // components/ui/NotificationCard.tsx
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
+import { formatTimeAgo } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -10,8 +11,9 @@ export interface NotificationItem {
   id: string;
   type: NotificationType;
   title: string;
-  body: string;       // 기존 groupName + 날짜/이름 조합해서 넣는 용도
+  groupName: string;
   isRead: boolean;
+  createdAt: string;
 }
 
 interface Props {
@@ -23,9 +25,9 @@ interface Props {
 
 const TYPE_ICON: Record<NotificationType, keyof typeof Ionicons.glyphMap> = {
   schedule: 'alarm-outline',
-  vote:     'stats-chart-outline',
-  notice:   'megaphone-outline',
-  invite:   'people-outline',
+  vote: 'stats-chart-outline',
+  notice: 'megaphone-outline',
+  invite: 'people-outline',
 };
 
 export default function NotificationCard({ item, mode = 'list', onPress, onDismiss }: Props) {
@@ -36,36 +38,38 @@ export default function NotificationCard({ item, mode = 'list', onPress, onDismi
     <TouchableOpacity
       style={[
         styles.container,
+        !isBanner && styles.containerList,  // list면 구분선
+        isBanner && styles.containerBanner, // banner면 네모
         isNew && styles.containerNew,
-        isBanner && styles.containerBanner,
       ]}
       onPress={() => onPress?.(item.id)}
       activeOpacity={0.7}
     >
       {/* 아이콘 영역 */}
-      <View style={[styles.iconWrap, isNew && styles.iconWrapNew]}>
-        <Ionicons
-          name={TYPE_ICON[item.type]}
-          size={20}
-          color={Colors.primary}
-        />
+      <View style={styles.iconContainer}>
+        <View style={[styles.iconWrap, isNew && styles.iconWrapNew]}>
+          <Ionicons
+            name={TYPE_ICON[item.type]}
+            size={20}
+            color={Colors.primary}
+          />
+        </View>
       </View>
 
       {/* 텍스트 영역 */}
       <View style={styles.content}>
-        <Text
-          style={[styles.title, isNew && styles.titleNew]}
-          numberOfLines={1}
-        >
+        <Text style={[styles.title, isNew && styles.titleNew]} numberOfLines={1}>
           {item.title}
         </Text>
-        <Text style={styles.body} numberOfLines={isBanner ? 1 : 2}>
-          {item.body}
-        </Text>
+        <View style={styles.metaRow}>
+          <Text style={styles.meta}>{item.groupName}</Text>
+          <Text style={styles.meta}> · </Text>
+          <Text style={styles.meta}>{formatTimeAgo(item.createdAt)}</Text>
+        </View>
       </View>
 
       {/* 읽지 않음 뱃지 */}
-      {isNew && (
+      {isNew && isBanner && (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>N</Text>
         </View>
@@ -90,23 +94,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.white,
-    marginHorizontal: Spacing.base,
-    marginVertical: Spacing.xs,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
+  },
+  containerList: {
+    // list일 때만 구분선
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  containerBanner: {
+    // banner일 때만 네모
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
-    gap: Spacing.md,
+    marginHorizontal: Spacing.base,
+    marginTop: Spacing.sm,
+    ...Shadow.md,
   },
   containerNew: {
     backgroundColor: Colors.primaryLight,
     borderColor: Colors.primary,
   },
-  containerBanner: {
-    marginHorizontal: Spacing.base,
-    marginTop: Spacing.sm,
-    ...Shadow.md,
+  iconContainer: {
+    position: 'relative',
   },
 
   // 아이콘
@@ -119,7 +130,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrapNew: {
-    backgroundColor: '#FDE8C8',  // primaryLight보다 살짝 진한 오렌지 틴트
+    backgroundColor: '#FDE8C8',
   },
 
   // 텍스트
@@ -136,7 +147,11 @@ const styles = StyleSheet.create({
     color: Colors.black,
     fontWeight: '600',
   },
-  body: {
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  meta: {
     fontSize: Typography.sm,
     color: Colors.gray500,
   },

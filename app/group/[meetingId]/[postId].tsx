@@ -1,13 +1,16 @@
 import CommentItem, { Comment } from '@/components/board/CommentItem';
 import Header from '@/components/ui/Header';
 import MenuGroup from '@/components/ui/MenuGroup';
+import Modal from '@/components/ui/Modal';
+import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useMeetingStore } from '@/store/MeetingStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { formatTimeAgo } from '@/utils/date';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
     KeyboardAvoidingView, Platform, ScrollView,
@@ -30,68 +33,71 @@ interface Post {
     title: string;
     updatedAt: string;
     writerId: number;
-    writerNickname: string;
+    writerName: string;
 }
 
 export default function PostDetailScreen() {
-    const { userId } = useAuthStore();
-    const [post, setPost] = useState<Post | null>({
-        content: "안녕하세요. 게시글 테스트입니다.",
-        createdAt: "2026-04-05T00:06:54",
-        imageUrls: null,
-        meetingId: 1,
-        notice: false,
-        postId: 1,
-        title: "첫 게시글입니다",
-        updatedAt: "",
-        writerId: 1,
-        writerNickname: "test1"
-    });
-
-    const [commentText, setCommentText] = useState('');
-    const [comments, setComments] = useState<Comment[]>([
-        {
-            commentId: 1,
-            content: '저도 오늘 중으로 입금할게요!',
-            writerNickname: 'Sora',
-            writerId: 2,
-            createdAt: '2026-04-05T00:11:54',
-            profileImageUrl: null,
-        },
-        {
-            commentId: 2,
-            content: '확인했어! 미납자는 톡도 남길게.',
-            writerNickname: 'Jihun',
-            writerId: 3,
-            createdAt: '2026-04-05T00:15:54',
-            profileImageUrl: null,
-        },
-    ]);
-
-    const isMyPost = post?.writerId === userId;
-    const isLeader = false; // 나중에 API로 받아오기
-    const isNotice = post?.notice ?? false;
-
+    // ───── 라우터 / 인증 ─────
+    const router = useRouter();
+    const { userId, userToken } = useAuthStore();
+    const { myRole } = useMeetingStore();
     const { meetingId, postId } = useLocalSearchParams();
 
+    // ───── 상태 ─────
+    const [post, setPost] = useState<Post | null>(null);
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [commentText, setCommentText] = useState('');
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [serverErrorModal, setServerErrorModal] = useState(false);
+
+    // ───── 파생값 ─────
+    const isLeader = myRole === 'HOST';
+    const isMyPost = post?.writerId === userId;
+    const isNotice = post?.notice ?? false;
+
+    // ───── 데이터 fetch ─────
     useEffect(() => {
-        // 여기서 getPost 호출하면 됨
         const fetchPost = async () => {
             try {
-                // API 호출해서 post 데이터 받아오기
-                const response = await fetch(API.getPost(Number(postId)));
+                const response = await fetch(API.getPost(Number(meetingId), Number(postId)), {
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`,
+                    }
+                });
                 const data = await response.json();
                 setPost(data);
+                setComments(data.comments ?? []);
             } catch (e) {
-                // setServerErrorModal(true);
-            } finally {
-                // 로딩 상태 해제 등 추가 작업
+                setServerErrorModal(true);
             }
-
         };
         fetchPost();
     }, []);
 
+    // ───── 게시글 삭제 ─────
+    const handleDeletePost = async () => {
+        try {
+            const response = await fetch(API.deletePost(Number(meetingId), Number(postId)), {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${userToken}`,
+                }
+            });
+            if (!response.ok) {
+                // 실패
+                setServerErrorModal(true);
+                return;
+            }
+            // 성공 → 뒤로가기
+            router.back();
+        } catch (e) {
+            // 네트워크 오류
+            setServerErrorModal(true);
+        }
+    };
+    // ───── 댓글 추가 (API 연동 전) ─────
+
+    // ───── 팝오버 메뉴 ─────
     const menuButton = (
         <Popover
             from={(
@@ -107,7 +113,7 @@ export default function PostDetailScreen() {
                     // 내 게시글이면 수정/삭제 보이기
                     ...(isMyPost ? [{ label: '게시글 수정', onPress: () => { } }] : []),
                     // 내 게시글이거나 내가 방장이면 삭제 보이기
-                    ...(isMyPost || isLeader ? [{ label: '게시글 삭제', onPress: () => console.log('삭제'), labelStyle: { color: Colors.error } }] : []),
+                    ...(isMyPost || isLeader ? [{ label: '게시글 삭제', onPress: () => setShowDeleteModal(true), labelStyle: { color: Colors.error } }] : []),
                 ]} />
             </View>
         </Popover>
@@ -146,7 +152,7 @@ export default function PostDetailScreen() {
                         <Text style={styles.title}>{post?.title}</Text>
                     </View>
                     <View style={styles.infoSection}>
-                        <Text style={styles.infoText}>{post?.writerNickname}</Text>
+                        <Text style={styles.infoText}>{post?.writerName}</Text>
                         <Text style={styles.infoText}>·</Text>
                         <Text style={styles.infoText}>{formatTimeAgo(post?.createdAt ?? '')}</Text>
                     </View>
@@ -193,6 +199,22 @@ export default function PostDetailScreen() {
                     </View>
                 </View>
             </KeyboardAvoidingView>
+            <Modal
+                visible={showDeleteModal}
+                message='게시글을 삭제하시겠습니까?'
+                rightBtnText='삭제'
+                onLeftBtnPress={() => setShowDeleteModal(false)}
+                onRightBtnPress={() => {
+                    setShowDeleteModal(false);
+                    handleDeletePost();
+                }}
+                rightBtnVariant='danger'
+            />
+            {/* 서버 오류 모달 */}
+            <ServerErrorModal
+                visible={serverErrorModal}
+                onClose={() => setServerErrorModal(false)}
+            />
         </SafeAreaView>
     );
 }

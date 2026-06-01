@@ -1,7 +1,8 @@
 export const formatTimeAgo = (dateString: string) => {
     const now = new Date();
+    const kstNow = new Date(now.getTime() - 9 * 60 * 60 * 1000); // 9시간 빼기
     const date = new Date(dateString);
-    const diff = now.getTime() - date.getTime(); // 밀리초 차이
+    const diff = kstNow.getTime() - date.getTime(); // 밀리초 차이
 
     const minutes = Math.floor(diff / 1000 / 60);
     const hours = Math.floor(minutes / 60);

@@ -1,4 +1,4 @@
-const BASE_URL = "http://3.38.27.229:8080";
+const BASE_URL = "http://13.209.130.253:8080";
 
 export const API = {
   // ───── 인증 ─────
@@ -25,7 +25,7 @@ export const API = {
   leaveMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/members/me`, // DELETE
   updateMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}`,  // PATCH
   // 모임검색 프론트에서
-  getMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/home`,     // GET
+  getMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/home`,     // GET  -> 게시글 이거 가져옴.
   getMembers: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/members`, // GET
   transferOwnership: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/transfer-ownership`,  // POST
   kickMember: (meetingId: number, memberId: number) => `${BASE_URL}/api/meetings/${meetingId}/members/${memberId}`,  // DELETE
@@ -64,11 +64,10 @@ export const API = {
 
   // ───── 게시글 ─────
   createPost: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/posts`,  // POST
-  getPosts: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/posts`,    // GET
-  getPost: (postId: number) => `${BASE_URL}/api/posts/${postId}`,                   // GET
-  updatePost: (postId: number) => `${BASE_URL}/api/posts/${postId}`,                // PATCH
-  deletePost: (postId: number) => `${BASE_URL}/api/posts/${postId}`,                // DELETE
-  setNotice: (postId: number) => `${BASE_URL}/api/posts/${postId}/notice`,          // PATCH
+  getPost: (meetingId: number, postId: number) => `${BASE_URL}/api/meetings/${meetingId}/posts/${postId}`,  // GET
+  updatePost: (meetingId: number, postId: number) => `${BASE_URL}/api/meetings/${meetingId}/posts/${postId}`,                // PATCH
+  deletePost: (meetingId: number, postId: number) => `${BASE_URL}/api/meetings/${meetingId}/posts/${postId}`,                // DELETE
+  setNotice: (meetingId: number, postId: number) => `${BASE_URL}/api/meetings/${meetingId}/posts/${postId}/notice`,          // PATCH
 
   // ───── 댓글 ─────
   createComment: (postId: number) => `${BASE_URL}/api/posts/${postId}/comments`,      // POST

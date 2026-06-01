@@ -1,36 +1,43 @@
 import Button from '@/components/ui/Button';
 import Header from '@/components/ui/Header';
+import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
     ScrollView,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreatePostScreen() {
+    // ───── 라우터 / 인증 ─────
     const { meetingId } = useLocalSearchParams();
-    
+    const { userToken } = useAuthStore();
+
+    // ───── 상태 ─────
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [loading, setLoading] = useState(false);
     const [isNotice, setIsNotice] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [serverErrorModal, setServerErrorModal] = useState(false);
 
+    // ───── 에러 상태 ─────
     const [titleError, setTitleError] = useState('');
     const [contentError, setContentError] = useState('');
 
-    let isValid = true;
+    // ───── 게시글 등록 ─────
+    const handleCreatePost = async () => {
+        let isValid = true;
 
-    const handleSubmit = async () => {
         if (!title) {
             setTitleError('제목을 입력하세요');
             isValid = false;
@@ -40,27 +47,33 @@ export default function CreatePostScreen() {
             isValid = false;
 
         }
+
         if (!isValid) return;
 
         setLoading(true);
-        {/* API 연동 - 게시글 등록하기 */}
+
         try {
-            // API 호출
-            await fetch(API.createPost(Number(meetingId)), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title,
-                content,
-                notice: isNotice,
-                imageUrl: null,
-            })
-        });
-            router.back();  // 성공하면 이동
+            const response = await fetch(API.createPost(Number(meetingId)), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`
+                },
+                body: JSON.stringify({
+                    title,
+                    content,
+                    notice: isNotice,
+                    imageUrl: null,
+                })
+            });
+            if (!response.ok) {
+                setServerErrorModal(true);
+                return;
+            }
+            router.back();
+
         } catch (error) {
-            // 에러 처리
-            // modal로 할껀지 이걸로 할건지 정해야할듯.
-            Alert.alert('오류', '게시글 등록에 실패했습니다.');
+            setServerErrorModal(true);
         } finally {
             setLoading(false);  // 무조건 로딩 끝
         }
@@ -120,14 +133,19 @@ export default function CreatePostScreen() {
 
                     <Button
                         label="등록"
-                        onPress={handleSubmit}
+                        onPress={handleCreatePost}
                         loading={loading}
                         style={{ flex: 1 }}
                         fullWidth={false}
                     />
                 </View>
             </ScrollView>
-
+            
+            {/* 서버 오류 모달 */}
+            <ServerErrorModal
+                visible={serverErrorModal}
+                onClose={() => setServerErrorModal(false)}
+            />
         </SafeAreaView>
     );
 }

@@ -17,8 +17,17 @@ const dummyNotifications: NotificationItem[] = [
         id: '1',
         type: 'schedule',
         title: '새로운 일정이 확정되었어요',
-        body: '고등학교 동창회 - 2024-07-15 19:00',
+        groupName: '고등학교 동창회',
         isRead: false,
+        createdAt: '2024-07-16T12:00:00Z',
+    },
+    {
+        id: '2',
+        type: 'schedule',
+        title: '새로운 일정이 확정되었어요',
+        groupName: '고등학교 동창회',
+        isRead: false,
+        createdAt: '2024-07-15T19:00:00Z',
     },
 ];
 
@@ -61,7 +70,7 @@ export default function Notifications() {
                     <FlatList
                         data={notifications}
                         keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => <NotificationCard item={item} onPress={handlePressNotification} />}
+                        renderItem={({ item }) => <NotificationCard item={item} onPress={handlePressNotification} mode="list" />}
                     />
                 )}
             </View>
@@ -75,9 +84,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.white,
     },
     container: {
-        paddingHorizontal: Spacing['2xl'],
         paddingBottom: Spacing['3xl'],
-        marginTop: Spacing.lg,
         flex: 1,
     },
     emptyState: {
