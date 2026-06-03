@@ -9,6 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     Image,
     StatusBar,
     StyleSheet,
@@ -26,6 +27,7 @@ export default function EditScreen() {
     const [errors, setErrors] = useState({
         nickname: '',
     });
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -40,6 +42,8 @@ export default function EditScreen() {
                 setImage(data.profileImageUrl);
             } catch (e) {
                 console.error('프로필 불러오기 실패', e);
+            } finally {
+                setLoading(false);
             }
         };
         fetchUser();
@@ -88,6 +92,8 @@ export default function EditScreen() {
         }
     };
 
+    if (loading) return <ActivityIndicator style={{ marginTop: Spacing['2xl'] }} color={Colors.primary} />;
+    
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />

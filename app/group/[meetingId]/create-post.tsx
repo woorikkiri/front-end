@@ -113,7 +113,7 @@ export default function CreatePostScreen() {
 
                 {/* 공지사항 올리는 check박스 */}
                 <TouchableOpacity style={styles.checkboxContainer} onPress={() => setIsNotice(!isNotice)}>
-                    <Ionicons name="pin" size={22} color={Colors.primary} style={styles.checkboxIcon} />
+                    <Ionicons name="megaphone" size={22} color={Colors.primary} style={styles.checkboxIcon}/>
                     <Text style={styles.checkboxText}>공지사항으로 올리기</Text>
                     {isNotice
                         ? <Ionicons name="checkbox" size={22} color={Colors.primary} style={{ marginLeft: 'auto' }} />

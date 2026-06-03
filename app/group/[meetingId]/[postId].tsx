@@ -9,7 +9,7 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useMeetingStore } from '@/store/MeetingStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { formatTimeAgo } from '@/utils/date';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -97,6 +97,29 @@ export default function PostDetailScreen() {
     };
     // ───── 댓글 추가 (API 연동 전) ─────
 
+    // ───── 공지 토글 ─────
+    const handleToggleNotice = async () => {
+        try {
+            const response = await fetch(API.setNotice(Number(meetingId), Number(postId)), {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`,
+                },
+                body: JSON.stringify({ notice: !isNotice })
+            });
+            if (!response.ok) {
+                const text = await response.text();
+                console.error('공지 변경 실패', response.status, text);
+                return;
+            }
+            // 성공 → post 새로고침
+            setPost(prev => prev ? { ...prev, notice: !isNotice } : null);
+        } catch (e) {
+            setServerErrorModal(true);
+        }
+    };
+
     // ───── 팝오버 메뉴 ─────
     const menuButton = (
         <Popover
@@ -109,7 +132,7 @@ export default function PostDetailScreen() {
             <View style={styles.menu}>
                 <MenuGroup items={[
                     // 공지는 항상
-                    { label: isNotice ? '공지 내리기' : '공지 등록하기', onPress: () => console.log(isNotice ? '공지내리기' : '공지올리기') },
+                    { label: isNotice ? '공지 내리기' : '공지 등록하기', onPress: handleToggleNotice },
                     // 내 게시글이면 수정/삭제 보이기
                     ...(isMyPost ? [{ label: '게시글 수정', onPress: () => { } }] : []),
                     // 내 게시글이거나 내가 방장이면 삭제 보이기
@@ -119,21 +142,51 @@ export default function PostDetailScreen() {
         </Popover>
     );
 
-    // 댓글 추가 함수 (다른 함수들 옆에)
-    const handleAddComment = () => {
-        if (!commentText.trim()) return;  // 빈 댓글 방지
+    // 댓글 추가 함수 
+    const handleAddComment = async () => {
+        if (!commentText.trim()) return;
 
-        const newComment: Comment = {
-            commentId: Date.now(),  // 임시 id (나중에 API로 받아오면 됨)
-            content: commentText,
-            writerNickname: '나',  // 나중에 userId로 받아오면 됨
-            writerId: userId ?? 0,
-            createdAt: new Date().toISOString(),
-            profileImageUrl: null,
-        };
+        try {
+            const response = await fetch(API.createComment(Number(postId)), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`,
+                },
+                body: JSON.stringify({ content: commentText }),
+            });
 
-        setComments([...comments, newComment]);
-        setCommentText('');  // 입력창 초기화
+            if (!response.ok) {
+                setServerErrorModal(true);
+                return;
+            }
+
+            const newComment = await response.json();
+            setComments(prev => [...prev, newComment]);
+            setCommentText('');
+
+        } catch (e) {
+            setServerErrorModal(true);
+        }
+    };
+
+    const handleDeleteComment = async (commentId: number) => {
+        try {
+            const response = await fetch(API.deleteComment(Number(postId), commentId), {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${userToken}`,
+                },
+            });
+            if (!response.ok) {
+                setServerErrorModal(true);
+                return;
+            }
+            // 성공 → 로컬에서도 제거
+            setComments(prev => prev.filter(c => c.commentId !== commentId));
+        } catch (e) {
+            setServerErrorModal(true);
+        }
     };
 
     return (
@@ -141,7 +194,7 @@ export default function PostDetailScreen() {
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
 
             <Header
-                title={`그룹 ${meetingId} - 게시글 ${postId}`}
+                title="상세보기"
                 rightElement={menuButton} />
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
@@ -150,6 +203,12 @@ export default function PostDetailScreen() {
                 <ScrollView style={styles.container}>
                     <View style={styles.titleSection}>
                         <Text style={styles.title}>{post?.title}</Text>
+                        {post?.notice && (
+                            <View style={styles.noticeBadge}>
+                                <MaterialIcons name="push-pin" size={14} color={Colors.primary} />
+                                <Text style={styles.noticeText}>공지</Text>
+                            </View>
+                        )}
                     </View>
                     <View style={styles.infoSection}>
                         <Text style={styles.infoText}>{post?.writerName}</Text>
@@ -157,7 +216,6 @@ export default function PostDetailScreen() {
                         <Text style={styles.infoText}>{formatTimeAgo(post?.createdAt ?? '')}</Text>
                     </View>
                     <Text style={styles.subTitle}>{post?.content}</Text>
-                    {post?.notice && <Text>공지</Text>}
 
                     <View style={styles.inputDivider} />
 
@@ -169,10 +227,7 @@ export default function PostDetailScreen() {
                                 key={comment.commentId}
                                 comment={comment}
                                 isMyComment={comment.writerId === userId}
-                                onDelete={(commentId) => {
-                                    // 나중에 API 연동
-                                    setComments(comments.filter(c => c.commentId !== commentId));
-                                }}
+                                onDelete={handleDeleteComment}
                             />
                         ))}
                     </View>
@@ -238,9 +293,11 @@ const styles = StyleSheet.create({
         width: 150,
     },
     titleSection: {
+        flexDirection: 'row',
         marginTop: Spacing.lg,
         marginBottom: Spacing.md,
         alignItems: "flex-start",
+        justifyContent: 'space-between',
         gap: Spacing.xs,
     },
     title: {
@@ -283,5 +340,21 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary,
         borderRadius: Radius.full,
         padding: Spacing.md,
-    }
+    },
+
+    noticeBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.primaryLight,
+        paddingHorizontal: Spacing.sm,
+        paddingVertical: Spacing.xs,
+        borderRadius: Radius.lg,
+        alignSelf: 'flex-start',
+        marginBottom: Spacing.sm,
+    },
+    noticeText: {
+        color: Colors.primary,
+        fontSize: Typography.sm,
+        fontWeight: '700',
+    },
 });

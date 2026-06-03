@@ -2,7 +2,7 @@ import VoteCard, { VoteItem } from '@/components/group/vote/VoteCard';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
     FlatList,
@@ -20,20 +20,7 @@ export default function VoteList({ onCreatePress, onVotePress }: VoteListProps) 
 
     // 나중에 api 연동후에 바꿔야함. 지금은 테스트용 더미 데이터
     const [vote, setVote] = useState<VoteItem[]>([
-        {
-            voteId: 1,
-            title: '저녁 메뉴',
-            multipleChoice: false,
-            status: 'IN_PROGRESS',
-            deadline: '2일 뒤에 종료됩니다',
-            remainingDays: 2,
-            totalVoteCount: 2,
-            participated: false,
-            options: [
-                { optionId: 1, content: '마라탕', voteCount: 2 },
-                { optionId: 2, content: '돼지고기', voteCount: 0 },
-            ]
-        }
+        
     ]);
 
     /* 나중에 (API 연동 후)
@@ -80,14 +67,7 @@ export default function VoteList({ onCreatePress, onVotePress }: VoteListProps) 
                     <EmptyState
                         icon={
                             <View style={{ position: 'relative' }}>
-                                {/* 아이콘 바꾸기.. 마땅한게 안보임 */}
-                                <Ionicons name="calendar-clear-outline" size={40} color={Colors.gray500} />
-                                <Ionicons
-                                    name="close"
-                                    size={25}
-                                    color={Colors.gray500}
-                                    style={{ position: 'absolute', right: 8, bottom: 5 }}
-                                />
+                                <MaterialCommunityIcons name="vote-outline" size={40} color={Colors.gray500} />
                             </View>
                         }
                         title="아직 진행되는 투표가 없어요"

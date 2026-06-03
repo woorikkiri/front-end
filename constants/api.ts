@@ -72,6 +72,6 @@ export const API = {
   // ───── 댓글 ─────
   createComment: (postId: number) => `${BASE_URL}/api/posts/${postId}/comments`,      // POST
   getComments: (postId: number) => `${BASE_URL}/api/posts/${postId}/comments`,        // GET
-  updateComment: (commentId: number) => `${BASE_URL}/api/comments/${commentId}`,      // PATCH
-  deleteComment: (commentId: number) => `${BASE_URL}/api/comments/${commentId}`,      // DELETE
+  updateComment: (postId: number, commentId: number) => `${BASE_URL}/api/posts/${postId}/comments/${commentId}`,      // PATCH
+  deleteComment: (postId: number, commentId: number) => `${BASE_URL}/api/posts/${postId}/comments/${commentId}`,      // DELETE
 };

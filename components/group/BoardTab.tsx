@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -41,10 +42,10 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [noticePost, setNoticePost] = useState<Post | null>(null);
   const [serverErrorModal, setServerErrorModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // ───── 데이터 fetch ─────
   const fetchPosts = async () => {
-    console.log('fetchPosts 호출됨!');  // ← 추가
     try {
       const response = await fetch(API.getMeeting(meetingId), {
         headers: {
@@ -56,11 +57,17 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
         return;
       }
       const data = await response.json();
-      setPosts(data.posts);
+      const allPosts = data.noticePost
+        ? [data.noticePost, ...data.posts]
+        : data.posts;
+      setPosts(allPosts);
       setNoticePost(data.noticePost);
     } catch (e) {
       setServerErrorModal(true);
+    } finally {
+      setLoading(false);
     }
+
   };
 
   useFocusEffect(
@@ -68,6 +75,8 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
       fetchPosts();
     }, [])
   );
+
+  if (loading) return <ActivityIndicator style={{ marginTop: Spacing['2xl'] }} color={Colors.primary} />;
 
   return (
     <>
@@ -98,7 +107,7 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
             {noticePost && (
               <View style={styles.noticeBanner}>
                 <View style={styles.noticeBannerIcon}>
-                  <Ionicons name="alert-circle-outline" size={20} color={Colors.primary} />
+                  <Ionicons name="megaphone" size={22} color={Colors.primary} />
                 </View>
                 <Text style={styles.noticeBannerText}>{noticePost.title}</Text>
               </View>
@@ -139,7 +148,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
   noticeBannerIcon: {
-    backgroundColor: Colors.primaryLight,
     marginRight: Spacing.sm,
     padding: Spacing.sm,
     borderRadius: Radius.full,

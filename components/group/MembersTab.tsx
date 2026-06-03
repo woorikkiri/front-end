@@ -12,6 +12,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   ScrollView,
   Share,
   StyleSheet,
@@ -47,6 +48,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
   // ───── 멤버 데이터 ─────
   const [members, setMembers] = useState<Member[]>([]);
   const [myRole, setMyRole] = useState<Role>('MEMBER');
+  const [loading, setLoading] = useState(true);
   const { setMeeting } = useMeetingStore();
   const amILeader = myRole === 'HOST';
 
@@ -94,6 +96,8 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
 
     } catch (error) {
       console.error('Error fetching members:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -287,6 +291,8 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
       },
     ];
 
+  if (loading) return <ActivityIndicator style={{ marginTop: Spacing['2xl'] }} color={Colors.primary} />;
+  
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       {/* ── 멤버 수 + 초대 버튼 ── */}
@@ -319,7 +325,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
                 icon={
                   amILeader && !isMe ? (
                     <Popover
-                      isVisible={openPopoverId === member.userId}  
+                      isVisible={openPopoverId === member.userId}
                       onRequestClose={() => setOpenPopoverId(null)}
                       arrowSize={{ width: 0, height: 0 }}
                       backgroundStyle={{ backgroundColor: 'transparent' }}

@@ -1,5 +1,5 @@
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from '@expo/vector-icons';
 import {
     StyleSheet,
     Text,
@@ -38,7 +38,7 @@ export default function PostCard({
                 </Text>
                 {isNotice && (
                     <View style={styles.noticeBadge}>
-                        <Ionicons name="pin" color={Colors.primary}/>
+                        <MaterialIcons name="push-pin" size={14} color={Colors.primary} />
                         <Text style={styles.noticeText}>공지</Text>
                     </View>
                 )}
