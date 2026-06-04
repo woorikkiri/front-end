@@ -1,5 +1,5 @@
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { User } from 'lucide-react-native';
 import React from 'react';
 import {
     Image,
@@ -35,7 +35,7 @@ export default function ProfileCard({
                             style={styles.avatarImage}
                         />
                     ) : (
-                        <Ionicons name="person" size={30} color={Colors.gray300} />
+                        <User size={30} color={Colors.gray300} />
                     )}
             </View>
             <View style={{ flex: 1 }}>

@@ -3,11 +3,11 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import useAuth from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { AlertCircle } from 'lucide-react-native';
 import { useEffect } from "react";
 import { Text, View } from 'react-native';
 import 'react-native-gesture-handler';
@@ -36,7 +36,7 @@ const toastConfig = {
       elevation: 4,
       marginHorizontal: Spacing.lg,
     }}>
-      <Ionicons name="alert-circle" size={22} color={Colors.error} />
+      <AlertCircle size={22} color={Colors.error} />
       <Text style={{
         fontSize: Typography.sm,
         fontWeight: '600',

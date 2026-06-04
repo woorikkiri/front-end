@@ -2,7 +2,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import Header from "@/components/ui/Header";
 import NotificationCard, { NotificationItem } from "@/components/ui/NotificationCard";
 import { Colors, Spacing } from "@/constants/theme";
-import { Ionicons } from '@expo/vector-icons';
+import { BellOff } from 'lucide-react-native';
 import { useEffect, useState } from "react";
 import {
     FlatList,
@@ -15,7 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const dummyNotifications: NotificationItem[] = [
     {
         id: '1',
-        type: 'schedule',
+        type: 'notice',
         title: '새로운 일정이 확정되었어요',
         groupName: '고등학교 동창회',
         isRead: false,
@@ -58,7 +58,7 @@ export default function Notifications() {
                         <EmptyState
                             icon={
                                 <View style={{ position: 'relative' }}>
-                                    <Ionicons name="notifications-off" size={40} color={Colors.primaryAlpha} />
+                                    <BellOff size={40} color={Colors.primaryAlpha} />
                                 </View>
                             }
                             title="아직 알림이 없어요"

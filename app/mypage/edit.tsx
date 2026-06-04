@@ -4,9 +4,9 @@ import TextInput from '@/components/ui/TextInput';
 import { API } from "@/constants/api";
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from "@/store/useAuthStore";
-import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
+import { Camera, CircleX, User } from 'lucide-react-native';
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -18,6 +18,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 export default function EditScreen() {
     const router = useRouter();
@@ -108,12 +109,12 @@ export default function EditScreen() {
                         {image ? (
                             <Image source={{ uri: image }} style={styles.profileImage} />
                         ) : (
-                            <Ionicons name="person" size={40} color={Colors.gray300} />
+                            <User size={44} color={Colors.gray300} />
                         )}
 
                         {/* 카메라 버튼 */}
                         <View style={styles.cameraButton}>
-                            <Ionicons name="camera-outline" size={20} color={Colors.white} />
+                            <Camera size={20} color={Colors.white} />
                         </View>
                     </TouchableOpacity>
 
@@ -127,7 +128,7 @@ export default function EditScreen() {
                         value={nickname}
                         onChangeText={(v) => setNickname(v)}
                         error={errors.nickname}
-                        rightElement={nickname.length > 0 ? <Ionicons name="close-circle" size={20} color={Colors.gray300} onPress={() => setNickname('')} /> : undefined}
+                        rightElement={nickname.length > 0 ? <CircleX size={22} color={Colors.white} fill={Colors.gray300} onPress={() => setNickname('')} /> : undefined}
                         required
                     />
                 </View>

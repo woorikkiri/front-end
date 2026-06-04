@@ -1,6 +1,6 @@
 import { Colors } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { CalendarDays, Settings, Users } from "lucide-react-native";
 import React from 'react';
 
 export default function TabLayout() {
@@ -21,7 +21,7 @@ export default function TabLayout() {
         options={{
           title: '캘린더',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
+            <CalendarDays size={size} color={color} />
           ),
         }}
       />
@@ -30,7 +30,7 @@ export default function TabLayout() {
         options={{
           title: '그룹',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people-outline" size={size} color={color} />
+            <Users size={size} color={color} />
           ),
         }}
       />
@@ -39,7 +39,7 @@ export default function TabLayout() {
         options={{
           title: '설정',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
+            <Settings size={size} color={color} />
           ),
         }}
       />

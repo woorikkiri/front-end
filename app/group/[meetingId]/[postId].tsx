@@ -1,4 +1,4 @@
-import CommentItem, { Comment } from '@/components/board/CommentItem';
+import CommentItem, { Comment } from '@/components/group/board/CommentItem';
 import Header from '@/components/ui/Header';
 import MenuGroup from '@/components/ui/MenuGroup';
 import Modal from '@/components/ui/Modal';
@@ -9,9 +9,9 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useMeetingStore } from '@/store/MeetingStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { formatTimeAgo } from '@/utils/date';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Ellipsis, Pin, Send } from 'lucide-react-native';
+import { useCallback, useState } from 'react';
 import {
     KeyboardAvoidingView, Platform, ScrollView,
     StatusBar,
@@ -49,6 +49,7 @@ export default function PostDetailScreen() {
     const [commentText, setCommentText] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [serverErrorModal, setServerErrorModal] = useState(false);
+    const [popoverVisible, setPopoverVisible] = useState(false);
 
     // ───── 파생값 ─────
     const isLeader = myRole === 'HOST';
@@ -56,23 +57,23 @@ export default function PostDetailScreen() {
     const isNotice = post?.notice ?? false;
 
     // ───── 데이터 fetch ─────
-    useEffect(() => {
-        const fetchPost = async () => {
-            try {
-                const response = await fetch(API.getPost(Number(meetingId), Number(postId)), {
-                    headers: {
-                        'Authorization': `Bearer ${userToken}`,
-                    }
-                });
-                const data = await response.json();
-                setPost(data);
-                setComments(data.comments ?? []);
-            } catch (e) {
-                setServerErrorModal(true);
-            }
-        };
-        fetchPost();
-    }, []);
+    useFocusEffect(     
+        useCallback(() => {  
+            const fetchPost = async () => {
+                try {
+                    const response = await fetch(API.getPost(Number(meetingId), Number(postId)), {
+                        headers: { 'Authorization': `Bearer ${userToken}` }
+                    });
+                    const data = await response.json();
+                    setPost(data);
+                    setComments(data.comments ?? []);
+                } catch (e) {
+                    setServerErrorModal(true);
+                }
+            };
+            fetchPost();
+        }, []) 
+    );     
 
     // ───── 게시글 삭제 ─────
     const handleDeletePost = async () => {
@@ -123,20 +124,22 @@ export default function PostDetailScreen() {
     // ───── 팝오버 메뉴 ─────
     const menuButton = (
         <Popover
+            isVisible={popoverVisible}
+            onRequestClose={() => setPopoverVisible(false)}
             from={(
-                <TouchableOpacity>
-                    <Ionicons name="ellipsis-horizontal" size={24} color={Colors.gray500} />
+                <TouchableOpacity onPress={() => setPopoverVisible(true)}>
+                    <Ellipsis size={24} color={Colors.gray500} />
                 </TouchableOpacity>
             )}
         >
             <View style={styles.menu}>
                 <MenuGroup items={[
                     // 공지는 항상
-                    { label: isNotice ? '공지 내리기' : '공지 등록하기', onPress: handleToggleNotice },
+                    { label: isNotice ? '공지 내리기' : '공지 등록하기', onPress: () => { setPopoverVisible(false); handleToggleNotice(); } },
                     // 내 게시글이면 수정/삭제 보이기
-                    ...(isMyPost ? [{ label: '게시글 수정', onPress: () => { } }] : []),
+                    ...(isMyPost ? [{ label: '게시글 수정', onPress: () => { setPopoverVisible(false); router.push(`/group/${meetingId}/edit-post?postId=${postId}`) } }] : []),
                     // 내 게시글이거나 내가 방장이면 삭제 보이기
-                    ...(isMyPost || isLeader ? [{ label: '게시글 삭제', onPress: () => setShowDeleteModal(true), labelStyle: { color: Colors.error } }] : []),
+                    ...(isMyPost || isLeader ? [{ label: '게시글 삭제', onPress: () => { setPopoverVisible(false); setShowDeleteModal(true) }, labelStyle: { color: Colors.error } }] : []),
                 ]} />
             </View>
         </Popover>
@@ -205,7 +208,7 @@ export default function PostDetailScreen() {
                         <Text style={styles.title}>{post?.title}</Text>
                         {post?.notice && (
                             <View style={styles.noticeBadge}>
-                                <MaterialIcons name="push-pin" size={14} color={Colors.primary} />
+                                <Pin size={14} color={Colors.primary} />
                                 <Text style={styles.noticeText}>공지</Text>
                             </View>
                         )}
@@ -249,7 +252,7 @@ export default function PostDetailScreen() {
                             style={styles.sendBtn}
                             onPress={handleAddComment}
                         >
-                            <Ionicons name="paper-plane-outline" size={20} color={Colors.white} />
+                            <Send size={20} color={Colors.white} />
                         </TouchableOpacity>
                     </View>
                 </View>

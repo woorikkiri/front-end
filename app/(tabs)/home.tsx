@@ -1,8 +1,8 @@
 import { API } from "@/constants/api";
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
+import { Bell, CalendarDays, ChevronRight, KeyRound, Plus, Search, UsersRound } from "lucide-react-native";
 import React, { useEffect, useState } from 'react';
 import {
   Modal,
@@ -63,7 +63,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View style={styles.logoRow}>
           <View style={styles.logoIcon}>
-            <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
+            <CalendarDays size={20} color={Colors.primary} />
           </View>
           <Text style={styles.logoText}>우리끼리</Text>
         </View>
@@ -71,7 +71,7 @@ export default function HomeScreen() {
           style={styles.bellBtn}
           onPress={() => router.push("/notifications")}
         >
-          <Ionicons name="notifications-outline" size={22} color={Colors.primary} />
+          <Bell size={22} color={Colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -84,7 +84,7 @@ export default function HomeScreen() {
           <View style={styles.emptyContainer}>
             {/* 아이콘 */}
             <View style={styles.iconCircle}>
-              <Ionicons name="people" size={60} color={Colors.primaryAlpha} />
+              <UsersRound size={60} color={Colors.primaryAlpha} />
             </View>
 
             {/* 텍스트 그룹 */}
@@ -103,7 +103,7 @@ export default function HomeScreen() {
 
             {/* 검색창 */}
             <View style={styles.searchBar}>
-              <Ionicons name="search-outline" size={18} color={Colors.gray500} />
+              <Search size={18} color={Colors.gray500} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="그룹 검색"
@@ -138,7 +138,7 @@ export default function HomeScreen() {
                   </View>
 
                   {/* 화살표 */}
-                  <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
+                  <ChevronRight size={24} color={Colors.primary} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -152,7 +152,7 @@ export default function HomeScreen() {
         onPress={() => setShowBottomSheet(true)}
         activeOpacity={0.85}
       >
-        <Ionicons name="add" size={28} color={Colors.white} />
+        <Plus size={30} color={Colors.white} />
       </TouchableOpacity>
 
       {/* 바텀시트 */}
@@ -179,7 +179,7 @@ export default function HomeScreen() {
             }}
           >
             <Text style={styles.sheetItemText}>방 만들기</Text>
-            <Ionicons name="add" size={20} color={Colors.black} />
+            <Plus size={22} color={Colors.black} />
           </TouchableOpacity>
 
           <View style={styles.sheetDivider} />
@@ -192,7 +192,7 @@ export default function HomeScreen() {
             }}
           >
             <Text style={styles.sheetItemText}>초대코드 입력</Text>
-            <Ionicons name="key-outline" size={20} color={Colors.black} />
+            <KeyRound size={20} color={Colors.black} />
           </TouchableOpacity>
         </View>
       </Modal>

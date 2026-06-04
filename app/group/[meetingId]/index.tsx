@@ -6,8 +6,8 @@ import Header from '@/components/ui/Header';
 import { API } from '@/constants/api';
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Pencil } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   StatusBar,
@@ -79,7 +79,7 @@ export default function GroupScreen() {
           style={styles.fab}
           onPress={() => router.push(`/group/${meetingId}/create-post`)}
         >
-          <Ionicons name="pencil" size={24} color={Colors.white} />
+          <Pencil size={24} color={Colors.white} />
         </TouchableOpacity>
       )}
     </SafeAreaView>

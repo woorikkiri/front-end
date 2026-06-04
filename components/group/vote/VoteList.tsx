@@ -2,7 +2,7 @@ import VoteCard, { VoteItem } from '@/components/group/vote/VoteCard';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Plus, Vote } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     FlatList,
@@ -20,7 +20,35 @@ export default function VoteList({ onCreatePress, onVotePress }: VoteListProps) 
 
     // 나중에 api 연동후에 바꿔야함. 지금은 테스트용 더미 데이터
     const [vote, setVote] = useState<VoteItem[]>([
-        
+        {
+            voteId: 1,
+            title: "점심 뭐 먹을래?",
+            multipleChoice: false,
+            status: 'IN_PROGRESS',
+            deadline: "2026-03-12 20:00",
+            remainingDays: 2,
+            totalVoteCount: 3,
+            participated: false,
+            options: [
+                { optionId: 1, content: "김밥천국", voteCount: 2 },
+                { optionId: 2, content: "맥도날드", voteCount: 0 },
+                { optionId: 3, content: "피자헛", voteCount: 1 },
+            ]
+        },
+        {
+            voteId: 2,
+            title: "모임 장소 어디로?",
+            multipleChoice: true,
+            status: 'CLOSED',
+            deadline: "2026-03-10 23:59",
+            remainingDays: 0,
+            totalVoteCount: 5,
+            participated: true,
+            options: [
+                { optionId: 4, content: "홍대", voteCount: 3 },
+                { optionId: 5, content: "강남", voteCount: 2 },
+            ]
+        }
     ]);
 
     /* 나중에 (API 연동 후)
@@ -57,7 +85,7 @@ export default function VoteList({ onCreatePress, onVotePress }: VoteListProps) 
                                 variant="warning"
                                 size="sm"
                                 fullWidth={false}
-                                icon={<Ionicons name="add" size={20} color={Colors.primary} />}
+                                icon={<Plus size={18} color={Colors.primary} />}
                                 style={{ borderRadius: Radius.full }}
                             />
                         }
@@ -67,7 +95,7 @@ export default function VoteList({ onCreatePress, onVotePress }: VoteListProps) 
                     <EmptyState
                         icon={
                             <View style={{ position: 'relative' }}>
-                                <MaterialCommunityIcons name="vote-outline" size={40} color={Colors.gray500} />
+                                <Vote size={40} color={Colors.gray500} />
                             </View>
                         }
                         title="아직 진행되는 투표가 없어요"

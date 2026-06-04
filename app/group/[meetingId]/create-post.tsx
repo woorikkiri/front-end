@@ -5,8 +5,8 @@ import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Megaphone, Square, SquareCheck } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     ScrollView,
@@ -113,11 +113,11 @@ export default function CreatePostScreen() {
 
                 {/* 공지사항 올리는 check박스 */}
                 <TouchableOpacity style={styles.checkboxContainer} onPress={() => setIsNotice(!isNotice)}>
-                    <Ionicons name="megaphone" size={22} color={Colors.primary} style={styles.checkboxIcon}/>
+                    <Megaphone size={22} color={Colors.primary} style={styles.checkboxIcon}/>
                     <Text style={styles.checkboxText}>공지사항으로 올리기</Text>
                     {isNotice
-                        ? <Ionicons name="checkbox" size={22} color={Colors.primary} style={{ marginLeft: 'auto' }} />
-                        : <Ionicons name="square-outline" size={22} color={Colors.gray500} style={{ marginLeft: 'auto' }} />
+                        ? <SquareCheck size={22} color={Colors.primary} style={{ marginLeft: 'auto' }} />
+                        : <Square size={22} color={Colors.gray500} style={{ marginLeft: 'auto' }} />
                     }
                 </TouchableOpacity>
 

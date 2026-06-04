@@ -1,7 +1,7 @@
 // SchedulePollsTab.tsx
 import EmptyState from '@/components/ui/EmptyState';
 import { Colors, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { CalendarX2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
     FlatList,
@@ -57,13 +57,7 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
                 <EmptyState
                     icon={
                         <View style={{ position: 'relative' }}>
-                            <Ionicons name="calendar-clear-outline" size={40} color={Colors.gray500} />
-                            <Ionicons
-                                name="close"
-                                size={25}
-                                color={Colors.gray500}
-                                style={{ position: 'absolute', right: 8, bottom: 5 }}
-                            />
+                             <CalendarX2 size={40} color={Colors.gray500} />
                         </View>
                     }
                     title="아직 조율중인 일정이 없어요"

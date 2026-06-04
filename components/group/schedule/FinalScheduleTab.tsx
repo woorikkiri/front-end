@@ -1,7 +1,8 @@
 // FinalScheduleTab.tsx
+import ScheduleCard from '@/components/group/schedule/ScheduleCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { Colors, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { CalendarX2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
     FlatList,
@@ -15,7 +16,22 @@ interface FinalScheduleTabProps {
 }
 
 export default function FinalScheduleTab({ meetingId }: FinalScheduleTabProps) {
-    const [schedules, setSchedules] = useState([]);
+    const [schedules, setSchedules] = useState([
+        {
+            finalScheduleId: 1,
+            title: "나들이 가는날~",
+            startDate: "2026-03-12",
+            time: "20:00:00",
+            location: "엔이 집",
+        },
+        {
+            finalScheduleId: 2,
+            title: "일정입니다람쥐~",
+            startDate: "2026-06-12",
+            time: "13:00:00",
+            location: "장소~",
+        }
+    ]);
 
     useEffect(() => {
         // 나중에 API 연동할 때
@@ -26,7 +42,7 @@ export default function FinalScheduleTab({ meetingId }: FinalScheduleTabProps) {
         // };
         // fetchSchedules();
     }, [meetingId]);
-    
+
     return (
         <FlatList
             // 1. 데이터
@@ -36,7 +52,12 @@ export default function FinalScheduleTab({ meetingId }: FinalScheduleTabProps) {
             keyExtractor={(item, index) => index.toString()} // ← 나중에 item.scheduleId.toString()으로 바꿔주기
             renderItem={({ item }) => (
                 // 나중에 일정 카드
-                <Text>{item}</Text>
+                <ScheduleCard
+                    title={item.title}
+                    meta={`${item.startDate} ${item.time} | ${item.location}`}
+                    onEdit={() => console.log('Edit schedule:', item.finalScheduleId)}
+                    onDelete={() => console.log('Delete schedule:', item.finalScheduleId)}
+                />
             )}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
 
@@ -48,13 +69,7 @@ export default function FinalScheduleTab({ meetingId }: FinalScheduleTabProps) {
                 <EmptyState
                     icon={
                         <View style={{ position: 'relative' }}>
-                            <Ionicons name="calendar-clear-outline" size={40} color={Colors.gray500} />
-                            <Ionicons
-                                name="close"
-                                size={25}
-                                color={Colors.gray500}
-                                style={{ position: 'absolute', right: 8, bottom: 5 }}
-                            />
+                            <CalendarX2 size={40} color={Colors.gray500} />
                         </View>
                     }
                     title="아직 확정된 일정이 없어요"

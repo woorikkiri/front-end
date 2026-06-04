@@ -1,5 +1,5 @@
 import { CalendarTheme, Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { CalendarDays, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     StyleSheet,
@@ -39,12 +39,18 @@ export default function DatePicker({
                 ]}
                 onPress={() => setShowCalendar(!showCalendar)}
             >
-                <Ionicons name="calendar-outline" size={16} color={Colors.gray500} />
+                <CalendarDays size={16} color={Colors.gray500} />
+
                 <View>
                     <Text style={styles.dateBtnLabel}>{label}</Text>
                     <Text style={styles.dateBtnValue}>{value ?? '날짜 선택'}</Text>
                 </View>
-                <Ionicons name={showCalendar ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.gray500} />
+                <View style={styles.chevron}>
+                    {showCalendar
+                        ? <ChevronUp size={18} color={Colors.gray500} />
+                        : <ChevronDown size={18} color={Colors.gray500} />
+                    }
+                </View>
             </TouchableOpacity>
 
             {/* 2. 캘린더 (showCalendar가 true일 때만) */}
@@ -88,5 +94,8 @@ const styles = StyleSheet.create({
         fontSize: Typography.base,
         fontWeight: '600',
         color: Colors.black,
+    },
+    chevron: {
+        marginLeft: 'auto',
     },
 });

@@ -1,7 +1,7 @@
 import MenuGroup from '@/components/ui/MenuGroup';
 import Modal from '@/components/ui/Modal';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { CalendarClock, Ellipsis, Pencil, PointerOff, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     StyleSheet,
@@ -44,7 +44,7 @@ export default function VoteCard({ item, onPress }: VoteCardProps) {
             <TouchableOpacity onPress={onPress} style={styles.card}>
                 {/* 1. 마감일 */}
                 <View style={styles.deadlineRow}>
-                    <Ionicons name="time-outline" size={16} color={'gray'} />
+                    <CalendarClock size={16} color={'gray'} />
                     <Text style={styles.deadlineText}>{item.deadline}</Text>
                 </View>
 
@@ -59,7 +59,7 @@ export default function VoteCard({ item, onPress }: VoteCardProps) {
                         backgroundStyle={{ backgroundColor: 'transparent' }}
                         from={(
                             <TouchableOpacity onPress={() => setPopoverVisible(true)}>
-                                <Ionicons name="ellipsis-horizontal" size={20} color={Colors.gray500} />
+                                <Ellipsis size={20} color={Colors.gray500} />
                             </TouchableOpacity>
                         )}
                     >
@@ -69,7 +69,7 @@ export default function VoteCard({ item, onPress }: VoteCardProps) {
                                     label: '투표 수정',
                                     onPress: () => { },
                                     labelStyle: { fontSize: Typography.sm },
-                                    rightIcon: <Ionicons name="pencil-outline" size={18} color={Colors.gray500} />,
+                                    rightIcon: <Pencil size={18} color={Colors.gray500} />,
                                     showChevron: false
                                 },
                                 {
@@ -79,7 +79,7 @@ export default function VoteCard({ item, onPress }: VoteCardProps) {
                                         setShowCloseModal(true);   // 모달 열기
                                     },
                                     labelStyle: { fontSize: Typography.sm },
-                                    rightIcon: <Ionicons name="timer-outline" size={18} color={Colors.gray500} />,
+                                    rightIcon: <PointerOff size={18} color={Colors.gray500} />,
                                     showChevron: false
                                 },
                                 {
@@ -89,7 +89,7 @@ export default function VoteCard({ item, onPress }: VoteCardProps) {
                                         setShowDeleteModal(true);   // 모달 열기
                                     },
                                     labelStyle: { fontSize: Typography.sm, color: Colors.error },
-                                    rightIcon: <Ionicons name="trash-outline" size={18} color={Colors.error} />,
+                                    rightIcon: <Trash2 size={18} color={Colors.error} />,
                                     showChevron: false
                                 },
                             ]} />

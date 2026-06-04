@@ -1,6 +1,6 @@
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { formatTimeAgo } from '@/utils/date';
-import { Ionicons } from '@expo/vector-icons';
+import { Trash2, User } from 'lucide-react-native';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export interface Comment {
@@ -29,7 +29,7 @@ export default function CommentItem({ comment, isMyComment, onDelete }: CommentI
                         style={styles.avatarImage}
                     />
                 ) : (
-                    <Ionicons name="person" size={20} color={Colors.gray300} />
+                    <User size={24} color={Colors.gray300} />
                 )}
             </View>
 
@@ -50,7 +50,7 @@ export default function CommentItem({ comment, isMyComment, onDelete }: CommentI
                     onPress={() => onDelete(comment.commentId)}
                     hitSlop={8}
                 >
-                    <Ionicons name="trash-outline" size={16} color={Colors.gray300} />
+                    <Trash2 size={16} color={Colors.gray300} />
                 </TouchableOpacity>
             )}
         </View>

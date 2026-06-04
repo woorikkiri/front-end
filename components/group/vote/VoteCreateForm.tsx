@@ -3,7 +3,7 @@ import Button from '@/components/ui/Button';
 import DatePicker from '@/components/ui/DatePicker';
 import TextInput from '@/components/ui/TextInput';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { X } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     ScrollView,
@@ -63,7 +63,7 @@ export default function VoteCreateForm({ onBack }: VoteCreateFormProps) {
                             rightElement={
                                 options.length > 2 ? (
                                     <TouchableOpacity onPress={() => removeOption(index)}>
-                                        <Ionicons name="close" size={18} color={Colors.gray500} />
+                                        <X size={18} color={Colors.gray500} />
                                     </TouchableOpacity>
                                 ) : undefined
                             }

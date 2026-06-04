@@ -1,7 +1,7 @@
 // components/ui/Header.tsx
 import { Colors, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface HeaderProps {
@@ -29,7 +29,7 @@ export default function Header({ title, onBack, rightElement }: HeaderProps) {
         style={styles.backButton}
         hitSlop={12}
       >
-        <Ionicons name="arrow-back" size={24} color={Colors.black} />
+        <ArrowLeft size={24} color={Colors.black} />
       </TouchableOpacity>
 
       {/* 중앙 타이틀 */}

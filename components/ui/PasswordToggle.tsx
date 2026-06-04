@@ -1,5 +1,5 @@
 import { Colors } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { TouchableOpacity } from 'react-native';
 
 interface PasswordToggleProps {
@@ -10,11 +10,10 @@ interface PasswordToggleProps {
 export default function PasswordToggle({ show, onToggle }: PasswordToggleProps) {
     return (
         <TouchableOpacity onPress={onToggle} hitSlop={8}>
-            <Ionicons
-                name={show ? "eye-outline" : "eye-off-outline"}
-                size={20}
-                color={Colors.gray500}
-            />
+            {show
+                ? <Eye size={20} color={Colors.gray500} />
+                : <EyeOff size={20} color={Colors.gray500} />
+            }
         </TouchableOpacity>
     );
 }

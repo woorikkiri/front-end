@@ -1,13 +1,13 @@
 // BoardTab.tsx
-import PostCard from '@/components/board/PostCard';
+import PostCard from '@/components/group/board/PostCard';
 import EmptyState from '@/components/ui/EmptyState';
 import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from "@/store/useAuthStore";
 import { formatTimeAgo } from '@/utils/date';
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { File, Megaphone } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -107,7 +107,7 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
             {noticePost && (
               <View style={styles.noticeBanner}>
                 <View style={styles.noticeBannerIcon}>
-                  <Ionicons name="megaphone" size={22} color={Colors.primary} />
+                  <Megaphone size={22} color={Colors.primary} fill={Colors.primaryLight} />
                 </View>
                 <Text style={styles.noticeBannerText}>{noticePost.title}</Text>
               </View>
@@ -118,7 +118,7 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
         )}
         ListEmptyComponent={() => (
           <EmptyState
-            icon={<Ionicons name="document-outline" size={40} color={Colors.gray300} />}
+            icon={<File size={40} color={Colors.gray300} />}
             title="아직 게시글이 없어요"
             description="첫 번째 게시글을 작성해보세요!"
           />

@@ -1,5 +1,6 @@
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronRight } from 'lucide-react-native';
+
 import React from 'react';
 import {
     StyleSheet,
@@ -25,7 +26,7 @@ function MenuRow({ label, onPress, labelStyle, rightIcon, showChevron = true }: 
             {rightIcon ? (
                 rightIcon
             ) : showChevron ? (
-                <Ionicons name="chevron-forward" size={18} color={Colors.gray300} />
+                <ChevronRight size={20} color={Colors.gray300} />
             ) : null}
         </TouchableOpacity>
     );

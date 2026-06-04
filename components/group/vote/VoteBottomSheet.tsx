@@ -1,12 +1,12 @@
 import { VoteItem } from '@/components/group/vote/VoteCard';
 import Button from '@/components/ui/Button';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
+import { CalendarClock, CircleCheck } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -59,7 +59,7 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
             <>
               {/* 마감일 */}
               <View style={styles.deadlineRow}>
-                <Ionicons name="time-outline" size={15} color={Colors.gray500} />
+                <CalendarClock size={15} color={Colors.gray500} />
                 <Text style={styles.deadlineText}>{vote.deadline}</Text>
               </View>
 
@@ -110,7 +110,7 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
                         <View style={styles.resultTop}>
                           <View style={styles.resultLabel}>
                             {isMyChoice && (
-                              <Ionicons name="checkmark-circle" size={15} color={Colors.primary} />
+                              <CircleCheck size={18} color={Colors.white} fill={Colors.primary} />
                             )}
                             <Text style={[styles.optionText, !isMyChoice && { color: Colors.gray500 }]}>
                               {option.content}

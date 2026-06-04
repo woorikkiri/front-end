@@ -1,11 +1,11 @@
 // components/ui/NotificationCard.tsx
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
 import { formatTimeAgo } from '@/utils/date';
-import { Ionicons } from '@expo/vector-icons';
+import { CalendarCheck2, Megaphone, Vote, X } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export type NotificationType = 'schedule' | 'vote' | 'notice' | 'invite';
+export type NotificationType = 'schedule' | 'vote' | 'notice';
 
 export interface NotificationItem {
   id: string;
@@ -23,11 +23,10 @@ interface Props {
   onDismiss?: () => void;
 }
 
-const TYPE_ICON: Record<NotificationType, keyof typeof Ionicons.glyphMap> = {
-  schedule: 'alarm-outline',
-  vote: 'stats-chart-outline',
-  notice: 'megaphone-outline',
-  invite: 'people-outline',
+const TYPE_ICON = {
+  schedule: <CalendarCheck2 size={20} color={Colors.primary} />,
+  vote: <Vote size={20} color={Colors.primary} />,
+  notice: <Megaphone size={20} color={Colors.primary} />,
 };
 
 export default function NotificationCard({ item, mode = 'list', onPress, onDismiss }: Props) {
@@ -46,15 +45,11 @@ export default function NotificationCard({ item, mode = 'list', onPress, onDismi
       activeOpacity={0.7}
     >
       {/* 아이콘 영역 */}
-      <View style={styles.iconContainer}>
-        <View style={[styles.iconWrap, isNew && styles.iconWrapNew]}>
-          <Ionicons
-            name={TYPE_ICON[item.type]}
-            size={20}
-            color={Colors.primary}
-          />
-        </View>
+
+      <View style={[styles.iconWrap, isNew && styles.iconWrapNew]}>
+        {TYPE_ICON[item.type]}
       </View>
+
 
       {/* 텍스트 영역 */}
       <View style={styles.content}>
@@ -82,7 +77,7 @@ export default function NotificationCard({ item, mode = 'list', onPress, onDismi
           style={styles.dismissBtn}
           hitSlop={8}
         >
-          <Ionicons name="close" size={18} color={Colors.gray500} />
+          <X size={18} color={Colors.gray500} />
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -115,9 +110,6 @@ const styles = StyleSheet.create({
   containerNew: {
     backgroundColor: Colors.primaryLight,
     borderColor: Colors.primary,
-  },
-  iconContainer: {
-    position: 'relative',
   },
 
   // 아이콘

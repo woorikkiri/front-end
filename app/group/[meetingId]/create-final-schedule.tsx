@@ -5,9 +5,9 @@ import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import useError from '@/hooks/useError';
-import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ChevronDown, ChevronUp, Clock3 } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     ScrollView,
@@ -106,16 +106,16 @@ export default function CreateFinalScheduleScreen() {
                         style={[styles.timeButton, showTimePicker && styles.timeButtonActive]}
                         onPress={() => setShowTimePicker(!showTimePicker)}
                     >
-                        <Ionicons name="time-outline" size={16} color={Colors.gray500} />
+                        <Clock3 size={16} color={Colors.gray500} />
                         <Text style={styles.timeBtnValue}>
                             {time ? time.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : '시간 선택'}
                         </Text>
-                        <Ionicons
-                            name={showTimePicker ? 'chevron-up' : 'chevron-down'}
-                            size={16}
-                            color={Colors.gray500}
-                            style={{ marginLeft: 'auto' }}
-                        />
+                        <View style={{ marginLeft: 'auto' }}>
+                            {showTimePicker
+                                ? <ChevronUp size={18} color={Colors.gray500} />
+                                : <ChevronDown size={18} color={Colors.gray500} />
+                            }
+                        </View>
                     </TouchableOpacity>
 
                     {/* 시간 선택 휠 */}
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: Colors.black,
     },
-    
+
     timeSection: {
         marginTop: Spacing.lg,
         gap: Spacing.sm

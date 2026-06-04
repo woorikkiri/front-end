@@ -1,6 +1,6 @@
 // 개인 캘린더 화면
 import { CalendarTheme, Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { MapPin } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     ScrollView,
@@ -105,7 +105,7 @@ export default function CalendarScreen() {
                                             </Text>
                                         </View>
                                     </View>
-                                    <Text style={styles.schedulePlace}><Ionicons name="location-outline" size={12} color={Colors.gray500} /> {schedule.place}</Text>
+                                    <Text style={styles.schedulePlace}><MapPin size={12} color={Colors.gray500} /> {schedule.place}</Text>
                                 </View>
                             ))
                         )}

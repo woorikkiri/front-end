@@ -7,9 +7,19 @@ import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useMeetingStore } from '@/store/MeetingStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useFocusEffect, useRouter } from "expo-router";
+import {
+  ChevronDown,
+  ChevronUp,
+  Crown,
+  EllipsisVertical,
+  LogOut,
+  Pencil,
+  Trash2,
+  UserRoundMinus,
+  UserRoundPlus
+} from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -250,7 +260,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
         openModal(memberId, 'delegate');
       },
       labelStyle: { color: Colors.primary },
-      rightIcon: <Ionicons name="ribbon-outline" size={20} color={Colors.primary} />,
+      rightIcon: <Crown size={20} color={Colors.primary} />,
       showChevron: false,
     },
     {
@@ -260,7 +270,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
         openModal(memberId, 'kick');
       },
       labelStyle: { color: Colors.error },
-      rightIcon: <Ionicons name="person-remove-outline" size={20} color={Colors.error} />,
+      rightIcon: <UserRoundMinus size={20} color={Colors.error} />,
       showChevron: false,
     },
   ];
@@ -270,14 +280,14 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
       {
         label: '모임 수정',
         onPress: () => router.push(`/group/${meetingId}/edit-meeting`),
-        rightIcon: <Ionicons name="pencil-outline" size={20} color={Colors.gray500} />,
+        rightIcon: <Pencil size={20} color={Colors.gray500} />,
         showChevron: false,
       },
       {
         label: '모임 삭제',
         onPress: () => openModal(userId ?? 0, 'delete'),
         labelStyle: { color: Colors.error },
-        rightIcon: <Ionicons name="trash-outline" size={20} color={Colors.error} />,
+        rightIcon: <Trash2 size={20} color={Colors.error} />,
         showChevron: false,
       },
     ]
@@ -286,13 +296,13 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
         label: '모임 나가기',
         onPress: () => openModal(userId ?? 0, 'leave'),
         labelStyle: { color: Colors.error },
-        rightIcon: <Ionicons name="exit-outline" size={20} color={Colors.error} />,
+        rightIcon: <LogOut size={20} color={Colors.error} />,
         showChevron: false,
       },
     ];
 
   if (loading) return <ActivityIndicator style={{ marginTop: Spacing['2xl'] }} color={Colors.primary} />;
-  
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       {/* ── 멤버 수 + 초대 버튼 ── */}
@@ -304,7 +314,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
           variant="warning"
           size="sm"
           fullWidth={false}
-          icon={<Ionicons name="person-add" size={16} color={Colors.primary} />}
+          icon={<UserRoundPlus size={18} color={Colors.primary} />}
           style={{ borderRadius: Radius.full }}
         />
       </View>
@@ -331,7 +341,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
                       backgroundStyle={{ backgroundColor: 'transparent' }}
                       from={(
                         <TouchableOpacity onPress={() => setOpenPopoverId(member.userId)}>
-                          <Ionicons name="ellipsis-vertical" size={18} color={Colors.gray300} />
+                          <EllipsisVertical size={18} color={Colors.gray300} />
                         </TouchableOpacity>
                       )}
                     >
@@ -360,11 +370,10 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
             <Text style={styles.expandBtnText}>
               {expanded ? '접기' : `대화상대 전체보기 (${hiddenCount}명 더)`}
             </Text>
-            <Ionicons
-              name={expanded ? 'chevron-up' : 'chevron-down'}
-              size={16}
-              color={Colors.gray500}
-            />
+            {expanded
+              ? <ChevronUp size={16} color={Colors.gray500} />
+              : <ChevronDown size={16} color={Colors.gray500} />
+            }
           </TouchableOpacity>
         )}
       </View>

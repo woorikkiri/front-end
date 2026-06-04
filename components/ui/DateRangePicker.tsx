@@ -1,5 +1,5 @@
 import { CalendarTheme, Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { CalendarDays, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     StyleSheet,
@@ -61,17 +61,17 @@ export default function DateRangePicker({
                         }
                     }}
                 >
-                    <Ionicons name="calendar-outline" size={16} color={Colors.gray500} />
+                    <CalendarDays size={16} color={Colors.gray500} />
                     <View>
                         <Text style={styles.dateBtnLabel}>시작</Text>
                         <Text style={styles.dateBtnValue}>{startDate ?? '날짜 선택'}</Text>
                     </View>
-                    <Ionicons
-                        name={showCalendar && selecting === 'start' ? 'chevron-up' : 'chevron-down'}
-                        size={16}
-                        color={Colors.gray500}
-                        style={{ marginLeft: 'auto' }}
-                    />
+                    <View style={styles.chevron}>
+                        {showCalendar && selecting === 'start'
+                            ? <ChevronUp size={18} color={Colors.gray500} />
+                            : <ChevronDown size={18} color={Colors.gray500} />
+                        }
+                    </View>
                 </TouchableOpacity>
 
                 {/* 종료 버튼 */}
@@ -90,17 +90,17 @@ export default function DateRangePicker({
                         }
                     }}
                 >
-                    <Ionicons name="calendar-outline" size={16} color={Colors.gray500} />
+                    <CalendarDays size={16} color={Colors.gray500} />
                     <View>
                         <Text style={styles.dateBtnLabel}>종료</Text>
                         <Text style={styles.dateBtnValue}>{endDate ?? '날짜 선택'}</Text>
                     </View>
-                    <Ionicons
-                        name={showCalendar && selecting === 'end' ? 'chevron-up' : 'chevron-down'}
-                        size={16}
-                        color={Colors.gray500}
-                        style={{ marginLeft: 'auto' }}
-                    />
+                    <View style={styles.chevron}>
+                        {showCalendar && selecting === 'end'
+                            ? <ChevronUp size={18} color={Colors.gray500} />
+                            : <ChevronDown size={18} color={Colors.gray500} />
+                        }
+                    </View>
                 </TouchableOpacity>
             </View>
 
@@ -151,5 +151,8 @@ const styles = StyleSheet.create({
         fontSize: Typography.base,
         fontWeight: '600',
         color: Colors.black,
+    },
+    chevron: {
+        marginLeft: 'auto',
     },
 });

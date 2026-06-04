@@ -1,5 +1,5 @@
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Pin } from 'lucide-react-native';
 import {
     StyleSheet,
     Text,
@@ -38,7 +38,7 @@ export default function PostCard({
                 </Text>
                 {isNotice && (
                     <View style={styles.noticeBadge}>
-                        <MaterialIcons name="push-pin" size={14} color={Colors.primary} />
+                        <Pin size={14} color={Colors.primary} />
                         <Text style={styles.noticeText}>공지</Text>
                     </View>
                 )}
