@@ -1,15 +1,19 @@
 import Button from '@/components/ui/Button';
 import DateRangePicker from '@/components/ui/DateRangePicker';
 import Header from '@/components/ui/Header';
+import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import useError from '@/hooks/useError';
+import { useAuthStore } from '@/store/useAuthStore';
+import { formatTime } from '@/utils/date';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronDown, ChevronUp, Clock3 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -19,44 +23,98 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const TODAY = new Date().toISOString().split('T')[0];
-
 export default function CreateFinalScheduleScreen() {
+    // ── 라우터 / 인증 ──
     const router = useRouter();
-    const { meetingId } = useLocalSearchParams();
-    const [loading, setLoading] = useState(false);
+    const { meetingId, scheduleId } = useLocalSearchParams();
+    const { userToken } = useAuthStore();
+    const { showError } = useError();
+
+    // ── 모드 판별 ──
+    const isEdit = !!scheduleId;
+
+    // ── 로딩 ──
+    const [fetchLoading, setFetchLoading] = useState(false);
+    const [submitLoading, setSubmitLoading] = useState(false);
+
+    // ── 서버 오류 ──
+    const [serverErrorModal, setServerErrorModal] = useState(false);
+
+    // ── 폼 데이터 ──
     const [title, setTitle] = useState('');
     const [startDate, setStartDate] = useState<string | null>(null);
     const [endDate, setEndDate] = useState<string | null>(null);
+    const [location, setLocation] = useState('');
+
+    // ── 시간 ──
     const [time, setTime] = useState<Date | null>(null);
     const [showTimePicker, setShowTimePicker] = useState(false);
-    const [location, setLocation] = useState('');
-    const { showError } = useError();
 
-    // Date → "20:00:00" 변환
-    const formatTime = (date: Date) => {
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}:00`;
-    };
+    // ── 수정 모드면 기존 데이터 불러오기 ──
+    useEffect(() => {
+        if (!isEdit) return;  // 생성 모드면 스킵
+        setFetchLoading(true)
+
+        const fetchSchedule = async () => {
+            try {
+                const response = await fetch(
+                    API.getFinalSchedule(Number(meetingId), Number(scheduleId)), {
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    setServerErrorModal(true);
+                    return;
+                }
+                // 기존 데이터로 폼 채우기
+                setTitle(data.title);
+                setStartDate(data.startDate);
+                setEndDate(data.endDate);
+                setLocation(data.location ?? '');
+                if (data.time) {
+                    // "20:00:00" → Date 객체로 변환
+                    const [hours, minutes] = data.time.split(':');
+                    const d = new Date();
+                    d.setHours(Number(hours));
+                    d.setMinutes(Number(minutes));
+                    setTime(d);
+                }
+            } catch (e) {
+                setServerErrorModal(true);
+            } finally {
+                setFetchLoading(false);
+            }
+        };
+        fetchSchedule();
+    }, []);
 
     const handleSubmit = async () => {
         try {
-            setLoading(true);
-            const response = await fetch(API.createFinalSchedule(Number(meetingId)), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            setSubmitLoading(true);
+
+            // ── 생성 vs 수정 분기 ──
+            const url = isEdit
+                ? API.updateFinalSchedule(Number(meetingId), Number(scheduleId))
+                : API.createFinalSchedule(Number(meetingId));
+
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Authorization': `Bearer ${userToken}`,
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
                     title,
                     startDate,
                     endDate,
-                    time: time ? formatTime(time) : null,  // 선택사항
-                    location: location || null,             // 선택사항
+                    time: time ? formatTime(time) : null,
+                    location: location || null,
                 }),
             });
 
             const data = await response.json();
-
             if (!response.ok) {
                 showError(data.message);
                 return;
@@ -64,104 +122,109 @@ export default function CreateFinalScheduleScreen() {
 
             router.back();
         } catch (e) {
-            showError('네트워크 오류가 발생했어요.');
+            setServerErrorModal(true);
         } finally {
-            setLoading(false);
+            setSubmitLoading(false);
         }
     };
 
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-            <Header title='일정 생성' />
-            <ScrollView
-                contentContainerStyle={styles.container}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-                scrollEnabled={!showTimePicker}  // ← 타임피커 열리면 스크롤 막기
-            >
-                <View style={styles.titleSection}>
-                    <TextInput
-                        label='제목'
-                        placeholder='예: 나들이 가는날~'
-                        value={title}
-                        onChangeText={setTitle}
-                    />
-                </View>
+            {/* 생성/수정에 따라 타이틀 변경 */}
+            <Header title={isEdit ? '일정 수정' : '일정 생성'} />
 
-                <View style={styles.dateSection}>
-                    <Text style={styles.dateLabel}>날짜</Text>
-                    <DateRangePicker
-                        startDate={startDate}
-                        endDate={endDate}
-                        onStartChange={setStartDate}
-                        onEndChange={setEndDate}
-                    />
-                </View>
-
-                {/* 시간 섹션 */}
-                <View style={styles.timeSection}>
-                    <Text style={styles.dateLabel}>시간 (선택)</Text>
-                    <TouchableOpacity
-                        style={[styles.timeButton, showTimePicker && styles.timeButtonActive]}
-                        onPress={() => setShowTimePicker(!showTimePicker)}
-                    >
-                        <Clock3 size={16} color={Colors.gray500} />
-                        <Text style={styles.timeBtnValue}>
-                            {time ? time.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : '시간 선택'}
-                        </Text>
-                        <View style={{ marginLeft: 'auto' }}>
-                            {showTimePicker
-                                ? <ChevronUp size={18} color={Colors.gray500} />
-                                : <ChevronDown size={18} color={Colors.gray500} />
-                            }
-                        </View>
-                    </TouchableOpacity>
-
-                    {/* 시간 선택 휠 */}
-                    {showTimePicker && (
-                        <DateTimePicker
-                            value={time ?? new Date()}  // 선택된 시간 없으면 현재 시간
-                            mode="time"
-                            is24Hour={true}             // 24시간제
-                            display="spinner"           // 휠 스타일
-                            onChange={(event, selectedTime) => {
-                                if (selectedTime) setTime(selectedTime);
-                            }}
+            {fetchLoading ? (
+                <ActivityIndicator style={{ marginTop: Spacing['2xl'] }} color={Colors.primary} />
+            ) : (
+                <ScrollView
+                    contentContainerStyle={styles.container}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                    scrollEnabled={!showTimePicker}
+                >
+                    <View style={styles.titleSection}>
+                        <TextInput
+                            label='제목'
+                            placeholder='예: 나들이 가는날~'
+                            value={title}
+                            onChangeText={setTitle}
                         />
-                    )}
-                </View>
+                    </View>
 
-                <View style={styles.placeSection}>
-                    <TextInput
-                        label='장소'
-                        placeholder='예: 예은이 집'
-                        value={location}
-                        onChangeText={setLocation}
-                        error={''}
-                    />
-                </View>
+                    <View style={styles.dateSection}>
+                        <Text style={styles.dateLabel}>날짜</Text>
+                        <DateRangePicker
+                            startDate={startDate}
+                            endDate={endDate}
+                            onStartChange={setStartDate}
+                            onEndChange={setEndDate}
+                        />
+                    </View>
 
-                <View style={styles.buttonSection}>
-                    <Button
-                        label='취소'
-                        onPress={() => router.back()}
-                        variant='cancel'
-                        style={{ flex: 1 }}
-                        fullWidth={false}
-                    />
+                    <View style={styles.timeSection}>
+                        <Text style={styles.dateLabel}>시간 (선택)</Text>
+                        <TouchableOpacity
+                            style={[styles.timeButton, showTimePicker && styles.timeButtonActive]}
+                            onPress={() => setShowTimePicker(!showTimePicker)}
+                        >
+                            <Clock3 size={16} color={Colors.gray500} />
+                            <Text style={styles.timeBtnValue}>
+                                {time ? time.toLocaleTimeString('ko-KR', {
+                                    hour: '2-digit', minute: '2-digit', hour12: false
+                                }) : '시간 선택'}
+                            </Text>
+                            <View style={{ marginLeft: 'auto' }}>
+                                {showTimePicker
+                                    ? <ChevronUp size={18} color={Colors.gray500} />
+                                    : <ChevronDown size={18} color={Colors.gray500} />}
+                            </View>
+                        </TouchableOpacity>
+                        {showTimePicker && (
+                            <DateTimePicker
+                                value={time ?? new Date()}
+                                mode="time"
+                                is24Hour={true}
+                                display="spinner"
+                                onChange={(event, selectedTime) => {
+                                    if (selectedTime) setTime(selectedTime);
+                                }}
+                            />
+                        )}
+                    </View>
 
-                    <Button
-                        disabled={!title || !startDate || !endDate}  // 다 있어야 활성화
-                        label='생성'
-                        onPress={handleSubmit}
-                        loading={loading}
-                        style={{ flex: 1 }}
-                        fullWidth={false}
-                    />
+                    <View style={styles.placeSection}>
+                        <TextInput
+                            label='장소'
+                            placeholder='예: 예은이 집'
+                            value={location}
+                            onChangeText={setLocation}
+                        />
+                    </View>
 
-                </View>
-            </ScrollView>
+                    <View style={styles.buttonSection}>
+                        <Button
+                            label='취소'
+                            onPress={() => router.back()}
+                            variant='cancel'
+                            style={{ flex: 1 }}
+                            fullWidth={false}
+                        />
+                        <Button
+                            disabled={!title || !startDate || !endDate}
+                            label={isEdit ? '저장' : '생성'}  // 버튼 텍스트도 변경
+                            onPress={handleSubmit}
+                            loading={submitLoading}
+                            style={{ flex: 1 }}
+                            fullWidth={false}
+                        />
+                    </View>
+                </ScrollView>
+            )}
+            <ServerErrorModal
+                visible={serverErrorModal}
+                onClose={() => setServerErrorModal(false)}
+            />
         </SafeAreaView>
     );
 }

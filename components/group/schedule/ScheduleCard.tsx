@@ -1,5 +1,5 @@
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
-import { Pencil, Trash2 } from 'lucide-react-native';
+import { Clock, MapPin, Pencil, Trash2 } from 'lucide-react-native';
 import {
     StyleSheet,
     Text,
@@ -10,7 +10,9 @@ import {
 
 interface ScheduleCardProps {
     title: string;
-    meta: string;
+    meta: string;              // 날짜
+    time?: string | null;      // 시간
+    location?: string | null;  // 장소
     onEdit: () => void;
     onDelete: () => void;
 }
@@ -18,6 +20,8 @@ interface ScheduleCardProps {
 export default function ScheduleCard({
     title,
     meta,
+    time,
+    location,
     onEdit,
     onDelete,
 }: ScheduleCardProps) {
@@ -27,6 +31,22 @@ export default function ScheduleCard({
             <View style={styles.info}>
                 <Text style={styles.title}>{title}</Text>
                 <Text style={styles.subText}>{meta}</Text>
+                {(time || location) && (
+                    <View style={styles.locationRow}>
+                        {location && (
+                            <>
+                                <MapPin size={12} color={Colors.gray500} />
+                                <Text style={styles.locationText}>{location}</Text>
+                            </>
+                        )}
+                        {time && (
+                            <>
+                                <Clock size={12} color={Colors.gray500} />
+                                <Text style={styles.locationText}>{time.slice(0, 5)}</Text>
+                            </>
+                        )}
+                    </View>
+                )}
             </View>
 
             {/* 오른쪽: 수정 + 삭제 버튼 */}
@@ -85,5 +105,16 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.errorbackground,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+
+    locationRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        marginTop: 2,
+    },
+    locationText: {
+        color: Colors.gray500,
+        fontSize: Typography.sm,
     },
 });
