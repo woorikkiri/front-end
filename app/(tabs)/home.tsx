@@ -1,10 +1,12 @@
+import ServerErrorModal from "@/components/ui/ServerErrorModal";
 import { API } from "@/constants/api";
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Bell, CalendarDays, ChevronRight, KeyRound, Plus, Search, UsersRound } from "lucide-react-native";
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   ScrollView,
   StatusBar,
@@ -26,29 +28,44 @@ interface Meeting {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { userToken } = useAuthStore();
+
+  const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState<Meeting[]>([]);
   const [searchText, setSearchText] = useState('');
   const [showBottomSheet, setShowBottomSheet] = useState(false);
-  const { userToken } = useAuthStore();
+  const [serverErrorModal, setServerErrorModal] = useState(false);
 
-  useEffect(() => {
-    const fetchMeetings = async () => {
-      try {
-        const response = await fetch(API.getMyMeetings, {
-          headers: {
-            'Authorization': `Bearer ${userToken}`,
-          }
-        });
-        const data = await response.json();
-        console.log('API 응답:', data);
-        setGroups(data);
-      } catch (e) {
-        // 네트워크 오류 등
-        console.error('모임 목록 불러오기 실패', e);
+  const fetchMeetings = async () => {
+    if (!userToken) return;
+    setLoading(true);
+
+    try {
+      const response = await fetch(API.getMyMeetings, {
+        headers: {
+          'Authorization': `Bearer ${userToken}`,
+        }
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setServerErrorModal(true);
+        return;
       }
-    };
-    fetchMeetings();
-  }, []);
+
+      setGroups(data);
+      
+    } catch (e) {
+      setServerErrorModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMeetings();
+    }, [])
+  );
 
   // ───── 검색 필터 ─────
   const filteredGroups = groups.filter((g) =>
@@ -75,76 +92,80 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* 모임이 하나도 없는 경우 */}
-        {groups.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            {/* 아이콘 */}
-            <View style={styles.iconCircle}>
-              <UsersRound size={60} color={Colors.primaryAlpha} />
+      {loading ? (
+        <ActivityIndicator style={{ marginTop: Spacing['2xl'] }} color={Colors.primary} />
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* 모임이 하나도 없는 경우 */}
+          {groups.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              {/* 아이콘 */}
+              <View style={styles.iconCircle}>
+                <UsersRound size={60} color={Colors.primaryAlpha} />
+              </View>
+
+              {/* 텍스트 그룹 */}
+              <View style={styles.textGroup}>
+                <Text style={styles.emptyTitleText}>아직 참여 중인 모임이 없어요</Text>
+                <Text style={styles.emptySubTitleText}>
+                  우리끼리만의 특별한 공간을 만들어볼까요?{"\n"}
+                  새로운 모임을 만들거나 초대코드로 참여해보세요!
+                </Text>
+              </View>
             </View>
+          ) : (
+            <View>
+              {/* 참여중인 모임 n개 */}
+              <Text style={styles.groupCount}>참여중인 모임 {groups.length}개</Text>
 
-            {/* 텍스트 그룹 */}
-            <View style={styles.textGroup}>
-              <Text style={styles.emptyTitleText}>아직 참여 중인 모임이 없어요</Text>
-              <Text style={styles.emptySubTitleText}>
-                우리끼리만의 특별한 공간을 만들어볼까요?{"\n"}
-                새로운 모임을 만들거나 초대코드로 참여해보세요!
-              </Text>
+              {/* 검색창 */}
+              <View style={styles.searchBar}>
+                <Search size={18} color={Colors.gray500} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="그룹 검색"
+                  placeholderTextColor={Colors.placeholder}
+                  value={searchText}
+                  onChangeText={setSearchText}
+                />
+              </View>
+
+              {/* 그룹 목록 */}
+              <View style={styles.groupList}>
+                {filteredGroups.map((group) => (
+                  <TouchableOpacity
+                    key={group.meetingId}
+                    style={styles.groupCard}
+                    onPress={() => router.push(`/group/${group.meetingId}`)}
+                    activeOpacity={0.7}
+                  >
+                    {/* 이니셜 아바타 */}
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>
+                        {group.meetingName.charAt(0)}
+                      </Text>
+                    </View>
+
+                    {/* 모임 정보 */}
+                    <View style={styles.groupInfo}>
+                      <Text style={styles.groupName}>{group.meetingName}</Text>
+                      <Text style={styles.groupSub}>
+                        멤버 {group.totalMemberCount}명
+                      </Text>
+                    </View>
+
+                    {/* 화살표 */}
+                    <ChevronRight size={24} color={Colors.primary} />
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
-        ) : (
-          <View>
-            {/* 참여중인 모임 n개 */}
-            <Text style={styles.groupCount}>참여중인 모임 {groups.length}개</Text>
-
-            {/* 검색창 */}
-            <View style={styles.searchBar}>
-              <Search size={18} color={Colors.gray500} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="그룹 검색"
-                placeholderTextColor={Colors.placeholder}
-                value={searchText}
-                onChangeText={setSearchText}
-              />
-            </View>
-
-            {/* 그룹 목록 */}
-            <View style={styles.groupList}>
-              {filteredGroups.map((group) => (
-                <TouchableOpacity
-                  key={group.meetingId}
-                  style={styles.groupCard}
-                  onPress={() => router.push(`/group/${group.meetingId}`)}
-                  activeOpacity={0.7}
-                >
-                  {/* 이니셜 아바타 */}
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {group.meetingName.charAt(0)}
-                    </Text>
-                  </View>
-
-                  {/* 모임 정보 */}
-                  <View style={styles.groupInfo}>
-                    <Text style={styles.groupName}>{group.meetingName}</Text>
-                    <Text style={styles.groupSub}>
-                      멤버 {group.totalMemberCount}명
-                    </Text>
-                  </View>
-
-                  {/* 화살표 */}
-                  <ChevronRight size={24} color={Colors.primary} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
+      )}
 
       {/* + 버튼 */}
       <TouchableOpacity
@@ -197,6 +218,11 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
+      {/* 서버 오류 모달 */}
+      <ServerErrorModal
+        visible={serverErrorModal}
+        onClose={() => setServerErrorModal(false)}
+      />
     </SafeAreaView>
   );
 }

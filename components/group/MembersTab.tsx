@@ -71,6 +71,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
   const [modalType, setModalType] = useState<ModalType | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [serverErrorModal, setServerErrorModal] = useState(false);
+  const [pendingModal, setPendingModal] = useState<{ memberId: number, type: ModalType } | null>(null);
 
   // ───── 초대코드 ─────
   const [inviteCode, setInviteCode] = useState("");
@@ -84,11 +85,18 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
   // ───── 데이터 fetch ─────
   const fetchMembers = async () => {
     if (!meetingId) return;
+    setLoading(true);
+
     try {
       const response = await fetch(API.getMembers(meetingId), {
         headers: { "Authorization": `Bearer ${userToken}` }
       });
       const data = await response.json();
+      if (!response.ok) {
+        setServerErrorModal(true);
+        return;
+      }
+
       const sorted = [...data.members].sort((a, b) => {
         if (a.role === 'HOST') return -1;
         if (b.role === 'HOST') return 1;
@@ -102,10 +110,15 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
         headers: { "Authorization": `Bearer ${userToken}` }
       });
       const inviteData = await inviteResponse.json();
+
+      if (!inviteResponse.ok) {
+        setServerErrorModal(true);
+        return;
+      }
       setInviteCode(inviteData.inviteCode);
 
     } catch (error) {
-      console.error('Error fetching members:', error);
+      setServerErrorModal(true);
     } finally {
       setLoading(false);
     }
@@ -132,6 +145,9 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
   // ───── 멤버 관리  ─────
   const handleKickConfirm = async () => {
     if (!selectedMember) return;
+
+    setOpenPopoverId(null); // 팝오버 닫기
+    
     try {
       const response = await fetch(API.kickMember(meetingId ?? 0, selectedMember.userId), {
         method: "DELETE",
@@ -157,6 +173,8 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
 
   const handleDelegateConfirm = async () => {
     if (!selectedMember || !meetingId) return;
+
+    setOpenPopoverId(null); // 팝오버 닫기
 
     try {
       const response = await fetch(API.transferOwnership(meetingId), {
@@ -256,8 +274,8 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
     {
       label: '방장 위임',
       onPress: () => {
-        setOpenPopoverId(null);
-        openModal(memberId, 'delegate');
+        setPendingModal({ memberId, type: 'delegate' });
+        setOpenPopoverId(null);  // 팝오버 닫기 시작
       },
       labelStyle: { color: Colors.primary },
       rightIcon: <Crown size={20} color={Colors.primary} />,
@@ -266,8 +284,8 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
     {
       label: '멤버 강퇴',
       onPress: () => {
+        setPendingModal({ memberId, type: 'kick' });
         setOpenPopoverId(null);
-        openModal(memberId, 'kick');
       },
       labelStyle: { color: Colors.error },
       rightIcon: <UserRoundMinus size={20} color={Colors.error} />,
@@ -304,84 +322,92 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
   if (loading) return <ActivityIndicator style={{ marginTop: Spacing['2xl'] }} color={Colors.primary} />;
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-      {/* ── 멤버 수 + 초대 버튼 ── */}
-      <View style={styles.header}>
-        <Text style={styles.titleText}>멤버 {members.length}명</Text>
-        <Button
-          label="초대"
-          onPress={() => setShowInviteModal(true)}
-          variant="warning"
-          size="sm"
-          fullWidth={false}
-          icon={<UserRoundPlus size={18} color={Colors.primary} />}
-          style={{ borderRadius: Radius.full }}
-        />
-      </View>
+    <>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
+        {/* ── 멤버 수 + 초대 버튼 ── */}
+        <View style={styles.header}>
+          <Text style={styles.titleText}>멤버 {members.length}명</Text>
+          <Button
+            label="초대"
+            onPress={() => setShowInviteModal(true)}
+            variant="warning"
+            size="sm"
+            fullWidth={false}
+            icon={<UserRoundPlus size={18} color={Colors.primary} />}
+            style={{ borderRadius: Radius.full }}
+          />
+        </View>
 
-      {/* ── 멤버 목록 ── */}
-      <View style={styles.memberList}>
-        {visibleMembers.map((member) => {
-          const isMe = member.userId === userId;
-          const isOwner = member.role === 'HOST';
+        {/* ── 멤버 목록 ── */}
+        <View style={styles.memberList}>
+          {visibleMembers.map((member) => {
+            const isMe = member.userId === userId;
+            const isOwner = member.role === 'HOST';
 
-          return (
-            <View key={member.userId} style={styles.memberWrapper}>
-              <ProfileCard
-                name={member.nickname}
-                role={isOwner ? '방장' : '멤버'}
-                profileImage={member.profileImageUrl}
-                // 방장이고 내가 아닌 멤버에게만 ··· 팝오버 표시
-                icon={
-                  amILeader && !isMe ? (
-                    <Popover
-                      isVisible={openPopoverId === member.userId}
-                      onRequestClose={() => setOpenPopoverId(null)}
-                      arrowSize={{ width: 0, height: 0 }}
-                      backgroundStyle={{ backgroundColor: 'transparent' }}
-                      from={(
-                        <TouchableOpacity onPress={() => setOpenPopoverId(member.userId)}>
-                          <EllipsisVertical size={18} color={Colors.gray300} />
-                        </TouchableOpacity>
-                      )}
-                    >
-                      <View style={styles.menu}>
-                        <Text style={styles.menuHeader}>
-                          {member.nickname}님
-                        </Text>
-                        <View style={styles.menuDivider} />
-                        <MenuGroup items={getMemberMenuItems(member.userId)} />
-                      </View>
-                    </Popover>
-                  ) : undefined
-                }
-              />
-            </View>
-          );
-        })}
+            return (
+              <View key={member.userId} style={styles.memberWrapper}>
+                <ProfileCard
+                  name={member.nickname}
+                  role={isOwner ? '방장' : '멤버'}
+                  profileImage={member.profileImageUrl}
+                  // 방장이고 내가 아닌 멤버에게만 ··· 팝오버 표시
+                  icon={
+                    amILeader && !isMe ? (
+                      <Popover
+                        isVisible={openPopoverId === member.userId}
+                        onRequestClose={() => setOpenPopoverId(null)}
+                        onCloseComplete={() => {
+                          if (pendingModal) {
+                            openModal(pendingModal.memberId, pendingModal.type);
+                            setPendingModal(null);
+                          }
+                        }}
+                        arrowSize={{ width: 0, height: 0 }}
+                        backgroundStyle={{ backgroundColor: 'transparent' }}
+                        from={(
+                          <TouchableOpacity onPress={() => setOpenPopoverId(member.userId)}>
+                            <EllipsisVertical size={18} color={Colors.gray300} />
+                          </TouchableOpacity>
+                        )}
+                      >
+                        <View style={styles.menu}>
+                          <Text style={styles.menuHeader}>
+                            {member.nickname}님
+                          </Text>
+                          <View style={styles.menuDivider} />
+                          <MenuGroup items={getMemberMenuItems(member.userId)} />
+                        </View>
+                      </Popover>
+                    ) : undefined
+                  }
+                />
+              </View>
+            );
+          })}
 
-        {/* 전체보기 / 접기 버튼 */}
-        {hasMore && (
-          <TouchableOpacity
-            style={styles.expandBtn}
-            onPress={() => setExpanded((prev) => !prev)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.expandBtnText}>
-              {expanded ? '접기' : `대화상대 전체보기 (${hiddenCount}명 더)`}
-            </Text>
-            {expanded
-              ? <ChevronUp size={16} color={Colors.gray500} />
-              : <ChevronDown size={16} color={Colors.gray500} />
-            }
-          </TouchableOpacity>
-        )}
-      </View>
+          {/* 전체보기 / 접기 버튼 */}
+          {hasMore && (
+            <TouchableOpacity
+              style={styles.expandBtn}
+              onPress={() => setExpanded((prev) => !prev)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.expandBtnText}>
+                {expanded ? '접기' : `대화상대 전체보기 (${hiddenCount}명 더)`}
+              </Text>
+              {expanded
+                ? <ChevronUp size={16} color={Colors.gray500} />
+                : <ChevronDown size={16} color={Colors.gray500} />
+              }
+            </TouchableOpacity>
+          )}
+        </View>
 
-      {/* ── 하단 모임 관리 ── */}
-      <View style={styles.bottomSection}>
-        <MenuGroup items={bottomMenuItems} />
-      </View>
+        {/* ── 하단 모임 관리 ── */}
+        <View style={styles.bottomSection}>
+          <MenuGroup items={bottomMenuItems} />
+        </View>
+      </ScrollView>
 
       {/* ── 모달 ── */}
       {modalType !== null && (
@@ -425,12 +451,13 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
           </TouchableOpacity>
         </View>
       </Modal>
+      
       {/* 서버 오류 모달 */}
       <ServerErrorModal
         visible={serverErrorModal}
         onClose={() => setServerErrorModal(false)}
       />
-    </ScrollView>
+    </>
   );
 }
 

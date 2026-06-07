@@ -45,7 +45,7 @@ export const API = {
   createFinalSchedule: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules`,  // POST
   getFinalSchedules: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules`,  // GET
   getFinalSchedule: (meetingId: number, scheduleId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules/${scheduleId}`,  // GET
-  updateFinalSchedule: (meetingId: number, scheduleId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules/${scheduleId}`,  // PATCH
+  updateFinalSchedule: (meetingId: number, scheduleId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules/${scheduleId}`,  // PUT
   deleteFinalSchedule: (meetingId: number, scheduleId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules/${scheduleId}`,  // DELETE
 
   // ───── 알림 ─────

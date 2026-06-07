@@ -149,7 +149,7 @@ export default function EditMeetingScreen() {
                 onLeftBtnPress={() => { }}
                 onRightBtnPress={() => {
                     setShowModal(false);
-                    router.replace("/(tabs)/home");
+                    router.back();
                 }}
                 rightBtnVariant="primary"
             />
