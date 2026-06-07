@@ -1,9 +1,17 @@
 // SchedulePollsTab.tsx
+import SchedulePollCard from '@/components/group/schedule/SchedulePollCard';
 import EmptyState from '@/components/ui/EmptyState';
+import Modal from '@/components/ui/Modal';
+import ServerErrorModal from '@/components/ui/ServerErrorModal';
+import { API } from '@/constants/api';
 import { Colors, Spacing, Typography } from '@/constants/theme';
+import { useAuthStore } from '@/store/useAuthStore';
+import { formatFinalScheduleMeta, getDaysUntilDeadline } from '@/utils/date';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { CalendarX2 } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
+    ActivityIndicator,
     FlatList,
     StyleSheet,
     Text,
@@ -24,52 +32,161 @@ interface SchedulePoll {
 }
 
 export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
+    // ── 인증 ──
+    const router = useRouter();
+    const { userToken } = useAuthStore();
+
+    // ── 데이터 ──
     const [polls, setPolls] = useState<SchedulePoll[]>([]);
 
-    useEffect(() => {
-        // 나중에 API 연동할 때
-        // const fetchPolls = async () => {
-        //     const response = await fetch(API.getSchedulePolls(meetingId));
-        //     const data = await response.json();
-        //     setPolls(data.schedulePolls);
-        // };
-        // fetchPolls();
-    }, [meetingId]);
+    // ── 로딩 ──
+    const [loading, setLoading] = useState(false);
+
+    // ── 서버 오류 ──
+    const [serverErrorModal, setServerErrorModal] = useState(false);
+
+    // ── 삭제 모달 ──
+    const [deleteModal, setDeleteModal] = useState(false);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+
+    // ── 파생 값 ──
+    const selectedPoll = polls.find(p => p.schedulePollId === selectedId);
+
+    // ── 목록 조회 ──
+    const fetchPolls = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(API.getSchedulePolls(meetingId), {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`,
+                }
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                setServerErrorModal(true);
+                return;
+            }
+
+            const sorted = [...data.schedulePolls].sort((a, b) => {
+                // 마감된 건 맨 아래
+                if (a.status === 'CLOSED' && b.status !== 'CLOSED') return 1;
+                if (a.status !== 'CLOSED' && b.status === 'CLOSED') return -1;
+                if (a.status === 'CLOSED' && b.status === 'CLOSED') return 0;
+
+                // 조율중인 건 마감일 가까운 순
+                return new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime();
+            });
+            setPolls(sorted);
+
+        } catch (e) {
+            setServerErrorModal(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+    // ── 화면 포커스될 때마다 새로고침 ──
+    useFocusEffect(
+        useCallback(() => {
+            fetchPolls();
+        }, [])
+    );
+
+    // ── 삭제 ──
+    const handleDelete = async () => {
+        if (!selectedId) return;
+        try {
+            const response = await fetch(API.deleteSchedulePoll(meetingId, selectedId), {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${userToken}`,
+                }
+            });
+
+            if (!response.ok) {
+                setServerErrorModal(true);
+                return;
+            }
+
+            fetchPolls();
+
+        } catch (e) {
+            setServerErrorModal(true);
+        }
+    };
+
+    if (loading) return <ActivityIndicator style={{ marginTop: Spacing['2xl'] }} color={Colors.primary} />;
 
     return (
-        <FlatList
-            // 1. 데이터
-            data={polls}
+        <>
+            <FlatList
+                // 1. 데이터
+                data={polls}
 
-            // 2. 각 항목 렌더링
-            keyExtractor={(item) => item.schedulePollId.toString()}
-            renderItem={({ item }) => (
-                // 나중에 일정 카드
-                <Text>{item.title}</Text>
-            )}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
+                // 2. 각 항목 렌더링
+                keyExtractor={(item) => item.schedulePollId.toString()}
+                renderItem={({ item }) => (
+                    <SchedulePollCard
+                        title={item.title}
+                        meta={formatFinalScheduleMeta(item.startDate, item.endDate)}
+                        deadline={getDaysUntilDeadline(item.deadlineAt)}
+                        status={item.status}
+                        onPress={() => router.push(`/group/${meetingId}/schedule-poll/${item.schedulePollId}`)}
+                        onEdit={() => router.push({
+                            pathname: `/group/${meetingId}/create-schedule-poll` as any,
+                            params: { schedulePollId: item.schedulePollId }
+                        })}
+                        onDelete={() => {
+                            setSelectedId(item.schedulePollId);
+                            setDeleteModal(true);
+                        }}
+                    />
+                )}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
 
-            // 3. 헤더/빈상태
-            ListHeaderComponent={() => (
-                <Text style={styles.titleText}>조율중인 일정</Text>
-            )}
-            ListEmptyComponent={() => (
-                <EmptyState
-                    icon={
-                        <View style={{ position: 'relative' }}>
-                             <CalendarX2 size={40} color={Colors.gray500} />
-                        </View>
-                    }
-                    title="아직 조율중인 일정이 없어요"
-                    description={"새 일정조율을 만들어\n멤버들의 가능한 날짜를 받아보세요."}
-                    variant='card'
-                />
-            )}
+                // 3. 헤더/빈상태
+                ListHeaderComponent={() => (
+                    <Text style={styles.titleText}>조율중인 일정</Text>
+                )}
+                ListEmptyComponent={() => (
+                    <EmptyState
+                        icon={
+                            <View style={{ position: 'relative' }}>
+                                <CalendarX2 size={40} color={Colors.gray500} />
+                            </View>
+                        }
+                        title="아직 조율중인 일정이 없어요"
+                        description={"새 일정조율을 만들어\n멤버들의 가능한 날짜를 받아보세요."}
+                        variant='card'
+                    />
+                )}
 
-            // 4. 스타일/옵션
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContainer}
-        />
+                // 4. 스타일/옵션
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.listContainer}
+            />
+            <Modal
+                visible={deleteModal}
+                message={`"${selectedPoll?.title}" 조율을\n삭제하시겠습니까?`}
+                showLeftBtn={true}
+                leftBtnText="취소"
+                rightBtnText="삭제"
+                onLeftBtnPress={() => setDeleteModal(false)}
+                onRightBtnPress={() => {
+                    setDeleteModal(false);
+                    handleDelete();
+                }}
+                onBackDropPress={() => setDeleteModal(false)}
+                rightBtnVariant="danger"
+            />
+
+            {/* 서버 오류 모달 */}
+            <ServerErrorModal
+                visible={serverErrorModal}
+                onClose={() => setServerErrorModal(false)}
+            />
+        </>
     );
 }
 
