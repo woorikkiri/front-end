@@ -70,12 +70,13 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
             }
 
             const sorted = [...data.schedulePolls].sort((a, b) => {
-                // 마감된 건 맨 아래
-                if (a.status === 'CLOSED' && b.status !== 'CLOSED') return 1;
-                if (a.status !== 'CLOSED' && b.status === 'CLOSED') return -1;
-                if (a.status === 'CLOSED' && b.status === 'CLOSED') return 0;
+                const aIsClosed = getDaysUntilDeadline(a.deadlineAt) === '마감됨';
+                const bIsClosed = getDaysUntilDeadline(b.deadlineAt) === '마감됨';
 
-                // 조율중인 건 마감일 가까운 순
+                if (aIsClosed && !bIsClosed) return 1;
+                if (!aIsClosed && bIsClosed) return -1;
+                if (aIsClosed && bIsClosed) return 0;
+
                 return new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime();
             });
             setPolls(sorted);
@@ -131,8 +132,11 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
                         title={item.title}
                         meta={formatFinalScheduleMeta(item.startDate, item.endDate)}
                         deadline={getDaysUntilDeadline(item.deadlineAt)}
-                        status={item.status}
-                        onPress={() => router.push(`/group/${meetingId}/schedule-poll/${item.schedulePollId}`)}
+                        status={getDaysUntilDeadline(item.deadlineAt) === '마감됨' ? 'CLOSED' : item.status}
+                        onPress={() => router.push({
+                            pathname: `/group/${meetingId}/schedule-poll-detail` as any,
+                            params: { schedulePollId: item.schedulePollId }
+                        })}
                         onEdit={() => router.push({
                             pathname: `/group/${meetingId}/create-schedule-poll` as any,
                             params: { schedulePollId: item.schedulePollId }
