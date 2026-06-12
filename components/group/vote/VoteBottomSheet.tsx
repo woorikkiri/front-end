@@ -1,40 +1,91 @@
 import { VoteItem } from '@/components/group/vote/VoteCard';
 import Button from '@/components/ui/Button';
+import ServerErrorModal from '@/components/ui/ServerErrorModal';
+import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useAuthStore } from '@/store/useAuthStore';
+import { getDaysUntilDeadline } from '@/utils/date';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
-import { CalendarClock, CircleCheck } from 'lucide-react-native';
+import { CalendarClock, ChevronRight, CircleCheck } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface VoteBottomSheetProps {
   vote: VoteItem | null;
+  onSuccess: () => void;
 }
 
 const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
-  ({ vote }, ref) => {
+  ({ vote, onSuccess }, ref) => {
+    const { userToken } = useAuthStore();
     const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
     const [hasVoted, setHasVoted] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [serverErrorModal, setServerErrorModal] = useState(false);
+    const [currentVote, setCurrentVote] = useState<VoteItem | null>(null);
 
     useEffect(() => {
-      setSelectedOptions([]);
-      setHasVoted(false);
+      setCurrentVote(vote);
+      setSelectedOptions(vote?.myOptionIds ?? []);  // [] → myOptionIds
+      setHasVoted(vote?.participated ?? false); // 이미 투표했으면 결과 바로 보여주기
     }, [vote]);
 
     const toggleOption = (optionId: number) => {
       if (selectedOptions.includes(optionId)) {
         setSelectedOptions(selectedOptions.filter(id => id !== optionId));
       } else {
-        setSelectedOptions([...selectedOptions, optionId]);
+        if (!vote?.multipleChoice) {
+          setSelectedOptions([optionId]); // 단일 선택이면 하나만
+        } else {
+          setSelectedOptions([...selectedOptions, optionId]);
+        }
       }
     };
 
-    const totalCount = vote?.options.reduce((sum, o) => sum + o.voteCount, 0) ?? 0;
+    const handleVote = async (optionIds: number[]) => {
+      if (!vote) return;
+      setLoading(true);
+      try {
+        const res = await fetch(API.participateVote(vote.voteId), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`,
+          },
+          body: JSON.stringify({ optionIds }),
+        });
+        if (!res.ok) {
+          setServerErrorModal(true);
+          return;
+        }
+        // 상세 데이터 다시 fetch
+        const detailRes = await fetch(API.getVote(vote.voteId), {
+          headers: { 'Authorization': `Bearer ${userToken}` },
+        });
+        if (detailRes.ok) {
+          const detailData = await detailRes.json();
+          setCurrentVote(detailData); // 바텀시트 데이터 갱신
+          setSelectedOptions(detailData.myOptionIds ?? []);
+        }
+        if (optionIds.length === 0) {
+          setHasVoted(false);
+        } else {
+          setHasVoted(true);
+        }
+        onSuccess(); // VoteList 갱신
+      } catch (e) {
+        setServerErrorModal(true);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // 배경 렌더링 함수
+    const totalCount = currentVote?.options.reduce((sum, o) => sum + o.voteCount, 0) ?? 0;
+
     const renderBackdrop = useCallback(
       (props: any) => (
         <BottomSheetBackdrop
@@ -48,119 +99,119 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
     );
 
     return (
-      <BottomSheetModal
-        ref={ref}
-        snapPoints={['50%', '85%']}
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
-      >
-        <BottomSheetScrollView contentContainerStyle={styles.container}>
-          {vote && (
-            <>
-              {/* 마감일 */}
-              <View style={styles.deadlineRow}>
-                <CalendarClock size={15} color={Colors.gray500} />
-                <Text style={styles.deadlineText}>{vote.deadline}</Text>
-              </View>
+      <>
+        <BottomSheetModal
+          ref={ref}
+          snapPoints={['50%', '85%']}
+          enablePanDownToClose
+          backdropComponent={renderBackdrop}
+        >
+          <BottomSheetScrollView contentContainerStyle={styles.container}>
+            {currentVote && (
+              <>
+                {/* 마감일 */}
+                <View style={styles.deadlineRow}>
+                  <CalendarClock size={15} color={Colors.gray500} />
+                  <Text style={styles.deadlineText}>{getDaysUntilDeadline(currentVote.deadline)}</Text>
+                </View>
 
-              {/* 제목 + 총 투표수 */}
-              <Text style={styles.title}>{vote.title}</Text>
-              <Text style={styles.sub}>총 {totalCount}명 투표</Text>
+                <Text style={styles.title}>{currentVote.title}</Text>
+                <Text style={styles.sub}>총 {totalCount}명 투표</Text>
 
-              <View style={styles.divider} />
+                <View style={styles.divider} />
 
-              {/* 투표 전 */}
-              {!hasVoted && (
-                <>
-                  {vote.options.map((option) => {
-                    const isSelected = selectedOptions.includes(option.optionId);
-                    return (
-                      <TouchableOpacity
-                        key={option.optionId}
-                        style={[styles.option, isSelected && styles.optionSelected]}
-                        onPress={() => toggleOption(option.optionId)}
-                        activeOpacity={0.7}
-                      >
-                        <View style={[styles.radio, isSelected && styles.radioSelected]}>
-                          {isSelected && <View style={styles.radioDot} />}
-                        </View>
-                        <Text style={styles.optionText}>{option.content}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                  <Button
-                    label="투표하기"
-                    onPress={() => setHasVoted(true)}
-                    disabled={selectedOptions.length === 0}
-                    style={{ marginTop: Spacing.sm }}
-                  />
-                </>
-              )}
+                {/* 투표 전 */}
+                {!hasVoted && (
+                  <>
+                    {currentVote.options.map((option) => {
+                      const isSelected = selectedOptions.includes(option.optionId);
+                      return (
+                        <TouchableOpacity
+                          key={option.optionId}
+                          style={[styles.option, isSelected && styles.optionSelected]}
+                          onPress={() => toggleOption(option.optionId)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={[styles.radio, isSelected && styles.radioSelected]}>
+                            {isSelected && <View style={styles.radioDot} />}
+                          </View>
+                          <Text style={styles.optionText}>{option.content}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                    <Button
+                      label="투표하기"
+                      onPress={() => handleVote(selectedOptions)}
+                      disabled={selectedOptions.length === 0}
+                      loading={loading}
+                      style={{ marginTop: Spacing.sm }}
+                    />
+                  </>
+                )}
 
-              {/* 투표 후 */}
-              {hasVoted && (
-                <>
-                  {vote.options.map((option) => {
-                    const isMyChoice = selectedOptions.includes(option.optionId);
-                    const percent = totalCount > 0
-                      ? Math.round((option.voteCount / totalCount) * 100)
-                      : 0;
-                    return (
-                      <View key={option.optionId} style={styles.resultItem}>
-                        <View style={styles.resultTop}>
-                          <View style={styles.resultLabel}>
-                            {isMyChoice && (
-                              <CircleCheck size={18} color={Colors.white} fill={Colors.primary} />
-                            )}
-                            <Text style={[styles.optionText, !isMyChoice && { color: Colors.gray500 }]}>
-                              {option.content}
+                {/* 투표 후 */}
+                {hasVoted && (
+                  <>
+                    {currentVote.options.map((option) => {
+                      const isMyChoice = selectedOptions.includes(option.optionId);
+                      const percent = totalCount > 0
+                        ? Math.round((option.voteCount / totalCount) * 100)
+                        : 0;
+                      return (
+                        <View key={option.optionId} style={styles.resultItem}>
+                          <View style={styles.resultTop}>
+                            <View style={styles.resultLabel}>
+                              {isMyChoice && (
+                                <CircleCheck size={18} color={Colors.white} fill={Colors.primary} />
+                              )}
+                              <Text style={[styles.optionText, !isMyChoice && { color: Colors.gray500 }]}>
+                                {option.content}
+                              </Text>
+                            </View>
+                            <Text style={[styles.countBadge, !isMyChoice && styles.countBadgeDim]}>
+                              {option.voteCount}표
                             </Text>
                           </View>
-                          <Text style={[styles.countBadge, !isMyChoice && styles.countBadgeDim]}>
-                            {option.voteCount}표
-                          </Text>
-                        </View>
 
-                        <View style={styles.barBg}>
-                          <View style={[
-                            styles.barFill,
-                            { width: `${percent}%` },
-                            !isMyChoice && styles.barFillDim
-                          ]} />
-                        </View>
-
-                        {option.voters && option.voters.length > 0 && (
-                          <View style={styles.votersRow}>
-                            {option.voters.slice(0, 3).map((voter) => (
-                              <View key={voter} style={styles.voterChip}>
-                                <Text style={styles.voterText}>{voter}</Text>
-                              </View>
-                            ))}
-                            {option.voters.length > 3 && (
-                              <View style={styles.voterChip}>
-                                <Text style={styles.voterText}>+{option.voters.length - 3}명</Text>
-                              </View>
-                            )}
+                          <View style={styles.barBg}>
+                            <View style={[
+                              styles.barFill,
+                              { width: `${percent}%` },
+                              !isMyChoice && styles.barFillDim
+                            ]} />
                           </View>
-                        )}
-                      </View>
-                    );
-                  })}
-                  <Button
-                    label="다시 투표하기"
-                    onPress={() => {
-                      setHasVoted(false);
-                      setSelectedOptions([]);
-                    }}
-                    variant="cancel"
-                    style={{ marginTop: Spacing.sm }}
-                  />
-                </>
-              )}
-            </>
-          )}
-        </BottomSheetScrollView>
-      </BottomSheetModal>
+                        </View>
+                      );
+                    })}
+                    {!currentVote.anonymous && totalCount > 0 && (
+                      <TouchableOpacity
+                        style={styles.detail}
+                        onPress={() => { }}
+                      >
+                        <Text>{totalCount}명 참여</Text>
+                        <ChevronRight size={15} />
+                      </TouchableOpacity>
+                    )}
+
+                    <Button
+                      label="다시 투표하기"
+                      onPress={() => setHasVoted(false)}
+                      loading={loading}
+                      variant="cancel"
+                      style={{ marginTop: Spacing.sm }}
+                    />
+                  </>
+                )}
+              </>
+            )}
+          </BottomSheetScrollView>
+        </BottomSheetModal>
+
+        <ServerErrorModal
+          visible={serverErrorModal}
+          onClose={() => setServerErrorModal(false)}
+        />
+      </>
     );
   }
 );
@@ -277,20 +328,10 @@ const styles = StyleSheet.create({
   barFillDim: {
     backgroundColor: Colors.gray300,
   },
-  votersRow: {
+  detail: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-    marginTop: Spacing.sm,
-  },
-  voterChip: {
-    backgroundColor: Colors.gray100,
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-  },
-  voterText: {
-    fontSize: Typography.xs,
-    color: Colors.gray700,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginBottom: Spacing.sm,
   },
 });
