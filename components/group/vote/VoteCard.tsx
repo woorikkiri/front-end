@@ -20,7 +20,7 @@ export interface VoteItem {
     title: string;
     multipleChoice: boolean;
     anonymous: boolean;
-    status: 'IN_PROGRESS' | 'CLOSED';
+    status: 'IN_PROGRESS' | 'COMPLETED';
     deadline: string;
     remainingDays: number;
     totalVoteCount: number;
@@ -39,17 +39,22 @@ export interface VoteOption {
 interface VoteCardProps {
     item: VoteItem;
     onPress: () => void;  // 카드 눌렸을 때 (상세 화면으로)
-    onDelete: () => void;
+    onSuccess: () => void;
 }
 
-export default function VoteCard({ item, onPress, onDelete }: VoteCardProps) {
+export default function VoteCard({ item, onPress, onSuccess }: VoteCardProps) {
     const { userToken } = useAuthStore();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showCloseModal, setShowCloseModal] = useState(false);
     const [popoverVisible, setPopoverVisible] = useState(false);
     const [serverErrorModal, setServerErrorModal] = useState(false);
 
+    const maxCount = item.options.reduce((max, o) => o.voteCount > max ? o.voteCount : max, 0);
+    const topOptions = item.options.filter(o => o.voteCount === maxCount);
+
     const handleDelete = async () => {
+        setShowDeleteModal(false);
+        setPopoverVisible(false);
         try {
             const response = await fetch(API.deleteVote(item.voteId), {
                 method: 'DELETE',
@@ -60,82 +65,153 @@ export default function VoteCard({ item, onPress, onDelete }: VoteCardProps) {
                 setServerErrorModal(true);
                 return;
             }
-            setShowDeleteModal(false);
-            onDelete();
+            onSuccess();
         } catch (e) {
             setServerErrorModal(true);
         }
     };
 
+    const handleClose = async () => {
+        setShowCloseModal(false);
+        try {
+            const response = await fetch(API.closeVote(item.voteId), {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${userToken}` },
+            });
+
+            // 실패
+            if (!response.ok) {
+                const err = await response.json();
+                console.log(err);
+                setServerErrorModal(true);
+                return;
+            }
+            // 성공
+            onSuccess();
+        } catch (e) {
+            console.log(e);
+            setServerErrorModal(true);
+        }
+    }
+
     return (
         <>
             <TouchableOpacity onPress={onPress} style={styles.card}>
-                {/* 1. 마감일 */}
-                <View style={styles.deadlineRow}>
-                    <CalendarClock size={16} color={'gray'} />
-                    <Text style={styles.deadlineText}>{getDaysUntilDeadline(item.deadline)}</Text>
-                </View>
-
-
-                {/* 2. 제목 */}
-                <View style={styles.titleRow}>
-                    <Text style={styles.title}>{item.title}</Text>
-                    {item.owner && (
-                        <Popover
-                            isVisible={popoverVisible}
-                            onRequestClose={() => setPopoverVisible(false)}
-                            arrowSize={{ width: 0, height: 0 }}
-                            backgroundStyle={{ backgroundColor: 'transparent' }}
-                            from={(
-                                <TouchableOpacity onPress={() => setPopoverVisible(true)}>
-                                    <Ellipsis size={20} color={Colors.gray500} />
-                                </TouchableOpacity>
+                {item.status === 'COMPLETED' ? (
+                    <View style={{ gap: Spacing.sm }}>
+                        {/* 제목 + 팝오버 */}
+                        <View style={styles.titleRow}>
+                            <Text style={styles.title}>Q. {item.title}</Text>
+                            {item.owner && (
+                                <Popover
+                                    isVisible={popoverVisible}
+                                    onRequestClose={() => setPopoverVisible(false)}
+                                    arrowSize={{ width: 0, height: 0 }}
+                                    backgroundStyle={{ backgroundColor: 'transparent' }}
+                                    from={(
+                                        <TouchableOpacity onPress={() => setPopoverVisible(true)}>
+                                            <Ellipsis size={20} color={Colors.gray500} />
+                                        </TouchableOpacity>
+                                    )}
+                                >
+                                    <View style={styles.menu}>
+                                        <MenuGroup items={[
+                                            {
+                                                label: '투표 삭제',
+                                                onPress: () => {
+                                                    setPopoverVisible(false);
+                                                    setShowDeleteModal(true);
+                                                },
+                                                labelStyle: { fontSize: Typography.sm, color: Colors.error },
+                                                rightIcon: <Trash2 size={18} color={Colors.error} />,
+                                                showChevron: false
+                                            },
+                                        ]} />
+                                    </View>
+                                </Popover>
                             )}
-                        >
-                            <View style={styles.menu}>
-                                <MenuGroup items={[
-                                    ...(item.totalVoteCount === 0 ? [{
-                                        label: '투표 수정',
-                                        onPress: () => { },
-                                        labelStyle: { fontSize: Typography.sm },
-                                        rightIcon: <Pencil size={18} color={Colors.gray500} />,
-                                        showChevron: false
-                                    }] : []),
-                                    {
-                                        label: '투표 종료',
-                                        onPress: () => {
-                                            setPopoverVisible(false);  // 팝오버 닫기
-                                            setShowCloseModal(true);   // 모달 열기
-                                        },
-                                        labelStyle: { fontSize: Typography.sm },
-                                        rightIcon: <PointerOff size={18} color={Colors.gray500} />,
-                                        showChevron: false
-                                    },
-                                    {
-                                        label: '투표 삭제',
-                                        onPress: () => {
-                                            setPopoverVisible(false);  // 팝오버 닫기
-                                            setShowDeleteModal(true);   // 모달 열기
-                                        },
-                                        labelStyle: { fontSize: Typography.sm, color: Colors.error },
-                                        rightIcon: <Trash2 size={18} color={Colors.error} />,
-                                        showChevron: false
-                                    },
-                                ]} />
-                            </View>
-                        </Popover>
-                    )}
-                </View>
-
-                {/* 3. 선택지 목록 */}
-                <View style={styles.optionsContainer}>
-                    {item.options.map((option) => (
-                        <View key={option.optionId} style={styles.optionRow}>
-                            <Text style={styles.optionText}>{option.content}</Text>
-                            <Text style={styles.countText}>{option.voteCount}표</Text>
                         </View>
-                    ))}
-                </View>
+                        <View style={{ alignItems: 'center', gap: Spacing.sm }}>
+                            <View style={styles.badge}>
+                                <Text style={styles.badgeText}>1위</Text>
+                            </View>
+                            {topOptions.map((option) => (
+                                <Text key={option.optionId} style={styles.topOptionText}>
+                                    {option.content}
+                                </Text>
+                            ))}
+                        </View>
+                    </View>
+                ) : (
+                    <View style={{ gap: Spacing.md }}>
+                        {/* 1. 마감일 */}
+                        <View style={styles.deadlineRow}>
+                            <CalendarClock size={16} color={'gray'} />
+                            <Text style={styles.deadlineText}>{getDaysUntilDeadline(item.deadline)}</Text>
+                        </View>
+
+
+                        {/* 2. 제목 */}
+                        <View style={styles.titleRow}>
+                            <Text style={styles.title}>{item.title}</Text>
+                            {item.owner && (
+                                <Popover
+                                    isVisible={popoverVisible}
+                                    onRequestClose={() => setPopoverVisible(false)}
+                                    arrowSize={{ width: 0, height: 0 }}
+                                    backgroundStyle={{ backgroundColor: 'transparent' }}
+                                    from={(
+                                        <TouchableOpacity onPress={() => setPopoverVisible(true)}>
+                                            <Ellipsis size={20} color={Colors.gray500} />
+                                        </TouchableOpacity>
+                                    )}
+                                >
+                                    <View style={styles.menu}>
+                                        <MenuGroup items={[
+                                            ...(item.totalVoteCount === 0 ? [{
+                                                label: '투표 수정',
+                                                onPress: () => { },
+                                                labelStyle: { fontSize: Typography.sm },
+                                                rightIcon: <Pencil size={18} color={Colors.gray500} />,
+                                                showChevron: false
+                                            }] : []),
+                                            {
+                                                label: '투표 종료',
+                                                onPress: () => {
+                                                    setPopoverVisible(false);  // 팝오버 닫기
+                                                    setShowCloseModal(true);   // 모달 열기
+                                                },
+                                                labelStyle: { fontSize: Typography.sm },
+                                                rightIcon: <PointerOff size={18} color={Colors.gray500} />,
+                                                showChevron: false
+                                            },
+                                            {
+                                                label: '투표 삭제',
+                                                onPress: () => {
+                                                    setPopoverVisible(false);  // 팝오버 닫기
+                                                    setShowDeleteModal(true);   // 모달 열기
+                                                },
+                                                labelStyle: { fontSize: Typography.sm, color: Colors.error },
+                                                rightIcon: <Trash2 size={18} color={Colors.error} />,
+                                                showChevron: false
+                                            },
+                                        ]} />
+                                    </View>
+                                </Popover>
+                            )}
+                        </View>
+
+                        {/* 3. 선택지 목록 */}
+                        <View style={styles.optionsContainer}>
+                            {item.options.map((option) => (
+                                <View key={option.optionId} style={styles.optionRow}>
+                                    <Text style={styles.optionText}>{option.content}</Text>
+                                    <Text style={styles.countText}>{option.voteCount}표</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                )}
             </TouchableOpacity>
 
             <Modal
@@ -151,9 +227,7 @@ export default function VoteCard({ item, onPress, onDelete }: VoteCardProps) {
                 message='투표를 종료하시겠습니까?'
                 rightBtnText='종료'
                 onLeftBtnPress={() => setShowCloseModal(false)}
-                onRightBtnPress={() => {
-                    setShowCloseModal(false);
-                }}
+                onRightBtnPress={handleClose}
                 rightBtnVariant='warning'
             />
             <ServerErrorModal
@@ -220,5 +294,22 @@ const styles = StyleSheet.create({
         fontSize: Typography.sm,
         color: Colors.primary,
         fontWeight: '600',
-    }
+    },
+
+    badge: {
+        backgroundColor: Colors.primary,
+        borderRadius: Radius.full,
+        paddingHorizontal: Spacing.base,
+        paddingVertical: Spacing.xs,
+    },
+    badgeText: {
+        color: Colors.white,
+        fontWeight: '700',
+        fontSize: Typography.sm,
+    },
+    topOptionText: {
+        fontSize: Typography.base,
+        fontWeight: '600',
+        color: Colors.black,
+    },
 });

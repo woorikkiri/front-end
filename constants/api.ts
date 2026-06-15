@@ -59,6 +59,7 @@ export const API = {
   updateVote: (voteId: number) => `${BASE_URL}/api/votes/${voteId}`,                // PATCH
   deleteVote: (voteId: number) => `${BASE_URL}/api/votes/${voteId}`,                // DELETE
   participateVote: (voteId: number) => `${BASE_URL}/api/votes/${voteId}/participate`, // POST 
+  closeVote: (voteId: number) => `${BASE_URL}/api/votes/${voteId}/close`, // PATCH
   
   // ───── 개인 일정 ─────
   getMySchedules: `${BASE_URL}/api/calendar/my-schedules`, // GET

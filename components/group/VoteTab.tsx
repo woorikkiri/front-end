@@ -35,6 +35,7 @@ export default function VoteTab({ meetingId }: VoteTabProps) {
         return;
       }
       const data = await response.json();
+      console.log(data);
       setVotes(data);
     } catch (e) {
       setServerErrorModal(true);
@@ -55,7 +56,13 @@ export default function VoteTab({ meetingId }: VoteTabProps) {
     });
     if (response.ok) {
       const detail = await response.json();
-      setSelectedVote(detail);
+      // setSelectedVote(detail); 백엔드 수정되면 이걸로하기
+      setSelectedVote({
+        ...detail,
+        status: vote.status,
+        multipleChoice: vote.multipleChoice,
+        anonymous: vote.anonymous,
+      });
       bottomSheetRef.current?.present();
     }
   };
@@ -70,7 +77,7 @@ export default function VoteTab({ meetingId }: VoteTabProps) {
             votes={votes}
             onCreatePress={() => setMode('create')}
             onVotePress={handleVotePress}
-            onDelete={fetchVotes}
+            onSuccess={fetchVotes}
           />
         ) : (
           <VoteCreateForm

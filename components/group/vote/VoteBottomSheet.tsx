@@ -4,13 +4,12 @@ import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
-import { getDaysUntilDeadline } from '@/utils/date';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
-import { CalendarClock, ChevronRight, CircleCheck } from 'lucide-react-native';
+import { ChevronRight, CircleCheck } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -109,19 +108,17 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
           <BottomSheetScrollView contentContainerStyle={styles.container}>
             {currentVote && (
               <>
-                {/* 마감일 */}
-                <View style={styles.deadlineRow}>
-                  <CalendarClock size={15} color={Colors.gray500} />
-                  <Text style={styles.deadlineText}>{getDaysUntilDeadline(currentVote.deadline)}</Text>
-                </View>
-
                 <Text style={styles.title}>{currentVote.title}</Text>
-                <Text style={styles.sub}>총 {totalCount}명 투표</Text>
+                <Text style={styles.sub}>
+                  {currentVote.multipleChoice ? '복수 선택 가능 · ' : ''}
+                  {currentVote.anonymous ? '익명 · ' : ''}
+                  총 {totalCount}명 투표
+                </Text>
 
                 <View style={styles.divider} />
 
                 {/* 투표 전 */}
-                {!hasVoted && (
+                {!hasVoted && currentVote.status !== 'COMPLETED' && (
                   <>
                     {currentVote.options.map((option) => {
                       const isSelected = selectedOptions.includes(option.optionId);
@@ -150,7 +147,7 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
                 )}
 
                 {/* 투표 후 */}
-                {hasVoted && (
+                {(hasVoted || currentVote.status === 'COMPLETED') && (
                   <>
                     {currentVote.options.map((option) => {
                       const isMyChoice = selectedOptions.includes(option.optionId);
@@ -193,13 +190,15 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
                       </TouchableOpacity>
                     )}
 
-                    <Button
-                      label="다시 투표하기"
-                      onPress={() => setHasVoted(false)}
-                      loading={loading}
-                      variant="cancel"
-                      style={{ marginTop: Spacing.sm }}
-                    />
+                    {currentVote.status !== 'COMPLETED' && (
+                      <Button
+                        label="다시 투표하기"
+                        onPress={() => setHasVoted(false)}
+                        loading={loading}
+                        variant="cancel"
+                        style={{ marginTop: Spacing.sm }}
+                      />
+                    )}
                   </>
                 )}
               </>
