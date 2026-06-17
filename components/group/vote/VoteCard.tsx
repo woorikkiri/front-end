@@ -1,18 +1,10 @@
 import MenuGroup from '@/components/ui/MenuGroup';
 import Modal from '@/components/ui/Modal';
-import ServerErrorModal from '@/components/ui/ServerErrorModal';
-import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useAuthStore } from '@/store/useAuthStore';
 import { getDaysUntilDeadline } from '@/utils/date';
 import { CalendarClock, Ellipsis, Pencil, PointerOff, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
-import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Popover from 'react-native-popover-view';
 
 export interface VoteItem {
@@ -24,7 +16,7 @@ export interface VoteItem {
     deadline: string;
     remainingDays: number;
     totalVoteCount: number;
-    participated: boolean; // 내가 투표했는지 여부
+    participated: boolean;
     myOptionIds?: number[];
     owner: boolean;
     options: VoteOption[];
@@ -32,74 +24,50 @@ export interface VoteItem {
 
 export interface VoteOption {
     optionId: number;
-    content: string;    // 선택지
-    voteCount: number;   // 투표수
+    content: string;
+    voteCount: number;
 }
 
 interface VoteCardProps {
     item: VoteItem;
-    onPress: () => void;  // 카드 눌렸을 때 (상세 화면으로)
-    onSuccess: () => void;
+    onPress: () => void;
+    onDelete: () => void;
+    onClose: () => void;
+    onEdit: () => void;
 }
 
-export default function VoteCard({ item, onPress, onSuccess }: VoteCardProps) {
-    const { userToken } = useAuthStore();
+export default function VoteCard({ item, onPress, onDelete, onClose, onEdit }: VoteCardProps) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showCloseModal, setShowCloseModal] = useState(false);
     const [popoverVisible, setPopoverVisible] = useState(false);
-    const [serverErrorModal, setServerErrorModal] = useState(false);
 
     const maxCount = item.options.reduce((max, o) => o.voteCount > max ? o.voteCount : max, 0);
     const topOptions = item.options.filter(o => o.voteCount === maxCount);
 
-    const handleDelete = async () => {
+    const handleDeletePress = async () => {
         setShowDeleteModal(false);
         setPopoverVisible(false);
-        try {
-            const response = await fetch(API.deleteVote(item.voteId), {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${userToken}` },
-            });
-            if (!response.ok) {
-                const err = await response.json();
-                setServerErrorModal(true);
-                return;
-            }
-            onSuccess();
-        } catch (e) {
-            setServerErrorModal(true);
-        }
+        await new Promise(resolve => setTimeout(resolve, 300));
+        onDelete();
     };
 
-    const handleClose = async () => {
+    const handleClosePress = async () => {
         setShowCloseModal(false);
-        try {
-            const response = await fetch(API.closeVote(item.voteId), {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${userToken}` },
-            });
+        await new Promise(resolve => setTimeout(resolve, 300));
+        onClose();
+    };
 
-            // 실패
-            if (!response.ok) {
-                const err = await response.json();
-                console.log(err);
-                setServerErrorModal(true);
-                return;
-            }
-            // 성공
-            onSuccess();
-        } catch (e) {
-            console.log(e);
-            setServerErrorModal(true);
-        }
-    }
+    const handleEditPress = async () => {
+        setPopoverVisible(false);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        onEdit();
+    };
 
     return (
         <>
             <TouchableOpacity onPress={onPress} style={styles.card}>
                 {item.status === 'COMPLETED' ? (
                     <View style={{ gap: Spacing.sm }}>
-                        {/* 제목 + 팝오버 */}
                         <View style={styles.titleRow}>
                             <Text style={styles.title}>Q. {item.title}</Text>
                             {item.owner && (
@@ -115,18 +83,13 @@ export default function VoteCard({ item, onPress, onSuccess }: VoteCardProps) {
                                     )}
                                 >
                                     <View style={styles.menu}>
-                                        <MenuGroup items={[
-                                            {
-                                                label: '투표 삭제',
-                                                onPress: () => {
-                                                    setPopoverVisible(false);
-                                                    setShowDeleteModal(true);
-                                                },
-                                                labelStyle: { fontSize: Typography.sm, color: Colors.error },
-                                                rightIcon: <Trash2 size={18} color={Colors.error} />,
-                                                showChevron: false
-                                            },
-                                        ]} />
+                                        <MenuGroup items={[{
+                                            label: '투표 삭제',
+                                            onPress: () => { setPopoverVisible(false); setShowDeleteModal(true); },
+                                            labelStyle: { fontSize: Typography.sm, color: Colors.error },
+                                            rightIcon: <Trash2 size={18} color={Colors.error} />,
+                                            showChevron: false
+                                        }]} />
                                     </View>
                                 </Popover>
                             )}
@@ -144,14 +107,10 @@ export default function VoteCard({ item, onPress, onSuccess }: VoteCardProps) {
                     </View>
                 ) : (
                     <View style={{ gap: Spacing.md }}>
-                        {/* 1. 마감일 */}
                         <View style={styles.deadlineRow}>
                             <CalendarClock size={16} color={'gray'} />
                             <Text style={styles.deadlineText}>{getDaysUntilDeadline(item.deadline)}</Text>
                         </View>
-
-
-                        {/* 2. 제목 */}
                         <View style={styles.titleRow}>
                             <Text style={styles.title}>{item.title}</Text>
                             {item.owner && (
@@ -170,27 +129,21 @@ export default function VoteCard({ item, onPress, onSuccess }: VoteCardProps) {
                                         <MenuGroup items={[
                                             ...(item.totalVoteCount === 0 ? [{
                                                 label: '투표 수정',
-                                                onPress: () => { },
+                                                onPress: handleEditPress,
                                                 labelStyle: { fontSize: Typography.sm },
                                                 rightIcon: <Pencil size={18} color={Colors.gray500} />,
                                                 showChevron: false
                                             }] : []),
                                             {
                                                 label: '투표 종료',
-                                                onPress: () => {
-                                                    setPopoverVisible(false);  // 팝오버 닫기
-                                                    setShowCloseModal(true);   // 모달 열기
-                                                },
+                                                onPress: () => { setPopoverVisible(false); setShowCloseModal(true); },
                                                 labelStyle: { fontSize: Typography.sm },
                                                 rightIcon: <PointerOff size={18} color={Colors.gray500} />,
                                                 showChevron: false
                                             },
                                             {
                                                 label: '투표 삭제',
-                                                onPress: () => {
-                                                    setPopoverVisible(false);  // 팝오버 닫기
-                                                    setShowDeleteModal(true);   // 모달 열기
-                                                },
+                                                onPress: () => { setPopoverVisible(false); setShowDeleteModal(true); },
                                                 labelStyle: { fontSize: Typography.sm, color: Colors.error },
                                                 rightIcon: <Trash2 size={18} color={Colors.error} />,
                                                 showChevron: false
@@ -200,8 +153,6 @@ export default function VoteCard({ item, onPress, onSuccess }: VoteCardProps) {
                                 </Popover>
                             )}
                         </View>
-
-                        {/* 3. 선택지 목록 */}
                         <View style={styles.optionsContainer}>
                             {item.options.map((option) => (
                                 <View key={option.optionId} style={styles.optionRow}>
@@ -219,7 +170,7 @@ export default function VoteCard({ item, onPress, onSuccess }: VoteCardProps) {
                 message='투표를 삭제하시겠습니까?'
                 rightBtnText='삭제'
                 onLeftBtnPress={() => setShowDeleteModal(false)}
-                onRightBtnPress={handleDelete}
+                onRightBtnPress={handleDeletePress}
                 rightBtnVariant='danger'
             />
             <Modal
@@ -227,12 +178,8 @@ export default function VoteCard({ item, onPress, onSuccess }: VoteCardProps) {
                 message='투표를 종료하시겠습니까?'
                 rightBtnText='종료'
                 onLeftBtnPress={() => setShowCloseModal(false)}
-                onRightBtnPress={handleClose}
+                onRightBtnPress={handleClosePress}
                 rightBtnVariant='warning'
-            />
-            <ServerErrorModal
-                visible={serverErrorModal}
-                onClose={() => setServerErrorModal(false)}
             />
         </>
     );

@@ -1,7 +1,7 @@
-import BoardTab from '@/components/group/BoardTab';
-import MembersTab from '@/components/group/MembersTab';
-import ScheduleTab from '@/components/group/ScheduleTab';
-import VoteTab from '@/components/group/VoteTab';
+import BoardTab from '@/components/group/board/BoardTab';
+import MembersTab from '@/components/group/member/MembersTab';
+import ScheduleTab from '@/components/group/schedule/ScheduleTab';
+import VoteTab from '@/components/group/vote/VoteTab';
 import Header from '@/components/ui/Header';
 import { API } from '@/constants/api';
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';

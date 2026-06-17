@@ -1,4 +1,5 @@
 // VoteCreateForm.tsx
+import { VoteItem } from '@/components/group/vote/VoteCard';
 import Button from '@/components/ui/Button';
 import DatePicker from '@/components/ui/DatePicker';
 import ServerErrorModal from '@/components/ui/ServerErrorModal';
@@ -7,7 +8,7 @@ import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
 import { X } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ScrollView,
     StyleSheet,
@@ -20,9 +21,11 @@ import {
 interface VoteCreateFormProps {
     meetingId: number;
     onBack: () => void;
+    isEdit?: boolean;
+    initialData?: VoteItem;
 }
 
-export default function VoteCreateForm({ meetingId, onBack }: VoteCreateFormProps) {
+export default function VoteCreateForm({ meetingId, onBack, isEdit, initialData }: VoteCreateFormProps) {
     const { userToken } = useAuthStore();
 
     const [title, setTitle] = useState('');
@@ -46,8 +49,11 @@ export default function VoteCreateForm({ meetingId, onBack }: VoteCreateFormProp
         setLoading(true);
 
         try {
-            const res = await fetch(API.createVote(meetingId), {
-                method: 'POST',
+            const url = isEdit ? API.updateVote(initialData!.voteId) : API.createVote(meetingId);
+            const method = isEdit ? 'PATCH' : 'POST';
+
+            const res = await fetch(url, {
+                method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${userToken}`,
@@ -72,6 +78,15 @@ export default function VoteCreateForm({ meetingId, onBack }: VoteCreateFormProp
         }
     };
 
+    useEffect(() => {
+        if (!initialData) return;
+        setTitle(initialData.title);
+        setOptions(initialData.options.map(o => o.content));
+        setDeadline(initialData.deadline.split('T')[0]);
+        setIsMultiple(initialData.multipleChoice);
+        setIsAnonymous(initialData.anonymous);
+    }, [initialData]);
+
     return (
         <>
             <ScrollView
@@ -80,7 +95,7 @@ export default function VoteCreateForm({ meetingId, onBack }: VoteCreateFormProp
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
-                <Text style={styles.titleText}>새 투표 만들기</Text>
+                <Text style={styles.titleText}>{isEdit ? '투표 수정' : '새 투표 만들기'}</Text>
                 <View style={styles.formContainer}>
                     <TextInput
                         label='투표 제목'
@@ -155,7 +170,7 @@ export default function VoteCreateForm({ meetingId, onBack }: VoteCreateFormProp
                             style={{ flex: 1 }}
                         />
                         <Button
-                            label="투표 생성"
+                            label={isEdit ? '저장' : '투표 생성'}
                             disabled={!title || options.some(o => !o.trim()) || !deadline}
                             onPress={handleCreate}
                             loading={loading}
