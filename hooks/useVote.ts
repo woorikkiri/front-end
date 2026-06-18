@@ -31,12 +31,7 @@ export default function useVote(meetingId: number) {
         });
         if (!res.ok) return null;
         const detail = await res.json();
-        return {
-            ...detail,
-            status: vote.status,
-            multipleChoice: vote.multipleChoice,
-            anonymous: vote.anonymous,
-        };
+        return detail;
     };
 
     const handleDelete = async (voteId: number) => {
