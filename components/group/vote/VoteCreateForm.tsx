@@ -159,6 +159,7 @@ export default function VoteCreateForm({ meetingId, onBack, isEdit, initialData 
                             label="마감"
                             value={deadline}
                             onChange={setDeadline}
+                            minDate={new Date().toISOString().split('T')[0]}
                         />
                     </View>
 
