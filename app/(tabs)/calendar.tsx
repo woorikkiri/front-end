@@ -1,8 +1,12 @@
 // 개인 캘린더 화면
+import { API } from '@/constants/api';
 import { CalendarTheme, Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useFocusEffect } from 'expo-router';
 import { MapPin } from 'lucide-react-native';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
+    ActivityIndicator,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -14,44 +18,95 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CARD_COLORS = ['#5ab8ac', '#7BC67A', '#fca944'];
 const today = new Date().toISOString().split('T')[0];
+const todayDate = new Date();
+
+interface MarkedDay {
+    date: string;
+    scheduleCount: number;
+}
+
+interface DailySchedule {
+    finalScheduleId: number;
+    meetingId: number;
+    meetingName: string;
+    title: string;
+    startDate: string;
+    endDate: string;
+    time: string | null;
+    location: string | null;
+}
 
 export default function CalendarScreen() {
+    const { userToken } = useAuthStore();
     const [selectDate, setSelectDate] = useState(today);
-    const [schedules, setSchedules] = useState([
-        { id: '1', title: '스터디 모임', groupName: '우리 스터디', date: '2026-05-25', time: '19:00', place: '강남역 스터디카페' },
-        { id: '2', title: '소풍', groupName: '친구들', date: '2026-05-25', time: '11:00', place: '한강공원' },
-        { id: '3', title: '정기 모임', groupName: '동아리', date: '2026-05-28', time: '21:00', place: '홍대 루프탑바' },
-    ]);
+    const [currentYear, setCurrentYear] = useState(todayDate.getFullYear());
+    const [currentMonth, setCurrentMonth] = useState(todayDate.getMonth() + 1);
+    const [markedDays, setMarkedDays] = useState<MarkedDay[]>([]);
+    const [dailySchedules, setDailySchedules] = useState<DailySchedule[]>([]);
+    const [loading, setLoading] = useState(false);
 
+    // ───── 날짜 포맷 ─────
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         return `${date.getMonth() + 1}월 ${date.getDate()}일 ${days[date.getDay()]}요일`;
     };
 
-    // 1. schedules 배열에서 markedDates 객체 만들기
-    const markedDates = schedules.reduce((acc, schedule) => {
-        return {
-            ...acc,
-            [schedule.date]: { marked: true, dotColor: Colors.primary }
-        };
-    }, {} as any);
+    // ───── 월별 일정 조회 ─────
+    const fetchMonthlySchedules = async (year: number, month: number) => {
+        try {
+            const res = await fetch(API.getMyCalendar(year, month), {
+                headers: { 'Authorization': `Bearer ${userToken}` },
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            setMarkedDays(data);
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
-    // 2. 선택한 날짜 표시
-    if (selectDate) {
-        markedDates[selectDate] = {
-            ...markedDates[selectDate],
-            selected: true,
-            //  오늘이면 오늘 스타일 유지
-            selectedColor: selectDate === today ? Colors.primary : Colors.primaryLight,
-            selectedTextColor: selectDate === today ? Colors.white : Colors.primary,
-        };
-    }
+    // ───── 특정 날짜 일정 조회 ─────
+    const fetchDailySchedules = async (date: string) => {
+        try {
+            setLoading(true);
+            const res = await fetch(API.getDailySchedule(date), {
+                headers: { 'Authorization': `Bearer ${userToken}` },
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            setDailySchedules(data);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    // 3. 선택한 날짜의 일정만 걸러내기
-    const selectedSchedules = schedules.filter(
-        (schedule) => schedule.date === selectDate
+    // ───── 화면 진입 시 현재 월 + 오늘 일정 불러오기 ─────
+    useFocusEffect(
+        useCallback(() => {
+            fetchMonthlySchedules(currentYear, currentMonth);
+            fetchDailySchedules(today);
+        }, [currentYear, currentMonth])
     );
+
+    // ───── 캘린더 마킹 데이터 ─────
+    const markedDates = (() => {
+        const marks: any = {};
+        markedDays.forEach(({ date }) => {
+            marks[date] = { marked: true, dotColor: Colors.primary };
+        });
+        if (selectDate) {
+            marks[selectDate] = {
+                ...marks[selectDate],
+                selected: true,
+                selectedColor: selectDate === today ? Colors.primary : Colors.primaryLight,
+                selectedTextColor: selectDate === today ? Colors.white : Colors.primary,
+            };
+        }
+        return marks;
+    })();
 
     return (
         <SafeAreaView style={styles.safe}>
@@ -61,51 +116,51 @@ export default function CalendarScreen() {
             </View>
             <ScrollView>
                 <View style={styles.calendarSection}>
-                    {/* 캘린더 색상 및 일정 띄우기 등 */}
                     <Calendar
                         theme={CalendarTheme}
-                        onDayPress={(day) => setSelectDate(day.dateString)}
-                        markedDates={{ ...markedDates }}
+                        onDayPress={(day) => {
+                            setSelectDate(day.dateString);
+                            fetchDailySchedules(day.dateString);
+                        }}
+                        onMonthChange={(month) => {
+                            setCurrentYear(month.year);
+                            setCurrentMonth(month.month);
+                            fetchMonthlySchedules(month.year, month.month);
+                        }}
+                        markedDates={markedDates}
                     />
                 </View>
-                {/* 일정 선택하면 밑에 정확한 일정 내용 뜨게 만들어주기 */}
+
                 {selectDate && (
                     <View style={styles.scheduleSection}>
-                        {/* 날짜 텍스트 */}
                         <Text style={styles.dateLabel}>{formatDate(selectDate)}</Text>
 
-                        {/* 일정 목록 */}
-                        {selectedSchedules.length === 0 ? (
-                            // 일정 없을 때
+                        {loading ? (
+                            <ActivityIndicator color={Colors.primary} />
+                        ) : dailySchedules.length === 0 ? (
                             <Text style={styles.noScheduleText}>일정 없음</Text>
                         ) : (
-                            // 일정 있을 때 → map으로 카드 렌더링
-                            selectedSchedules.map((schedule, index) => (
+                            dailySchedules.map((schedule, index) => (
                                 <View
-                                    key={schedule.id}
-                                    style={[
-                                        styles.scheduleCard,
-                                        { borderLeftColor: CARD_COLORS[index % CARD_COLORS.length] }
-                                    ]}
+                                    key={schedule.finalScheduleId}
+                                    style={[styles.scheduleCard, { borderLeftColor: CARD_COLORS[index % CARD_COLORS.length] }]}
                                 >
                                     <View style={styles.scheduleTop}>
                                         <View>
                                             <Text style={styles.scheduleTitle}>{schedule.title}</Text>
-                                            <Text style={styles.scheduleGroup}>{schedule.groupName}</Text>
+                                            <Text style={styles.scheduleGroup}>{schedule.meetingName}</Text>
                                         </View>
-                                        <View style={[
-                                            styles.scheduleTimeBadge,
-                                            { backgroundColor: CARD_COLORS[index % CARD_COLORS.length] + '20' }
-                                        ]}>
-                                            <Text style={[
-                                                styles.scheduleTimeText,
-                                                { color: CARD_COLORS[index % CARD_COLORS.length] }
-                                            ]}>
-                                                {schedule.time}
+                                        <View style={[styles.scheduleTimeBadge, { backgroundColor: CARD_COLORS[index % CARD_COLORS.length] + '20' }]}>
+                                            <Text style={[styles.scheduleTimeText, { color: CARD_COLORS[index % CARD_COLORS.length] }]}>
+                                                {schedule.time?.slice(0, 5) ?? ''}
                                             </Text>
                                         </View>
                                     </View>
-                                    <Text style={styles.schedulePlace}><MapPin size={12} color={Colors.gray500} /> {schedule.place}</Text>
+                                    {schedule.location && (
+                                        <Text style={styles.schedulePlace}>
+                                            <MapPin size={12} color={Colors.gray500} /> {schedule.location}
+                                        </Text>
+                                    )}
                                 </View>
                             ))
                         )}
@@ -145,22 +200,16 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
 
-
-
     scheduleSection: {
-        // 캘린더 아래 전체 영역 패딩
         padding: Spacing.lg,
     },
     dateLabel: {
-        // "5월 25일 월요일" 텍스트
         fontSize: Typography.base,
         fontWeight: '600',
         color: Colors.gray700,
         marginBottom: Spacing.md,
     },
     scheduleCard: {
-        // 카드 전체 - 테두리, 둥근 모서리, 패딩
-        // 왼쪽 색상 바는 borderLeftWidth + borderLeftColor
         borderRadius: Radius.lg,
         borderWidth: 1,
         borderColor: Colors.border,
@@ -172,43 +221,35 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 0,
     },
     scheduleTop: {
-        // 제목이랑 시간뱃지 가로로 배치 → flexDirection: 'row'
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
     scheduleTitle: {
-        // 카드 제목
         fontSize: Typography.base,
         fontWeight: '600',
         color: Colors.black,
     },
     scheduleGroup: {
-        // 모임명 (작은 글씨, 회색)
         fontSize: Typography.sm,
         color: Colors.gray500,
     },
     scheduleTimeBadge: {
-        // 시간 뱃지 (연한 배경, 둥근 모서리)
         backgroundColor: Colors.primaryLight,
         borderRadius: Radius.lg,
         paddingHorizontal: Spacing.sm,
         paddingVertical: Spacing.xs,
     },
     schedulePlace: {
-        // 장소 (작은 글씨, 회색)
         fontSize: Typography.sm,
         color: Colors.gray500,
     },
     scheduleTimeText: {
-        // 시간
         fontSize: Typography.sm,
         fontWeight: '600',
         color: Colors.primary,
     },
-
     noScheduleText: {
-        // 일정 없을 때 텍스트
         fontSize: Typography.base,
         color: Colors.gray500,
         fontStyle: 'italic',
