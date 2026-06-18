@@ -6,9 +6,9 @@ import Header from '@/components/ui/Header';
 import { API } from '@/constants/api';
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   StatusBar,
   StyleSheet,
@@ -21,28 +21,31 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const TABS = ['게시판', '일정조율', '투표', '멤버'];
 
 export default function GroupScreen() {
+  const router = useRouter();
   const { meetingId } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('게시판');
 
   const { userToken } = useAuthStore();
   const [meetingName, setMeetingName] = useState("");
 
-  useEffect(() => {
-    const fetchMeeting = async () => {
-      try {
-        const response = await fetch(API.getMeeting(Number(meetingId)), {
-          headers: {
-            'Authorization': `Bearer ${userToken}`,
-          }
-        });
-        const data = await response.json();
-        setMeetingName(data.meetingName);
-      } catch (error) {
-        router.back();
+  useFocusEffect(
+    useCallback(() => {
+      const fetchMeeting = async () => {
+        try {
+          const response = await fetch(API.getMeeting(Number(meetingId)), {
+            headers: {
+              'Authorization': `Bearer ${userToken}`,
+            }
+          });
+          const data = await response.json();
+          setMeetingName(data.meetingName);
+        } catch (error) {
+          router.back();
+        }
       }
-    }
-    fetchMeeting();
-  }, []);
+      fetchMeeting();
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -77,7 +80,7 @@ export default function GroupScreen() {
       {activeTab === '게시판' && (
         <TouchableOpacity
           style={styles.fab}
-          onPress={() => router.push(`/group/${meetingId}/create-post`)}
+          onPress={() => router.push(`/group/${meetingId}/post/create`)}
         >
           <Pencil size={24} color={Colors.white} />
         </TouchableOpacity>

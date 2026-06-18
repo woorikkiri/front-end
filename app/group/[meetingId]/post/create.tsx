@@ -7,9 +7,8 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Megaphone, Square, SquareCheck } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
-    ActivityIndicator,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -19,39 +18,24 @@ import {
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function EditPostScreen() {
+export default function CreatePostScreen() {
     // ───── 라우터 / 인증 ─────
-    const { meetingId, postId } = useLocalSearchParams();
+    const { meetingId } = useLocalSearchParams();
     const { userToken } = useAuthStore();
 
     // ───── 상태 ─────
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [isNotice, setIsNotice] = useState(false);
-    const [fetchLoading, setFetchLoading] = useState(true);  // API 불러올 때
-    const [saveLoading, setSaveLoading] = useState(false);   // 저장 버튼 누를 때
+    const [loading, setLoading] = useState(false);
     const [serverErrorModal, setServerErrorModal] = useState(false);
 
     // ───── 에러 상태 ─────
     const [titleError, setTitleError] = useState('');
     const [contentError, setContentError] = useState('');
 
-    useEffect(() => {
-        const fetchUser = async () => {
-            const response = await fetch(API.getPost(Number(meetingId), Number(postId)), {
-                headers: { 'Authorization': `Bearer ${userToken}` }
-            });
-            const data = await response.json();
-            setTitle(data.title);
-            setContent(data.content);
-            setIsNotice(data.isNotice);
-            setFetchLoading(false);
-        };
-        fetchUser();
-    }, []);
-
-    // ───── 게시글 수정 ─────
-    const handleUpdatePost = async () => {
+    // ───── 게시글 등록 ─────
+    const handleCreatePost = async () => {
         let isValid = true;
 
         if (!title) {
@@ -66,21 +50,21 @@ export default function EditPostScreen() {
 
         if (!isValid) return;
 
-        setSaveLoading(true);
+        setLoading(true);
 
         try {
-            const response = await fetch(API.updatePost(Number(meetingId), Number(postId)), {
-                method: 'PATCH',
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('content', content);
+            formData.append('notice', String(isNotice));
+            // file은 선택사항이라 일단 생략
+
+            const response = await fetch(API.createPost(Number(meetingId)), {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${userToken}`
                 },
-                body: JSON.stringify({
-                    title,
-                    content,
-                    notice: isNotice,
-                    imageUrl: null,
-                })
+                body: formData,
             });
             if (!response.ok) {
                 setServerErrorModal(true);
@@ -91,16 +75,14 @@ export default function EditPostScreen() {
         } catch (error) {
             setServerErrorModal(true);
         } finally {
-            setSaveLoading(false);  // 무조건 로딩 끝
+            setLoading(false);  // 무조건 로딩 끝
         }
     };
-
-    if (fetchLoading) return <ActivityIndicator style={{ marginTop: Spacing['2xl'] }} color={Colors.primary} />;
 
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-            <Header title="게시글 수정" />
+            <Header title="게시글 작성" />
             <ScrollView
                 style={styles.container}
                 showsVerticalScrollIndicator={false}
@@ -139,7 +121,7 @@ export default function EditPostScreen() {
                     }
                 </TouchableOpacity>
 
-                {/* 저장, 취소 버튼 */}
+                {/* 등록, 취소 버튼 */}
                 <View style={styles.buttonSection}>
                     <Button
                         label="취소"
@@ -150,9 +132,9 @@ export default function EditPostScreen() {
                     />
 
                     <Button
-                        label="저장"
-                        onPress={handleUpdatePost}
-                        loading={saveLoading}
+                        label="등록"
+                        onPress={handleCreatePost}
+                        loading={loading}
                         style={{ flex: 1 }}
                         fullWidth={false}
                     />

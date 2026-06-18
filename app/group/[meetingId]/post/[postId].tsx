@@ -6,8 +6,8 @@ import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useMeetingStore } from '@/store/MeetingStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useMeetingStore } from '@/store/useMeetingStore';
 import { formatTimeAgo } from '@/utils/date';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ellipsis, Pin, Send } from 'lucide-react-native';
@@ -137,7 +137,7 @@ export default function PostDetailScreen() {
                     // 공지는 항상
                     { label: isNotice ? '공지 내리기' : '공지 등록하기', onPress: () => { setPopoverVisible(false); handleToggleNotice(); } },
                     // 내 게시글이면 수정/삭제 보이기
-                    ...(isMyPost ? [{ label: '게시글 수정', onPress: () => { setPopoverVisible(false); router.push(`/group/${meetingId}/edit-post?postId=${postId}`) } }] : []),
+                    ...(isMyPost ? [{ label: '게시글 수정', onPress: () => { setPopoverVisible(false); router.push(`/group/${meetingId}/post/edit?postId=${postId}`) } }] : []),
                     // 내 게시글이거나 내가 방장이면 삭제 보이기
                     ...(isMyPost || isLeader ? [{ label: '게시글 삭제', onPress: () => { setPopoverVisible(false); setShowDeleteModal(true) }, labelStyle: { color: Colors.error } }] : []),
                 ]} />

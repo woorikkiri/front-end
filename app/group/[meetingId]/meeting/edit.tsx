@@ -35,9 +35,8 @@ export default function EditMeetingScreen() {
     // ───── 데이터 fetch ─────
     useEffect(() => {
         const fetchMeeting = async () => {
-            // API 호출해서 기존 데이터 가져오기
             try {
-                const response = await fetch(API.getMeeting(Number(meetingId)), {
+                const response = await fetch(API.getMeetingDetail(Number(meetingId)), {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -72,16 +71,16 @@ export default function EditMeetingScreen() {
         setLoading(true);
 
         try {
+            const formData = new FormData();
+            formData.append('meetingName', meetingName);
+            formData.append('description', description);
+
             const response = await fetch(API.updateMeeting(Number(meetingId)), {
                 method: "PATCH",
                 headers: {
-                    "Content-Type": "application/json",
                     "Authorization": `Bearer ${userToken}`,
                 },
-                body: JSON.stringify({
-                    meetingName,
-                    description,
-                }),
+                body: formData,
             });
 
             // 실패
