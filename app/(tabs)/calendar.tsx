@@ -125,6 +125,8 @@ export default function CalendarScreen() {
                         onMonthChange={(month) => {
                             setCurrentYear(month.year);
                             setCurrentMonth(month.month);
+                            setSelectDate('');
+                            setDailySchedules([]);
                             fetchMonthlySchedules(month.year, month.month);
                         }}
                         markedDates={markedDates}
