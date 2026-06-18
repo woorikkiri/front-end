@@ -50,13 +50,13 @@ export default function ScheduleTab({ meetingId }: ScheduleTabProps) {
       <View style={styles.buttonSection}>
         <Button
           label="일정 생성"
-          onPress={() => {router.push(`/group/${meetingId}/create-final-schedule`)}}
+          onPress={() => {router.push(`/group/${meetingId}/schedule/create-final`)}}
           variant='cancel'
           style={{flex: 1}}
         />
         <Button
           label="일정조율 만들기"
-          onPress={() => {router.push(`/group/${meetingId}/create-schedule-poll`)}}
+          onPress={() => {router.push(`/group/${meetingId}/schedule/create-poll`)}}
           style={{flex: 1}}
         />
 
@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
 
   content: {
     marginTop: Spacing.lg,
+    flex: 1,
   },
 
   buttonSection: {

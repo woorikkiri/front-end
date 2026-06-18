@@ -24,6 +24,7 @@ export const API = {
   getMeetingInviteCode: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/invite-code`,  // GET
   leaveMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/members/me`, // DELETE
   updateMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}`,  // PATCH
+  getMeetingDetail: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}`, // GET
   // 모임검색 프론트에서
   getMeeting: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/home`,     // GET  -> 게시글 이거 가져옴.
   getMembers: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/members`, // GET
@@ -51,6 +52,8 @@ export const API = {
   // ───── 알림 ─────
   updateNotificationSettings: `${BASE_URL}/api/users/me/notification-settings`, // PATCH
   getNotifications: `${BASE_URL}/api/notifications`,                             // GET
+  readNotification: (notificationId: number) => `${BASE_URL}/api/notifications/${notificationId}/read`, // PATCH
+  getUnreadCount: `${BASE_URL}/api/notifications/unread-count`,                  // GET                        // GET
 
   // ───── 투표 ─────
   createVote: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/votes`,  // POST
@@ -60,7 +63,11 @@ export const API = {
   deleteVote: (voteId: number) => `${BASE_URL}/api/votes/${voteId}`,                // DELETE
   participateVote: (voteId: number) => `${BASE_URL}/api/votes/${voteId}/participate`, // POST 
   closeVote: (voteId: number) => `${BASE_URL}/api/votes/${voteId}/close`, // PATCH
-  
+
+  getVoteParticipants: (voteId: number) => `${BASE_URL}/api/votes/${voteId}/participants`, // GET
+  getVoteResult: (voteId: number) => `${BASE_URL}/api/votes/${voteId}/result`, // GET
+
+
   // ───── 개인 일정 ─────
   getMySchedules: `${BASE_URL}/api/calendar/my-schedules`, // GET
 

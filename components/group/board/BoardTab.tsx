@@ -94,7 +94,7 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
             createdAt={formatTimeAgo(item.createdAt)}
             commentsCount={item.commentCount}
             isNotice={item.notice}
-            onPress={() => router.push(`/group/${meetingId}/${item.postId}`)}
+            onPress={() => router.push(`/group/${meetingId}/post/${item.postId}`)}
           />
         )}
         ItemSeparatorComponent={() => <View style={styles.separator} />}

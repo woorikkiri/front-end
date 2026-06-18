@@ -73,11 +73,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         flexShrink: 0,
     },
-    avatarText: {
-        fontSize: Typography.sm,
-        fontWeight: '700',
-        color: Colors.primary,
-    },
     avatarImage: {
         width: 36,
         height: 36,

@@ -5,8 +5,8 @@ import ProfileCard from '@/components/ui/ProfileCard';
 import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useMeetingStore } from '@/store/MeetingStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useMeetingStore } from '@/store/useMeetingStore';
 import * as Clipboard from 'expo-clipboard';
 import { useFocusEffect, useRouter } from "expo-router";
 import {
@@ -297,7 +297,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
     ? [
       {
         label: '모임 수정',
-        onPress: () => router.push(`/group/${meetingId}/edit-meeting`),
+        onPress: () => router.push(`/group/${meetingId}/meeting/edit`),
         rightIcon: <Pencil size={20} color={Colors.gray500} />,
         showChevron: false,
       },

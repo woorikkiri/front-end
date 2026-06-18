@@ -134,11 +134,11 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
                         deadline={getDaysUntilDeadline(item.deadlineAt)}
                         status={getDaysUntilDeadline(item.deadlineAt) === '마감됨' ? 'CLOSED' : item.status}
                         onPress={() => router.push({
-                            pathname: `/group/${meetingId}/schedule-poll-detail` as any,
+                            pathname: `/group/${meetingId}/schedule/detail` as any,
                             params: { schedulePollId: item.schedulePollId }
                         })}
                         onEdit={() => router.push({
-                            pathname: `/group/${meetingId}/create-schedule-poll` as any,
+                            pathname: `/group/${meetingId}/schedule/create-poll` as any,
                             params: { schedulePollId: item.schedulePollId }
                         })}
                         onDelete={() => {

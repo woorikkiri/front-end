@@ -1,10 +1,9 @@
 // 네비게이터 설정 (화면 전환), 폰트로딩, 전역 상태 관리, 로그인 여부 체크 등
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import useAuth from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/useAuthStore';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AlertCircle } from 'lucide-react-native';
@@ -57,7 +56,6 @@ const toastConfig = {
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const router = useRouter();
   const { loading, hasLaunched } = useAuth();
   const { userToken } = useAuthStore();
@@ -81,7 +79,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={DefaultTheme}>
           <Stack screenOptions={{ headerShown: false }}>
             {/* 첫 화면 */}
             <Stack.Screen name="index" />

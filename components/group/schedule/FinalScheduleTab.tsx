@@ -130,9 +130,7 @@ export default function FinalScheduleTab({ meetingId }: FinalScheduleTabProps) {
                         meta={formatFinalScheduleMeta(item.startDate, item.endDate)}
                         time={item.time}
                         location={item.location}
-                        onEdit={() => router.push(
-                            `/group/${meetingId}/create-final-schedule?scheduleId=${item.finalScheduleId}`
-                        )}
+                        onEdit={() => router.push(`/group/${meetingId}/schedule/create-final?scheduleId=${item.finalScheduleId}`)}
                         onDelete={() => {
                             setSelectedId(item.finalScheduleId);
                             setDeleteModal(true);
