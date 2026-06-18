@@ -50,10 +50,11 @@ export const API = {
   deleteFinalSchedule: (meetingId: number, scheduleId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules/${scheduleId}`,  // DELETE
 
   // ───── 알림 ─────
-  updateNotificationSettings: `${BASE_URL}/api/users/me/notification-settings`, // PATCH
-  getNotifications: `${BASE_URL}/api/notifications`,                             // GET
+  saveFcmToken: `${BASE_URL}/api/notifications/fcm-token`,                         // PATCH
+  updateNotificationSettings: `${BASE_URL}/api/notifications/setting`,             // PATCH
+  getNotifications: `${BASE_URL}/api/notifications`,                               // GET
   readNotification: (notificationId: number) => `${BASE_URL}/api/notifications/${notificationId}/read`, // PATCH
-  getUnreadCount: `${BASE_URL}/api/notifications/unread-count`,                  // GET                        // GET
+  getUnreadCount: `${BASE_URL}/api/notifications/unread-count`,                    // GET
 
   // ───── 투표 ─────
   createVote: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/votes`,  // POST
@@ -63,13 +64,12 @@ export const API = {
   deleteVote: (voteId: number) => `${BASE_URL}/api/votes/${voteId}`,                // DELETE
   participateVote: (voteId: number) => `${BASE_URL}/api/votes/${voteId}/participate`, // POST 
   closeVote: (voteId: number) => `${BASE_URL}/api/votes/${voteId}/close`, // PATCH
-
   getVoteParticipants: (voteId: number) => `${BASE_URL}/api/votes/${voteId}/participants`, // GET
   getVoteResult: (voteId: number) => `${BASE_URL}/api/votes/${voteId}/result`, // GET
 
-
   // ───── 개인 일정 ─────
-  getMySchedules: `${BASE_URL}/api/calendar/my-schedules`, // GET
+  getMyCalendar: (year: number, month: number) => `${BASE_URL}/api/calendar/me?year=${year}&month=${month}`, // GET
+  getDailySchedule: (date: string) => `${BASE_URL}/api/calendar/me/daily?date=${date}`, // GET
 
   // ───── 게시글 ─────
   createPost: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/posts`,  // POST
