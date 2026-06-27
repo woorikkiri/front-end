@@ -7,6 +7,7 @@ import { Bell, CalendarDays, ChevronRight, KeyRound, Plus, Search, UsersRound } 
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Modal,
   ScrollView,
   StatusBar,
@@ -24,6 +25,7 @@ interface Meeting {
   description: string;
   totalMemberCount: number;
   createdAt: string;
+  imageUrl: string | null;
 }
 
 export default function HomeScreen() {
@@ -53,7 +55,7 @@ export default function HomeScreen() {
       }
 
       setGroups(data);
-      
+
     } catch (e) {
       setServerErrorModal(true);
     } finally {
@@ -144,9 +146,12 @@ export default function HomeScreen() {
                   >
                     {/* 이니셜 아바타 */}
                     <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>
-                        {group.meetingName.charAt(0)}
-                      </Text>
+                      {group.imageUrl ? (
+                        <Image
+                          source={{ uri: group.imageUrl }}
+                          style={styles.avatarImage}
+                        />
+                      ) : null}
                     </View>
 
                     {/* 모임 정보 */}
@@ -359,10 +364,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: Typography.base,
-    fontWeight: '700',
-    color: Colors.primary,
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.full,
   },
   groupInfo: {
     flex: 1,

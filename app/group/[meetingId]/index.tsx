@@ -21,12 +21,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const TABS = ['게시판', '일정조율', '투표', '멤버'];
 
 export default function GroupScreen() {
+  const { userToken } = useAuthStore();
   const router = useRouter();
   const { meetingId } = useLocalSearchParams();
-  const [activeTab, setActiveTab] = useState('게시판');
-
-  const { userToken } = useAuthStore();
   const [meetingName, setMeetingName] = useState("");
+  const [activeTab, setActiveTab] = useState('게시판');
+  const [showFab, setShowFab] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -71,13 +71,16 @@ export default function GroupScreen() {
 
       {/* 탭 컨텐츠 - View 하나로 단순하게 */}
       <View style={styles.container}>
-        {activeTab === '게시판' && <BoardTab meetingId={Number(meetingId)} />}
+        {activeTab === '게시판' && <BoardTab
+          meetingId={Number(meetingId)}
+          onHasPosts={setShowFab}
+        />}
         {activeTab === '일정조율' && <ScheduleTab meetingId={Number(meetingId)} />}
         {activeTab === '투표' && <VoteTab meetingId={Number(meetingId)} />}
         {activeTab === '멤버' && <MembersTab meetingId={Number(meetingId)} meetingName={meetingName} />}
       </View>
       {/* FAB - 게시판일 때만 */}
-      {activeTab === '게시판' && (
+      {activeTab === '게시판' && showFab && (
         <TouchableOpacity
           style={styles.fab}
           onPress={() => router.push(`/group/${meetingId}/post/create`)}
