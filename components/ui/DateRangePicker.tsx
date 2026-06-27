@@ -2,6 +2,7 @@ import { CalendarTheme, Colors, Radius, Spacing, Typography } from '@/constants/
 import { CalendarDays, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useState } from 'react';
 import {
+    Keyboard,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -52,6 +53,7 @@ export default function DateRangePicker({
                         selecting === 'start' && showCalendar && styles.dateButtonActive
                     ]}
                     onPress={() => {
+                        Keyboard.dismiss();
                         if (showCalendar && selecting === 'start') {
                             setShowCalendar(false);
                             setSelecting(null);
@@ -81,6 +83,7 @@ export default function DateRangePicker({
                         selecting === 'end' && showCalendar && styles.dateButtonActive
                     ]}
                     onPress={() => {
+                        Keyboard.dismiss();
                         if (showCalendar && selecting === 'end') {
                             setShowCalendar(false);
                             setSelecting(null);

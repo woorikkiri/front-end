@@ -14,13 +14,15 @@ export default function EmptyState({ icon, title, description, children, variant
     return (
         <View style={[styles.container, variant === 'card' && styles.containerCard]}>
             {variant === 'card' ? (
-                icon
+                <View style={styles.iconRoundedBox}>
+                    {icon}
+                </View>
             ) : (
                 <View style={styles.iconCircle}>
                     {icon}
                 </View>
             )}
-            
+
             <View style={styles.textGroup}>
                 <Text style={styles.title}>{title}</Text>
                 {description && (
@@ -28,7 +30,6 @@ export default function EmptyState({ icon, title, description, children, variant
                 )}
             </View>
             {children}
-
         </View>
     );
 }
@@ -65,13 +66,20 @@ const styles = StyleSheet.create({
         color: Colors.gray500,
         textAlign: 'center',
     },
-
     containerCard: {
-        borderWidth: 1,
-        borderColor: Colors.border,
+        flex: 1,
         borderRadius: Radius.xl,
-        padding: Spacing.lg,
+        padding: Spacing.xl,
+        alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: Spacing.lg,
+        gap: Spacing.xl,
+    },
+    iconRoundedBox: {
+        width: 80,
+        height: 80,
+        borderRadius: Radius['2xl'],
+        backgroundColor: Colors.primaryLight,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });
