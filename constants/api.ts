@@ -50,11 +50,12 @@ export const API = {
   deleteFinalSchedule: (meetingId: number, scheduleId: number) => `${BASE_URL}/api/meetings/${meetingId}/final-schedules/${scheduleId}`,  // DELETE
 
   // ───── 알림 ─────
-  saveFcmToken: `${BASE_URL}/api/notifications/fcm-token`,                         // PATCH
-  updateNotificationSettings: `${BASE_URL}/api/notifications/setting`,             // PATCH
-  getNotifications: `${BASE_URL}/api/notifications`,                               // GET
+  saveFcmToken: `${BASE_URL}/api/notifications/fcm-token`,                              // PATCH
+  updateNotificationSettings: `${BASE_URL}/api/notifications/settings`,                 // PATCH
+  getNotificationSettings: `${BASE_URL}/api/notifications/settings`,                    // GET
+  getNotifications: `${BASE_URL}/api/notifications`,                                    // GET
   readNotification: (notificationId: number) => `${BASE_URL}/api/notifications/${notificationId}/read`, // PATCH
-  getUnreadCount: `${BASE_URL}/api/notifications/unread-count`,                    // GET
+  getUnreadCount: `${BASE_URL}/api/notifications/unread-count`,                         // GET
 
   // ───── 투표 ─────
   createVote: (meetingId: number) => `${BASE_URL}/api/meetings/${meetingId}/votes`,  // POST
