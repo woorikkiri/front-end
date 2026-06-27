@@ -1,5 +1,6 @@
 // BoardTab.tsx
 import PostCard from '@/components/group/board/PostCard';
+import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import { API } from '@/constants/api';
@@ -7,7 +8,7 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from "@/store/useAuthStore";
 import { formatTimeAgo } from '@/utils/date';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { File, Megaphone } from 'lucide-react-native';
+import { Megaphone, Pencil } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -19,6 +20,7 @@ import {
 
 interface BoardTabProps {
   meetingId: number;
+  onHasPosts?: (hasPosts: boolean) => void;
 }
 
 interface Post {
@@ -33,7 +35,7 @@ interface Post {
   imageUrl: null | string;
 }
 
-export default function BoardTab({ meetingId }: BoardTabProps) {
+export default function BoardTab({ meetingId, onHasPosts }: BoardTabProps) {
   // ───── 라우터 / 인증 ─────
   const router = useRouter();
   const { userToken } = useAuthStore();
@@ -61,6 +63,7 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
         ? [data.noticePost, ...data.posts]
         : data.posts;
       setPosts(allPosts);
+      onHasPosts?.(allPosts.length > 0);
       setNoticePost(data.noticePost);
     } catch (e) {
       setServerErrorModal(true);
@@ -81,6 +84,7 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
   return (
     <>
       <FlatList
+        contentContainerStyle={styles.listContainer}
         // 1. 데이터
         data={posts}
 
@@ -102,8 +106,6 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
         // 3. 헤더/빈상태
         ListHeaderComponent={() => (
           <>
-            {/* 공지 배너 - 항상 고정 */}
-            {/* noticePost가 있을 때만 배너 보여주기 */}
             {noticePost && (
               <View style={styles.noticeBanner}>
                 <View style={styles.noticeBannerIcon}>
@@ -112,16 +114,25 @@ export default function BoardTab({ meetingId }: BoardTabProps) {
                 <Text style={styles.noticeBannerText}>{noticePost.title}</Text>
               </View>
             )}
-            {/* 게시판 텍스트 */}
-            <Text style={styles.titleText}>게시판</Text>
+            {/* 게시글 있을 때만 "게시판" 텍스트 */}
+            {posts.length > 0 && (
+              <Text style={styles.titleText}>게시판</Text>
+            )}
           </>
         )}
         ListEmptyComponent={() => (
           <EmptyState
-            icon={<File size={40} color={Colors.gray300} />}
+            icon={<Pencil size={35} color={Colors.primary} />}
             title="아직 게시글이 없어요"
-            description="첫 번째 게시글을 작성해보세요!"
-          />
+            description={"첫 번째 게시글을 작성해서\n모임을 활발하게 만들어보세요!"}
+            variant='card'
+          >
+            <Button
+              label="게시글 작성하기"
+              onPress={() => router.push(`/group/${meetingId}/post/create`)}
+              fullWidth={false}
+            />
+          </EmptyState>
         )}
 
         // 4. 스타일/옵션
@@ -165,5 +176,11 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: Spacing.md,
+  },
+  emptyWrapper: {
+    marginTop: Spacing['5xl'],
+  },
+  listContainer: {
+    flexGrow: 1,
   },
 });

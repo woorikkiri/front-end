@@ -10,15 +10,19 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useMeetingStore } from '@/store/useMeetingStore';
 import { formatTimeAgo } from '@/utils/date';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Ellipsis, Pin, Send } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
+import { Ellipsis, Pin, Send, X } from 'lucide-react-native';
+import { useCallback, useRef, useState } from 'react';
 import {
-    KeyboardAvoidingView, Platform, ScrollView,
+    Image,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 import Popover from 'react-native-popover-view';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,7 +30,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 interface Post {
     content: string;
     createdAt: string;
-    imageUrls: null | string[];
+    postImageUrl: string | null;
+    writerProfileImageUrl: string | null;
     meetingId: number;
     notice: boolean;
     postId: number;
@@ -50,6 +55,9 @@ export default function PostDetailScreen() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [serverErrorModal, setServerErrorModal] = useState(false);
     const [popoverVisible, setPopoverVisible] = useState(false);
+    const scrollRef = useRef<ScrollView>(null);
+    const commentInputRef = useRef<any>(null);
+    const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
 
     // ───── 파생값 ─────
     const isLeader = myRole === 'HOST';
@@ -57,23 +65,44 @@ export default function PostDetailScreen() {
     const isNotice = post?.notice ?? false;
 
     // ───── 데이터 fetch ─────
-    useFocusEffect(     
-        useCallback(() => {  
+    useFocusEffect(
+        useCallback(() => {
             const fetchPost = async () => {
                 try {
-                    const response = await fetch(API.getPost(Number(meetingId), Number(postId)), {
-                        headers: { 'Authorization': `Bearer ${userToken}` }
-                    });
-                    const data = await response.json();
-                    setPost(data);
-                    setComments(data.comments ?? []);
+                    const [postRes, commentsRes] = await Promise.all([
+                        fetch(API.getPost(Number(meetingId), Number(postId)), {
+                            headers: { 'Authorization': `Bearer ${userToken}` }
+                        }),
+                        fetch(API.getComments(Number(postId)), {
+                            headers: { 'Authorization': `Bearer ${userToken}` }
+                        }),
+                    ]);
+
+                    const postData = await postRes.json();
+                    const commentsData = await commentsRes.json();
+
+                    setPost(postData);
+                    setComments(commentsData ?? []);
                 } catch (e) {
                     setServerErrorModal(true);
                 }
             };
             fetchPost();
-        }, []) 
-    );     
+        }, [])
+    );
+
+    // ───── 댓글 수정 버튼 눌렀을 때 ─────
+    const handleEditPress = (commentId: number, content: string) => {
+        setEditingCommentId(commentId);
+        setCommentText(content);
+        commentInputRef.current?.focus();
+    };
+
+    // ───── 댓글 수정 취소 ─────
+    const handleCancelEdit = () => {
+        setEditingCommentId(null);
+        setCommentText('');
+    };
 
     // ───── 게시글 삭제 ─────
     const handleDeletePost = async () => {
@@ -96,7 +125,6 @@ export default function PostDetailScreen() {
             setServerErrorModal(true);
         }
     };
-    // ───── 댓글 추가 (API 연동 전) ─────
 
     // ───── 공지 토글 ─────
     const handleToggleNotice = async () => {
@@ -150,24 +178,43 @@ export default function PostDetailScreen() {
         if (!commentText.trim()) return;
 
         try {
-            const response = await fetch(API.createComment(Number(postId)), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userToken}`,
-                },
-                body: JSON.stringify({ content: commentText }),
-            });
-
-            if (!response.ok) {
-                setServerErrorModal(true);
-                return;
+            if (editingCommentId) {
+                // 수정 모드
+                const response = await fetch(API.updateComment(Number(postId), editingCommentId), {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userToken}`,
+                    },
+                    body: JSON.stringify({ content: commentText }),
+                });
+                if (!response.ok) { setServerErrorModal(true); return; }
+                const updated = await response.json();
+                setComments(prev => prev.map(c =>
+                    c.commentId === editingCommentId
+                        ? { ...c, content: updated.content, updatedAt: updated.updatedAt }  // 여기 수정
+                        : c
+                ));
+                setEditingCommentId(null);
+            } else {
+                // 작성 모드
+                const response = await fetch(API.createComment(Number(postId)), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userToken}`,
+                    },
+                    body: JSON.stringify({ content: commentText }),
+                });
+                if (!response.ok) { setServerErrorModal(true); return; }
+                const newComment = await response.json();
+                setComments(prev => [...prev, newComment]);
+                setTimeout(() => {
+                    scrollRef.current?.scrollToEnd({ animated: true });
+                }, 100);
             }
-
-            const newComment = await response.json();
-            setComments(prev => [...prev, newComment]);
             setCommentText('');
-
+            Keyboard.dismiss();
         } catch (e) {
             setServerErrorModal(true);
         }
@@ -203,7 +250,7 @@ export default function PostDetailScreen() {
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-                <ScrollView style={styles.container}>
+                <ScrollView ref={scrollRef} style={styles.container}>
                     <View style={styles.titleSection}>
                         <Text style={styles.title}>{post?.title}</Text>
                         {post?.notice && (
@@ -219,6 +266,13 @@ export default function PostDetailScreen() {
                         <Text style={styles.infoText}>{formatTimeAgo(post?.createdAt ?? '')}</Text>
                     </View>
                     <Text style={styles.subTitle}>{post?.content}</Text>
+                    {post?.postImageUrl && (
+                        <Image
+                            source={{ uri: post.postImageUrl }}
+                            style={styles.postImage}
+                            resizeMode="cover"
+                        />
+                    )}
 
                     <View style={styles.inputDivider} />
 
@@ -231,6 +285,7 @@ export default function PostDetailScreen() {
                                 comment={comment}
                                 isMyComment={comment.writerId === userId}
                                 onDelete={handleDeleteComment}
+                                onEditPress={handleEditPress}
                             />
                         ))}
                     </View>
@@ -240,9 +295,19 @@ export default function PostDetailScreen() {
                 <View style={styles.divider} />
 
                 <View>
+                    {/* 수정 중 배너 */}
+                    {editingCommentId && (
+                        <View style={styles.editingBanner}>
+                            <Text style={styles.editingText}>댓글 수정 중</Text>
+                            <TouchableOpacity onPress={handleCancelEdit} hitSlop={8}>
+                                <X size={16} color={Colors.gray500} />
+                            </TouchableOpacity>
+                        </View>
+                    )}
                     {/* 댓글 입력 창 */}
                     <View style={styles.commentInputWrap}>
                         <TextInput
+                            ref={commentInputRef}
                             placeholder="댓글을 입력하세요"
                             containerStyle={{ flex: 1 }}
                             value={commentText}
@@ -311,6 +376,12 @@ const styles = StyleSheet.create({
     subTitle: {
         fontSize: Typography.base,
     },
+    postImage: {
+        width: '100%',
+        aspectRatio: 1,
+        borderRadius: Radius.lg,
+        marginTop: Spacing.lg,
+    },
     infoSection: {
         flexDirection: 'row',
         gap: Spacing.sm,
@@ -338,6 +409,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: Spacing.sm,
         paddingHorizontal: Spacing.lg,
+    },
+    editingBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.sm,
+        backgroundColor: Colors.primaryLight,
+        marginBottom: Spacing.sm,
+    },
+    editingText: {
+        fontSize: Typography.sm,
+        color: Colors.primary,
+        fontWeight: '600',
     },
     sendBtn: {
         backgroundColor: Colors.primary,

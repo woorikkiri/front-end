@@ -5,10 +5,12 @@ import TextInput from '@/components/ui/TextInput';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
+import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Megaphone, Square, SquareCheck } from 'lucide-react-native';
+import { Camera, Megaphone, Square, SquareCheck, X } from 'lucide-react-native';
 import { useState } from 'react';
 import {
+    Image,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -30,9 +32,38 @@ export default function CreatePostScreen() {
     const [loading, setLoading] = useState(false);
     const [serverErrorModal, setServerErrorModal] = useState(false);
 
+    // ───── 이미지 상태 ─────
+    const [imageUri, setImageUri] = useState<string | null>(null);
+    const [newImageFile, setNewImageFile] = useState<{ uri: string; name: string; type: string } | null>(null);
+
     // ───── 에러 상태 ─────
     const [titleError, setTitleError] = useState('');
     const [contentError, setContentError] = useState('');
+
+    // ───── 이미지 선택 ─────
+    const handlePickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            const asset = result.assets[0];
+            const uri = asset.uri;
+            const name = uri.split('/').pop() ?? 'image.jpg';
+            const type = asset.mimeType ?? 'image/jpeg';
+
+            setImageUri(uri);
+            setNewImageFile({ uri, name, type });
+        }
+    };
+
+    // ───── 이미지 삭제 ─────
+    const handleDeleteImage = () => {
+        setImageUri(null);
+        setNewImageFile(null);
+    };
 
     // ───── 게시글 등록 ─────
     const handleCreatePost = async () => {
@@ -45,7 +76,6 @@ export default function CreatePostScreen() {
         if (!content) {
             setContentError('내용을 입력하세요');
             isValid = false;
-
         }
 
         if (!isValid) return;
@@ -57,7 +87,14 @@ export default function CreatePostScreen() {
             formData.append('title', title);
             formData.append('content', content);
             formData.append('notice', String(isNotice));
-            // file은 선택사항이라 일단 생략
+
+            if (newImageFile) {
+                formData.append('file', {
+                    uri: newImageFile.uri,
+                    name: newImageFile.name,
+                    type: newImageFile.type,
+                } as any);
+            }
 
             const response = await fetch(API.createPost(Number(meetingId)), {
                 method: 'POST',
@@ -75,7 +112,7 @@ export default function CreatePostScreen() {
         } catch (error) {
             setServerErrorModal(true);
         } finally {
-            setLoading(false);  // 무조건 로딩 끝
+            setLoading(false);
         }
     };
 
@@ -86,6 +123,7 @@ export default function CreatePostScreen() {
             <ScrollView
                 style={styles.container}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{ gap: Spacing.xl }}
             >
                 <TextInput
@@ -111,6 +149,28 @@ export default function CreatePostScreen() {
                     }}
                 />
 
+                {/* 이미지 영역 */}
+                <View style={styles.imageSection}>
+                    <Text style={styles.imageLabel}>사진 (선택)</Text>
+                    {imageUri ? (
+                        <View style={styles.imageWrapper}>
+                            <Image source={{ uri: imageUri }} style={styles.image} />
+                            <TouchableOpacity
+                                style={styles.deleteButton}
+                                onPress={handleDeleteImage}
+                                activeOpacity={0.8}
+                            >
+                                <X size={14} color={Colors.white} />
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <TouchableOpacity style={styles.imagePicker} onPress={handlePickImage} activeOpacity={0.7}>
+                            <Camera size={24} color={Colors.gray500} />
+                            <Text style={styles.imagePickerText}>사진 추가</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
                 {/* 공지사항 올리는 check박스 */}
                 <TouchableOpacity style={styles.checkboxContainer} onPress={() => setIsNotice(!isNotice)}>
                     <Megaphone size={22} color={Colors.primary} style={styles.checkboxIcon} />
@@ -130,7 +190,6 @@ export default function CreatePostScreen() {
                         style={{ flex: 1 }}
                         fullWidth={false}
                     />
-
                     <Button
                         label="등록"
                         onPress={handleCreatePost}
@@ -141,7 +200,6 @@ export default function CreatePostScreen() {
                 </View>
             </ScrollView>
 
-            {/* 서버 오류 모달 */}
             <ServerErrorModal
                 visible={serverErrorModal}
                 onClose={() => setServerErrorModal(false)}
@@ -150,16 +208,70 @@ export default function CreatePostScreen() {
     );
 }
 
+const IMAGE_SIZE = 100;
+
 const styles = StyleSheet.create({
     safe: {
         flex: 1,
         backgroundColor: Colors.white,
     },
     container: {
-        paddingTop: Spacing['xl'],
-        paddingHorizontal: Spacing['lg'],
+        paddingTop: Spacing.xl,
+        paddingHorizontal: Spacing.lg,
         paddingBottom: Spacing['5xl'],
     },
+
+    // ───── 이미지 ─────
+    imageSection: {
+        gap: Spacing.sm,
+    },
+    imageLabel: {
+        fontSize: Typography.sm,
+        fontWeight: '600',
+        color: Colors.gray900,
+    },
+    imageWrapper: {
+        position: 'relative',
+        width: IMAGE_SIZE,
+        height: IMAGE_SIZE,
+    },
+    image: {
+        width: IMAGE_SIZE,
+        height: IMAGE_SIZE,
+        borderRadius: Radius.lg,
+    },
+    deleteButton: {
+        position: 'absolute',
+        top: -6,
+        right: -6,
+        width: 22,
+        height: 22,
+        borderRadius: Radius.full,
+        backgroundColor: Colors.gray500,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: Colors.white,
+    },
+    imagePicker: {
+        width: IMAGE_SIZE,
+        height: IMAGE_SIZE,
+        borderRadius: Radius.lg,
+        borderWidth: 1.5,
+        borderColor: Colors.border,
+        borderStyle: 'dashed',
+        backgroundColor: Colors.gray100,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: Spacing.xs,
+    },
+    imagePickerText: {
+        fontSize: Typography.sm,
+        color: Colors.gray500,
+        fontWeight: '600',
+    },
+
+    // ───── 공지 체크박스 ─────
     checkboxContainer: {
         backgroundColor: Colors.gray100,
         borderRadius: Radius.lg,
@@ -168,8 +280,6 @@ const styles = StyleSheet.create({
         borderColor: Colors.border,
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: Spacing.lg,
-        marginBottom: Spacing.lg,
     },
     checkboxIcon: {
         marginRight: Spacing.sm,
@@ -178,9 +288,10 @@ const styles = StyleSheet.create({
         fontSize: Typography.base,
         fontWeight: '700',
     },
+
+    // ───── 버튼 ─────
     buttonSection: {
         flexDirection: 'row',
         gap: Spacing.base,
     },
-
 });

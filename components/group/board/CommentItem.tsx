@@ -1,6 +1,6 @@
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { formatTimeAgo } from '@/utils/date';
-import { Trash2, User } from 'lucide-react-native';
+import { Pencil, Trash2, User } from 'lucide-react-native';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export interface Comment {
@@ -9,23 +9,25 @@ export interface Comment {
     writerNickname: string;
     writerId: number;
     createdAt: string;
-    profileImageUrl: string | null;
+    updatedAt: string | null;
+    writerProfileImageUrl: string | null;
 }
 
 interface CommentItemProps {
     comment: Comment;
     isMyComment: boolean;  // 내 댓글인지
     onDelete: (commentId: number) => void;  // 삭제 함수
+    onEditPress: (commentId: number, content: string) => void;  // 수정 버튼 눌렀을 때
 }
 
-export default function CommentItem({ comment, isMyComment, onDelete }: CommentItemProps) {
+export default function CommentItem({ comment, isMyComment, onDelete, onEditPress }: CommentItemProps) {
     return (
         <View style={styles.container}>
             {/* 아바타 */}
             <View style={styles.avatar}>
-                {comment.profileImageUrl ? (
+                {comment.writerProfileImageUrl ? (
                     <Image
-                        source={{ uri: comment.profileImageUrl }}
+                        source={{ uri: comment.writerProfileImageUrl }}
                         style={styles.avatarImage}
                     />
                 ) : (
@@ -38,20 +40,28 @@ export default function CommentItem({ comment, isMyComment, onDelete }: CommentI
                 {/* 작성자 + 시간 */}
                 <View style={styles.header}>
                     <Text style={styles.nickname}>{comment.writerNickname}</Text>
-                    <Text style={styles.time}>{formatTimeAgo(comment.createdAt)}</Text>
+                    {/* 처음 작성 시간 유지 + "수정됨" 표시 */}
+                    <Text style={styles.time}>
+                        {comment.updatedAt && comment.updatedAt !== comment.createdAt
+                            ? `${formatTimeAgo(comment.createdAt)} · 수정됨`
+                            : formatTimeAgo(comment.createdAt)
+                        }
+                    </Text>
                 </View>
                 {/* 댓글 내용 */}
                 <Text style={styles.text}>{comment.content}</Text>
             </View>
 
-            {/* 내 댓글이면 삭제 버튼 */}
+            {/* 내 댓글이면 수정/삭제 버튼 */}
             {isMyComment && (
-                <TouchableOpacity
-                    onPress={() => onDelete(comment.commentId)}
-                    hitSlop={8}
-                >
-                    <Trash2 size={16} color={Colors.gray300} />
-                </TouchableOpacity>
+                <View style={styles.actions}>
+                    <TouchableOpacity onPress={() => onEditPress(comment.commentId, comment.content)} hitSlop={8}>
+                        <Pencil size={16} color={Colors.gray300} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => onDelete(comment.commentId)} hitSlop={8}>
+                        <Trash2 size={16} color={Colors.gray300} />
+                    </TouchableOpacity>
+                </View>
             )}
         </View>
     );
@@ -100,5 +110,10 @@ const styles = StyleSheet.create({
         fontSize: Typography.base,
         color: Colors.gray900,
         lineHeight: 22,
+    },
+    actions: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+        alignItems: 'center',
     },
 });
