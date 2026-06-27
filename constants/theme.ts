@@ -4,6 +4,7 @@ export const Colors = {
   primaryLight: '#FEF3E2',  // 연한 오렌지 배경
   primaryDark: '#E0941A',   // 진한 오렌지 (pressed state)
   primaryAlpha: '#ffb55aec', // 오렌지 투명 (hover state)
+  primaryBorder: '#F9C97A',
 
   black: '#1A1A1A',
   gray900: '#2D2D2D',
