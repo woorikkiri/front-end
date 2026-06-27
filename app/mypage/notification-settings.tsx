@@ -1,74 +1,140 @@
 import Header from '@/components/ui/Header';
 import MenuGroup, { MenuItem } from '@/components/ui/MenuGroup';
+import ServerErrorModal from '@/components/ui/ServerErrorModal';
+import { API } from '@/constants/api';
 import { Colors, Spacing, Typography } from '@/constants/theme';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from "expo-router";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+    Alert,
     StatusBar,
     StyleSheet,
     Switch,
     Text,
-    View
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function notificationsScreen() {
+export default function NotificationSettingsScreen() {
     const router = useRouter();
-    
-    {/* 알림 별 state */}
-    // TODO: API 연동 후 서버에서 알림 설정 불러오기 / 저장하기
-    const [meetingAlarm, setMeetingAlarm] = useState(true);
-    const [voteAlarm, setVoteAlarm] = useState(true);
-    const [memberAlarm, setMemberAlarm] = useState(true);
+    const { userToken } = useAuthStore();
+
+    // ───── 알림 설정 상태 ─────
+    const [noticeEnabled, setNoticeEnabled] = useState(true);
+    const [pushEnabled, setPushEnabled] = useState(true);
+    const [scheduleEnabled, setScheduleEnabled] = useState(true);
+    const [voteEnabled, setVoteEnabled] = useState(true);
+    const [serverErrorModal, setServerErrorModal] = useState(false);
+
+    // ───── 알림 설정 불러오기 ─────
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch(API.getNotificationSettings, {
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+                if (!response.ok) {
+                    Alert.alert('실패', String(response.status));
+                    setServerErrorModal(true);
+                    return;
+                }
+                Alert.alert('status', String(response.status));
+                const data = await response.json();
+                console.log('data:', data);
+                setNoticeEnabled(data.noticeEnabled);
+                setPushEnabled(data.pushEnabled);
+                setScheduleEnabled(data.scheduleEnabled);
+                setVoteEnabled(data.voteEnabled);
+            } catch (e) {
+                setServerErrorModal(true);
+                Alert.alert('에러', String(e));
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    // ───── 알림 설정 변경 ─────
+    const updateSetting = async (key: string, value: boolean) => {
+        try {
+            const response = await fetch(API.updateNotificationSettings, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`,
+                },
+                body: JSON.stringify({ [key]: value }),
+            });
+            if (!response.ok) { setServerErrorModal(true); }
+        } catch (e) {
+            setServerErrorModal(true);
+        }
+    };
+
+    const handleToggle = (key: string, value: boolean, setter: (v: boolean) => void) => {
+        setter(value);
+        updateSetting(key, value);
+    };
 
     const menuItems: MenuItem[] = [
-        { 
-            label: '모임 확정 알림',
-            onPress: ()=> setMeetingAlarm(!meetingAlarm), 
+        {
+            label: '공지 알림',
+            onPress: () => handleToggle('noticeEnabled', !noticeEnabled, setNoticeEnabled),
             rightIcon: (
-                <Switch 
-                    value={meetingAlarm} 
-                    onValueChange={(v) => setMeetingAlarm(v)}
+                <Switch
+                    value={noticeEnabled}
+                    onValueChange={(v) => handleToggle('noticeEnabled', v, setNoticeEnabled)}
                     trackColor={{ false: Colors.gray300, true: Colors.primary }}
                 />
             )
         },
-        { 
-            label: '투표 마감 알림',
-            onPress: ()=> setVoteAlarm(!voteAlarm), 
+        {
+            label: '일정 알림',
+            onPress: () => handleToggle('scheduleEnabled', !scheduleEnabled, setScheduleEnabled),
             rightIcon: (
-                <Switch 
-                    value={voteAlarm} 
-                    onValueChange={(v) => setVoteAlarm(v)}
+                <Switch
+                    value={scheduleEnabled}
+                    onValueChange={(v) => handleToggle('scheduleEnabled', v, setScheduleEnabled)}
                     trackColor={{ false: Colors.gray300, true: Colors.primary }}
                 />
             )
         },
-        { 
-            label: '새 멤버 참여 알림',
-            onPress: ()=> setMemberAlarm(!memberAlarm), 
+        {
+            label: '투표 알림',
+            onPress: () => handleToggle('voteEnabled', !voteEnabled, setVoteEnabled),
             rightIcon: (
-                <Switch 
-                    value={memberAlarm} 
-                    onValueChange={(v) => setMemberAlarm(v)}
+                <Switch
+                    value={voteEnabled}
+                    onValueChange={(v) => handleToggle('voteEnabled', v, setVoteEnabled)}
                     trackColor={{ false: Colors.gray300, true: Colors.primary }}
                 />
             )
-        }
-    ]
+        },
+        {
+            label: '푸시 알림',
+            onPress: () => handleToggle('pushEnabled', !pushEnabled, setPushEnabled),
+            rightIcon: (
+                <Switch
+                    value={pushEnabled}
+                    onValueChange={(v) => handleToggle('pushEnabled', v, setPushEnabled)}
+                    trackColor={{ false: Colors.gray300, true: Colors.primary }}
+                />
+            )
+        },
+    ];
 
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-
-            <Header title='알림 설정'/>
-
+            <Header title='알림 설정' />
             <View style={styles.container}>
                 <MenuGroup items={menuItems} />
-                <View>
-                    <Text style={styles.infoText}>기기 알림 설정은 휴대폰 설정에서 변경할 수 있어요.</Text>
-                </View>
+                <Text style={styles.infoText}>기기 알림 설정은 휴대폰 설정에서 변경할 수 있어요.</Text>
             </View>
+            <ServerErrorModal
+                visible={serverErrorModal}
+                onClose={() => setServerErrorModal(false)}
+            />
         </SafeAreaView>
     );
 }
@@ -81,7 +147,7 @@ const styles = StyleSheet.create({
     container: {
         paddingTop: Spacing['2xl'],
         paddingHorizontal: Spacing.lg,
-        paddingBottom: Spacing['3xl']
+        paddingBottom: Spacing['3xl'],
     },
     infoText: {
         marginTop: Spacing.base,
@@ -89,4 +155,4 @@ const styles = StyleSheet.create({
         color: Colors.gray500,
         lineHeight: 20,
     },
-})
+});
