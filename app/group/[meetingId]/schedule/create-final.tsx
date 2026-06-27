@@ -199,6 +199,7 @@ export default function CreateFinalScheduleScreen() {
                             placeholder='예: 예은이 집'
                             value={location}
                             onChangeText={setLocation}
+                            onFocus={() => setShowTimePicker(false)}
                         />
                     </View>
 

@@ -141,13 +141,15 @@ export default function FinalScheduleTab({ meetingId }: FinalScheduleTabProps) {
 
                 // 3. 헤더/빈상태
                 ListHeaderComponent={() => (
-                    <Text style={styles.titleText}>확정된 일정</Text>
+                    schedules.length > 0 ? (
+                        <Text style={styles.titleText}>확정된 일정</Text>
+                    ) : null
                 )}
                 ListEmptyComponent={() => (
                     <EmptyState
                         icon={
                             <View style={{ position: 'relative' }}>
-                                <CalendarX2 size={40} color={Colors.gray500} />
+                                <CalendarX2 size={35} color={Colors.primary} />
                             </View>
                         }
                         title="아직 확정된 일정이 없어요"

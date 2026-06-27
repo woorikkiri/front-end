@@ -151,13 +151,15 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
 
                 // 3. 헤더/빈상태
                 ListHeaderComponent={() => (
-                    <Text style={styles.titleText}>조율중인 일정</Text>
+                    polls.length > 0 ? (
+                        <Text style={styles.titleText}>조율중인 일정</Text>
+                    ) : null
                 )}
                 ListEmptyComponent={() => (
                     <EmptyState
                         icon={
                             <View style={{ position: 'relative' }}>
-                                <CalendarX2 size={40} color={Colors.gray500} />
+                                <CalendarX2 size={35} color={Colors.primary} />
                             </View>
                         }
                         title="아직 조율중인 일정이 없어요"
