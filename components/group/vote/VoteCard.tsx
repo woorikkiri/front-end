@@ -40,6 +40,8 @@ export default function VoteCard({ item, onPress, onDelete, onClose, onEdit }: V
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showCloseModal, setShowCloseModal] = useState(false);
     const [popoverVisible, setPopoverVisible] = useState(false);
+    const [pendingDeleteModal, setPendingDeleteModal] = useState(false);
+    const [pendingCloseModal, setPendingCloseModal] = useState(false);
 
     const maxCount = item.options.reduce((max, o) => o.voteCount > max ? o.voteCount : max, 0);
     const topOptions = item.options.filter(o => o.voteCount === maxCount);
@@ -74,6 +76,10 @@ export default function VoteCard({ item, onPress, onDelete, onClose, onEdit }: V
                                 <Popover
                                     isVisible={popoverVisible}
                                     onRequestClose={() => setPopoverVisible(false)}
+                                    onCloseComplete={() => {
+                                        if (pendingDeleteModal) { setPendingDeleteModal(false); setShowDeleteModal(true); }
+                                        if (pendingCloseModal) { setPendingCloseModal(false); setShowCloseModal(true); }
+                                    }}
                                     arrowSize={{ width: 0, height: 0 }}
                                     backgroundStyle={{ backgroundColor: 'transparent' }}
                                     from={(
@@ -85,7 +91,7 @@ export default function VoteCard({ item, onPress, onDelete, onClose, onEdit }: V
                                     <View style={styles.menu}>
                                         <MenuGroup items={[{
                                             label: '투표 삭제',
-                                            onPress: () => { setPopoverVisible(false); setShowDeleteModal(true); },
+                                            onPress: () => { setPendingDeleteModal(true); setPopoverVisible(false); },
                                             labelStyle: { fontSize: Typography.sm, color: Colors.error },
                                             rightIcon: <Trash2 size={18} color={Colors.error} />,
                                             showChevron: false
@@ -117,6 +123,10 @@ export default function VoteCard({ item, onPress, onDelete, onClose, onEdit }: V
                                 <Popover
                                     isVisible={popoverVisible}
                                     onRequestClose={() => setPopoverVisible(false)}
+                                    onCloseComplete={() => {
+                                        if (pendingDeleteModal) { setPendingDeleteModal(false); setShowDeleteModal(true); }
+                                        if (pendingCloseModal) { setPendingCloseModal(false); setShowCloseModal(true); }
+                                    }}
                                     arrowSize={{ width: 0, height: 0 }}
                                     backgroundStyle={{ backgroundColor: 'transparent' }}
                                     from={(
@@ -136,14 +146,14 @@ export default function VoteCard({ item, onPress, onDelete, onClose, onEdit }: V
                                             }] : []),
                                             {
                                                 label: '투표 종료',
-                                                onPress: () => { setPopoverVisible(false); setShowCloseModal(true); },
+                                                onPress: () => { setPendingCloseModal(true); setPopoverVisible(false); },
                                                 labelStyle: { fontSize: Typography.sm },
                                                 rightIcon: <PointerOff size={18} color={Colors.gray500} />,
                                                 showChevron: false
                                             },
                                             {
                                                 label: '투표 삭제',
-                                                onPress: () => { setPopoverVisible(false); setShowDeleteModal(true); },
+                                                onPress: () => { setPendingDeleteModal(true); setPopoverVisible(false); },
                                                 labelStyle: { fontSize: Typography.sm, color: Colors.error },
                                                 rightIcon: <Trash2 size={18} color={Colors.error} />,
                                                 showChevron: false

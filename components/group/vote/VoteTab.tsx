@@ -43,11 +43,14 @@ export default function VoteTab({ meetingId }: VoteTabProps) {
         <>
             <View style={styles.container}>
                 {mode === 'list' ? (
-                    <ScrollView showsVerticalScrollIndicator={false}>
-                        {/* 헤더 */}
-                        <View style={styles.titleSection}>
-                            <Text style={styles.titleText}>투표</Text>
-                            {votes.length > 0 && (
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{ flexGrow: 1 }}
+                    >
+                        {/* 헤더 - 투표 있을 때만 */}
+                        {votes.length > 0 && (
+                            <View style={styles.titleSection}>
+                                <Text style={styles.titleText}>투표</Text>
                                 <Button
                                     label='투표 생성'
                                     onPress={() => setMode('create')}
@@ -57,19 +60,21 @@ export default function VoteTab({ meetingId }: VoteTabProps) {
                                     icon={<Plus size={18} color={Colors.primary} />}
                                     style={{ borderRadius: Radius.full }}
                                 />
-                            )}
-                        </View>
+                            </View>
+                        )}
 
                         {/* 빈 상태 */}
                         {votes.length === 0 && (
-                            <EmptyState
-                                icon={<Vote size={40} color={Colors.gray500} />}
-                                title="아직 진행되는 투표가 없어요"
-                                description="원하는 메뉴를 투표로 정해볼까요?"
-                                variant='card'
-                            >
-                                <Button label="투표 생성하기" onPress={() => setMode('create')} fullWidth={false} />
-                            </EmptyState>
+                            <View style={styles.emptyWrapper}>
+                                <EmptyState
+                                    icon={<Vote size={35} color={Colors.primary} />}
+                                    title="아직 진행되는 투표가 없어요"
+                                    description="원하는 메뉴를 투표로 정해볼까요?"
+                                    variant='card'
+                                >
+                                    <Button label="투표 생성하기" onPress={() => setMode('create')} fullWidth={false} />
+                                </EmptyState>
+                            </View>
                         )}
 
                         {/* 진행 중인 투표 */}
@@ -103,7 +108,7 @@ export default function VoteTab({ meetingId }: VoteTabProps) {
                                             onPress={() => handleVotePress(item)}
                                             onDelete={() => handleDelete(item.voteId)}
                                             onClose={() => handleClose(item.voteId)}
-                                            onEdit={() => {}}
+                                            onEdit={() => { }}
                                         />
                                     ))}
                                 </View>
@@ -155,4 +160,8 @@ const styles = StyleSheet.create({
     list: { gap: Spacing.md },
     moreButton: { alignItems: 'center', paddingVertical: Spacing.md },
     moreText: { fontSize: Typography.sm, color: Colors.primary, fontWeight: '600' },
+    emptyWrapper: {
+        flex: 1,
+        justifyContent: 'center',
+    },
 });

@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
+    Keyboard,
     ScrollView,
     StyleSheet,
     Switch,
@@ -139,7 +140,7 @@ export default function VoteCreateForm({ meetingId, onBack, isEdit, initialData 
                             <Text style={styles.toggleText}>복수 선택</Text>
                             <Switch
                                 value={isMultiple}
-                                onValueChange={setIsMultiple}
+                                onValueChange={(v) => { Keyboard.dismiss(); setIsMultiple(v); }}
                                 trackColor={{ false: Colors.gray300, true: Colors.primary }}
                             />
                         </View>
@@ -147,7 +148,7 @@ export default function VoteCreateForm({ meetingId, onBack, isEdit, initialData 
                             <Text style={styles.toggleText}>익명 투표</Text>
                             <Switch
                                 value={isAnonymous}
-                                onValueChange={setIsAnonymous}
+                                onValueChange={(v) => { Keyboard.dismiss(); setIsAnonymous(v); }}
                                 trackColor={{ false: Colors.gray300, true: Colors.primary }}
                             />
                         </View>
