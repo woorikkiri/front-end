@@ -147,7 +147,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
     if (!selectedMember) return;
 
     setOpenPopoverId(null); // 팝오버 닫기
-    
+
     try {
       const response = await fetch(API.kickMember(meetingId ?? 0, selectedMember.userId), {
         method: "DELETE",
@@ -451,7 +451,7 @@ export default function MembersTab({ meetingId, meetingName }: MembersTabProps) 
           </TouchableOpacity>
         </View>
       </Modal>
-      
+
       {/* 서버 오류 모달 */}
       <ServerErrorModal
         visible={serverErrorModal}
