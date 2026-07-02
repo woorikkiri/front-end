@@ -4,27 +4,27 @@ import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import { API } from '@/constants/api';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useRouter } from "expo-router";
 import { useEffect, useState } from 'react';
 import {
-    Alert,
+    ActivityIndicator,
     StatusBar,
     StyleSheet,
     Switch,
     Text,
-    View,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NotificationSettingsScreen() {
-    const router = useRouter();
     const { userToken } = useAuthStore();
 
     // ───── 알림 설정 상태 ─────
-    const [noticeEnabled, setNoticeEnabled] = useState(true);
-    const [pushEnabled, setPushEnabled] = useState(true);
-    const [scheduleEnabled, setScheduleEnabled] = useState(true);
-    const [voteEnabled, setVoteEnabled] = useState(true);
+    const [settings, setSettings] = useState<{
+        noticeEnabled: boolean;
+        pushEnabled: boolean;
+        scheduleEnabled: boolean;
+        voteEnabled: boolean;
+    } | null>(null);
     const [serverErrorModal, setServerErrorModal] = useState(false);
 
     // ───── 알림 설정 불러오기 ─────
@@ -35,20 +35,13 @@ export default function NotificationSettingsScreen() {
                     headers: { 'Authorization': `Bearer ${userToken}` }
                 });
                 if (!response.ok) {
-                    Alert.alert('실패', String(response.status));
                     setServerErrorModal(true);
                     return;
                 }
-                Alert.alert('status', String(response.status));
                 const data = await response.json();
-                console.log('data:', data);
-                setNoticeEnabled(data.noticeEnabled);
-                setPushEnabled(data.pushEnabled);
-                setScheduleEnabled(data.scheduleEnabled);
-                setVoteEnabled(data.voteEnabled);
+                setSettings(data);
             } catch (e) {
                 setServerErrorModal(true);
-                Alert.alert('에러', String(e));
             }
         };
         fetchSettings();
@@ -71,64 +64,72 @@ export default function NotificationSettingsScreen() {
         }
     };
 
-    const handleToggle = (key: string, value: boolean, setter: (v: boolean) => void) => {
-        setter(value);
+    const handleToggle = (key: string, value: boolean) => {
+        setSettings(prev => prev ? { ...prev, [key]: value } : prev);
         updateSetting(key, value);
     };
 
-    const menuItems: MenuItem[] = [
+    const menuItems: MenuItem[] = settings ? [
         {
             label: '공지 알림',
-            onPress: () => handleToggle('noticeEnabled', !noticeEnabled, setNoticeEnabled),
+            onPress: () => handleToggle('noticeEnabled', !settings.noticeEnabled),
             rightIcon: (
                 <Switch
-                    value={noticeEnabled}
-                    onValueChange={(v) => handleToggle('noticeEnabled', v, setNoticeEnabled)}
+                    value={settings.noticeEnabled}
+                    onValueChange={(v) => handleToggle('noticeEnabled', v)}
                     trackColor={{ false: Colors.gray300, true: Colors.primary }}
                 />
-            )
+            ),
+            showChevron: false,
         },
         {
             label: '일정 알림',
-            onPress: () => handleToggle('scheduleEnabled', !scheduleEnabled, setScheduleEnabled),
+            onPress: () => handleToggle('scheduleEnabled', !settings.scheduleEnabled),
             rightIcon: (
                 <Switch
-                    value={scheduleEnabled}
-                    onValueChange={(v) => handleToggle('scheduleEnabled', v, setScheduleEnabled)}
+                    value={settings.scheduleEnabled}
+                    onValueChange={(v) => handleToggle('scheduleEnabled', v)}
                     trackColor={{ false: Colors.gray300, true: Colors.primary }}
                 />
-            )
+            ),
+            showChevron: false,
         },
         {
             label: '투표 알림',
-            onPress: () => handleToggle('voteEnabled', !voteEnabled, setVoteEnabled),
+            onPress: () => handleToggle('voteEnabled', !settings.voteEnabled),
             rightIcon: (
                 <Switch
-                    value={voteEnabled}
-                    onValueChange={(v) => handleToggle('voteEnabled', v, setVoteEnabled)}
+                    value={settings.voteEnabled}
+                    onValueChange={(v) => handleToggle('voteEnabled', v)}
                     trackColor={{ false: Colors.gray300, true: Colors.primary }}
                 />
-            )
+            ),
+            showChevron: false,
         },
         {
             label: '푸시 알림',
-            onPress: () => handleToggle('pushEnabled', !pushEnabled, setPushEnabled),
+            onPress: () => handleToggle('pushEnabled', !settings.pushEnabled),
             rightIcon: (
                 <Switch
-                    value={pushEnabled}
-                    onValueChange={(v) => handleToggle('pushEnabled', v, setPushEnabled)}
+                    value={settings.pushEnabled}
+                    onValueChange={(v) => handleToggle('pushEnabled', v)}
                     trackColor={{ false: Colors.gray300, true: Colors.primary }}
                 />
-            )
+            ),
+            showChevron: false,
         },
-    ];
+    ] : [];
 
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
             <Header title='알림 설정' />
             <View style={styles.container}>
-                <MenuGroup items={menuItems} />
+                {settings === null ? (
+                    <ActivityIndicator color={Colors.primary} style={{ marginTop: Spacing.xl }} />
+                ) : (
+                    <MenuGroup items={menuItems} />
+                )}
                 <Text style={styles.infoText}>기기 알림 설정은 휴대폰 설정에서 변경할 수 있어요.</Text>
             </View>
             <ServerErrorModal

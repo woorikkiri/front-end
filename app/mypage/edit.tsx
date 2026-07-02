@@ -79,14 +79,35 @@ export default function EditScreen() {
     const handleSave = async () => {
         if (!validate()) return;
         try {
-            await fetch(API.updateMe, {
+            const formData = new FormData();
+            formData.append('nickname', nickname);
+
+            if (image && image.startsWith('file://')) {
+                // 새로 선택한 이미지
+                const filename = image.split('/').pop() ?? 'image.jpg';
+                const ext = filename.split('.').pop() ?? 'jpg';
+                formData.append('file', {
+                    uri: image,
+                    name: filename,
+                    type: `image/${ext}`,
+                } as any);
+                formData.append('deleteImage', 'false');
+            } else if (!image) {
+                // 이미지 삭제
+                formData.append('deleteImage', 'true');
+            } else {
+                // 기존 이미지 유지
+                formData.append('deleteImage', 'false');
+            }
+
+            const response = await fetch(API.updateMe, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${userToken}`,
-                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ nickname }),
+                body: formData,
             });
+            if (!response.ok) { console.error('수정 실패', response.status); return; }
             router.back();
         } catch (e) {
             console.error('프로필 수정 실패', e);
@@ -94,7 +115,7 @@ export default function EditScreen() {
     };
 
     if (loading) return <ActivityIndicator style={{ marginTop: Spacing['2xl'] }} color={Colors.primary} />;
-    
+
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
