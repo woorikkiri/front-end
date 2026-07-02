@@ -140,6 +140,7 @@ export default function VoteTab({ meetingId }: VoteTabProps) {
                     ref={bottomSheetRef}
                     vote={selectedVote}
                     onSuccess={fetchVotes}
+                    meetingId={meetingId}
                 />
             </View>
 

@@ -9,6 +9,7 @@ import {
   BottomSheetModal,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
+import { useRouter } from "expo-router";
 import { ChevronRight, CircleCheck } from 'lucide-react-native';
 import { forwardRef, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -16,10 +17,12 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 interface VoteBottomSheetProps {
   vote: VoteItem | null;
   onSuccess: () => void;
+  meetingId: number;
 }
 
 const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
-  ({ vote, onSuccess }, ref) => {
+  ({ vote, onSuccess, meetingId }, ref) => {
+    const router = useRouter();
     const { userToken } = useAuthStore();
     const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
     const [hasVoted, setHasVoted] = useState(false);
@@ -49,7 +52,7 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
       if (!vote) return;
       setLoading(true);
       try {
-        const res = await fetch(API.participateVote(vote.voteId), {
+        const response = await fetch(API.participateVote(vote.voteId), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -57,7 +60,7 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
           },
           body: JSON.stringify({ optionIds }),
         });
-        if (!res.ok) {
+        if (!response.ok) {
           setServerErrorModal(true);
           return;
         }
@@ -67,6 +70,7 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
         });
         if (detailRes.ok) {
           const detailData = await detailRes.json();
+          console.log(detailData);
           setCurrentVote(detailData); // 바텀시트 데이터 갱신
           setSelectedOptions(detailData.myOptionIds ?? []);
         }
@@ -83,7 +87,7 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
       }
     };
 
-    const totalCount = currentVote?.options.reduce((sum, o) => sum + o.voteCount, 0) ?? 0;
+    const totalCount = currentVote?.participantCount ?? 0;
 
     const renderBackdrop = useCallback(
       (props: any) => (
@@ -183,7 +187,12 @@ const VoteBottomSheet = forwardRef<BottomSheetModal, VoteBottomSheetProps>(
                     {!currentVote.anonymous && totalCount > 0 && (
                       <TouchableOpacity
                         style={styles.detail}
-                        onPress={() => { }}
+                        onPress={() => {
+                          (ref as React.RefObject<BottomSheetModal>)?.current?.dismiss();
+                          setTimeout(() => {
+                            router.push(`/group/${meetingId}/vote/participants?voteId=${currentVote.voteId}`);
+                          }, 300);
+                        }}
                       >
                         <Text>{totalCount}명 참여</Text>
                         <ChevronRight size={15} />

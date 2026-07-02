@@ -16,6 +16,7 @@ export interface VoteItem {
     deadline: string;
     remainingDays: number;
     totalVoteCount: number;
+    participantCount: number;
     participated: boolean;
     myOptionIds?: number[];
     owner: boolean;
