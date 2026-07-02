@@ -6,6 +6,7 @@ import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from "@/store/useAuthStore";
+import { useMeetingStore } from '@/store/useMeetingStore';
 import { formatTimeAgo } from '@/utils/date';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Megaphone, Pencil } from 'lucide-react-native';
@@ -39,6 +40,7 @@ export default function BoardTab({ meetingId, onHasPosts }: BoardTabProps) {
   // ───── 라우터 / 인증 ─────
   const router = useRouter();
   const { userToken } = useAuthStore();
+  const { setMeeting } = useMeetingStore();
 
   // ───── 상태 ─────
   const [posts, setPosts] = useState<Post[]>([]);
@@ -59,6 +61,11 @@ export default function BoardTab({ meetingId, onHasPosts }: BoardTabProps) {
         return;
       }
       const data = await response.json();
+      
+      if (data.myRole) {
+        setMeeting(meetingId, data.myRole);
+      }
+
       const allPosts = data.noticePost
         ? [data.noticePost, ...data.posts]
         : data.posts;
