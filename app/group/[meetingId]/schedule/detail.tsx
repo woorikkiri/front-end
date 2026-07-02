@@ -25,7 +25,6 @@ interface SchedulePoll {
     endDate: string,
     myAvailableDates: string[],
     dateCounts: DateCount[],
-    memberAvailabilities: DateMember[],
     deadlineAt: string,
     status: string,
 }
@@ -35,8 +34,7 @@ interface DateCount {
     date: string,
 }
 
-// memberAvailabilities용
-interface DateMember {
+interface SelectedMember {
     userId: number,
     userName: string,
     availableDates: string[],
@@ -76,7 +74,7 @@ export default function SchedulePollDetailScreen() {
     const [dateMembers, setDateMembers] = useState<DateMemberSimple[]>([]); // 해당 날짜 선택한 멤버
 
     // 필수참여자
-    const [selectedMember, setSelectedMember] = useState<DateMember | null>(null);
+    const [selectedMember, setSelectedMember] = useState<SelectedMember | null>(null);
     const [showMemberDropdown, setShowMemberDropdown] = useState(false);
 
     // ───── 데이터 fetch ─────
@@ -265,14 +263,18 @@ export default function SchedulePollDetailScreen() {
                                                     styles.dropdownItem,
                                                     index < arr.length - 1 && styles.dropdownDivider
                                                 ]}
-                                                onPress={() => {
-                                                    const found = schedulePoll?.memberAvailabilities
-                                                        .find(m => m.userId === member.userId);
-                                                    setSelectedMember(found ?? {
-                                                        userId: member.userId,
-                                                        userName: member.nickname,
-                                                        availableDates: []
+                                                onPress={async () => {
+                                                    const res = await fetch(API.getRequiredMembers(Number(meetingId), Number(schedulePollId), member.userId), {
+                                                        headers: { 'Authorization': `Bearer ${userToken}` }
                                                     });
+                                                    if (res.ok) {
+                                                        const data = await res.json();
+                                                        setSelectedMember({
+                                                            userId: data.userId,
+                                                            userName: data.nickname,
+                                                            availableDates: data.availableDates,
+                                                        });
+                                                    }
                                                     setShowMemberDropdown(false);
                                                 }}
                                             >
@@ -351,7 +353,7 @@ export default function SchedulePollDetailScreen() {
                                 <MemberItem
                                     key={member.userId}
                                     name={member.nickname}
-                                    profileImage={null}
+                                    profileImage={member.profileImageUrl}
                                 />
                             ))
                         )}
