@@ -1,10 +1,14 @@
 import EmptyState from '@/components/ui/EmptyState';
 import Header from "@/components/ui/Header";
 import NotificationCard, { NotificationItem } from "@/components/ui/NotificationCard";
+import { API } from '@/constants/api';
 import { Colors, Spacing } from "@/constants/theme";
+import { useAuthStore } from '@/store/useAuthStore';
+import { useFocusEffect } from 'expo-router';
 import { BellOff } from 'lucide-react-native';
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
+    ActivityIndicator,
     FlatList,
     StatusBar,
     StyleSheet,
@@ -12,41 +16,50 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const dummyNotifications: NotificationItem[] = [
-    {
-        id: '1',
-        type: 'notice',
-        title: '새로운 일정이 확정되었어요',
-        groupName: '고등학교 동창회',
-        isRead: false,
-        createdAt: '2024-07-16T12:00:00Z',
-    },
-    {
-        id: '2',
-        type: 'schedule',
-        title: '새로운 일정이 확정되었어요',
-        groupName: '고등학교 동창회',
-        isRead: false,
-        createdAt: '2024-07-15T19:00:00Z',
-    },
-];
-
 export default function Notifications() {
-    const [notifications, setNotifications] = useState<NotificationItem[]>([]); // 알림 데이터는 나중에 API 연동해서 가져올 예정
+    const { userToken } = useAuthStore();
+    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        setNotifications(dummyNotifications);
-    }, []);
-
-    const handlePressNotification = (id: string) => {
-        // 알림 클릭 시 상세 페이지로 이동하거나, 관련 액션 수행
-        console.log('알림 클릭:', id);
-        setNotifications((prev) =>
-            prev.map((n) =>
-                n.id === id ? { ...n, isRead: true } : n
-            )
-        );
+    const fetchNotifications = async () => {
+        if (!userToken) return;
+        try {
+            const res = await fetch(API.getNotifications, {
+                headers: { 'Authorization': `Bearer ${userToken}` },
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            console.log('알림 응답:', data); // 실제 필드명 확인용
+            setNotifications(data);
+        } catch (e) {
+            console.error('알림 목록 조회 실패', e);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchNotifications();
+        }, [])
+    );
+
+    const handlePressNotification = async (id: string) => {
+        setNotifications((prev) =>
+            prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+        );
+
+        try {
+            await fetch(API.readNotification(Number(id)), {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${userToken}` },
+            });
+        } catch (e) {
+            console.error('읽음 처리 실패', e);
+        }
+    };
+
+    if (loading) return <ActivityIndicator style={{ marginTop: Spacing['2xl'] }} color={Colors.primary} />;
 
     return (
         <SafeAreaView style={styles.safe}>
@@ -66,11 +79,12 @@ export default function Notifications() {
                         />
                     </View>
                 ) : (
-                    // 알림 리스트
                     <FlatList
                         data={notifications}
                         keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => <NotificationCard item={item} onPress={handlePressNotification} mode="list" />}
+                        renderItem={({ item }) => (
+                            <NotificationCard item={item} onPress={handlePressNotification} mode="list" />
+                        )}
                     />
                 )}
             </View>

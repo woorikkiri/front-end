@@ -1,10 +1,11 @@
 import ServerErrorModal from "@/components/ui/ServerErrorModal";
 import { API } from "@/constants/api";
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
+import usePushToken from '@/hooks/usePushToken';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFocusEffect, useRouter } from "expo-router";
 import { Bell, CalendarDays, ChevronRight, KeyRound, Plus, Search, UsersRound } from "lucide-react-native";
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -29,15 +30,24 @@ interface Meeting {
 }
 
 export default function HomeScreen() {
+  // ───── 라우터 / 인증 ─────
   const router = useRouter();
   const { userToken } = useAuthStore();
+  const { registerAndSendToken } = usePushToken();
 
+  // ───── 상태 ─────
   const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState<Meeting[]>([]);
   const [searchText, setSearchText] = useState('');
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [serverErrorModal, setServerErrorModal] = useState(false);
 
+  // ───── FCM 토큰 등록 ─────
+  useEffect(() => {
+    if (userToken) registerAndSendToken();
+  }, [userToken]);
+  
+  // ───── 데이터 fetch ─────
   const fetchMeetings = async () => {
     if (!userToken) return;
     setLoading(true);
