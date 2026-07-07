@@ -195,7 +195,7 @@ export default function CreateFinalScheduleScreen() {
 
                     <View style={styles.placeSection}>
                         <TextInput
-                            label='장소'
+                            label='장소 (선택)'
                             placeholder='예: 예은이 집'
                             value={location}
                             onChangeText={setLocation}

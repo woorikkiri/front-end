@@ -2,11 +2,11 @@ import Button from '@/components/ui/Button';
 import Header from '@/components/ui/Header';
 import TextInput from '@/components/ui/TextInput';
 import { API } from "@/constants/api";
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from "@/store/useAuthStore";
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from "expo-router";
-import { Camera, CircleX, User } from 'lucide-react-native';
+import { Camera, CircleX, User, X } from 'lucide-react-native';
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -62,6 +62,11 @@ export default function EditScreen() {
         if (!result.canceled) {
             setImage(result.assets[0].uri);
         }
+    };
+
+    // 이미지 삭제
+    const handleDeleteImage = () => {
+        setImage(null);
     };
 
     // 유효성 검사
@@ -123,21 +128,38 @@ export default function EditScreen() {
             <Header title='프로필' />
             <View style={styles.container}>
                 <View style={styles.profileSection}>
-                    <TouchableOpacity
-                        style={styles.profileImage}
-                        onPress={handlePickImage}
-                    >
-                        {image ? (
-                            <Image source={{ uri: image }} style={styles.profileImage} />
-                        ) : (
-                            <User size={44} color={Colors.gray300} />
-                        )}
+                    <View style={styles.imageWrapper}>
+                        <TouchableOpacity
+                            style={styles.profileImage}
+                            onPress={handlePickImage}
+                        >
+                            {image ? (
+                                <Image source={{ uri: image }} style={styles.profileImage} />
+                            ) : (
+                                <User size={44} color={Colors.gray300} />
+                            )}
+                        </TouchableOpacity>
 
                         {/* 카메라 버튼 */}
-                        <View style={styles.cameraButton}>
-                            <Camera size={20} color={Colors.white} />
-                        </View>
-                    </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.cameraButton}
+                            onPress={handlePickImage}
+                            activeOpacity={0.8}
+                        >
+                            <Camera size={14} color={Colors.white} />
+                        </TouchableOpacity>
+
+                        {/* X 버튼 - 이미지 있을 때만 표시 */}
+                        {image && (
+                            <TouchableOpacity
+                                style={styles.deleteButton}
+                                onPress={handleDeleteImage}
+                                activeOpacity={0.8}
+                            >
+                                <X size={12} color={Colors.white} />
+                            </TouchableOpacity>
+                        )}
+                    </View>
 
                     <Text style={styles.infoText}>프로필 이미지를 변경할 수 있어요.</Text>
                 </View>
@@ -165,6 +187,8 @@ export default function EditScreen() {
     );
 }
 
+const IMAGE_SIZE = 90;
+
 const styles = StyleSheet.create({
     safe: {
         flex: 1,
@@ -180,10 +204,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: Spacing['2xl'],
     },
+    imageWrapper: {
+        position: 'relative',
+        width: IMAGE_SIZE,
+        height: IMAGE_SIZE,
+    },
     profileImage: {
-        width: 90,
-        height: 90,
-        borderRadius: 45,
+        width: IMAGE_SIZE,
+        height: IMAGE_SIZE,
+        borderRadius: Radius.full,
         backgroundColor: Colors.gray200,
         justifyContent: 'center',
         alignItems: 'center',
@@ -192,12 +221,27 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0,
         right: 0,
-        width: 30,
-        height: 30,
-        borderRadius: 15,
+        width: 28,
+        height: 28,
+        borderRadius: Radius.full,
         backgroundColor: Colors.primary,
-        justifyContent: 'center',
         alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: Colors.white,
+    },
+    deleteButton: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: 22,
+        height: 22,
+        borderRadius: Radius.full,
+        backgroundColor: Colors.gray500,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: Colors.white,
     },
     infoText: {
         fontSize: Typography.sm,
