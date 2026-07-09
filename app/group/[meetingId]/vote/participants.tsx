@@ -4,9 +4,11 @@ import { API } from '@/constants/api';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useLocalSearchParams } from 'expo-router';
+import { User } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Image,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -19,6 +21,7 @@ import Svg, { Circle } from 'react-native-svg';
 interface Participant {
     userId: number;
     nickname: string;
+    profileImageUrl: string | null;
 }
 
 interface VoteOption {
@@ -133,10 +136,14 @@ function DonutChart({ options, total }: { options: VoteOption[]; total: number }
 }
 
 // ───── 아바타 ─────
-function Avatar({ nickname }: { nickname: string }) {
+function Avatar({ nickname, profileImageUrl }: { nickname: string; profileImageUrl: string | null }) {
     return (
         <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{nickname[0]}</Text>
+            {profileImageUrl ? (
+                <Image source={{ uri: profileImageUrl }} style={styles.avatarImage} />
+            ) : (
+                <User size={16} color={Colors.gray300} />
+            )}
         </View>
     );
 }
@@ -229,7 +236,7 @@ export default function VoteParticipantsScreen() {
                                     {option.participants.length > 0 ? (
                                         option.participants.map((p) => (
                                             <View key={p.userId} style={styles.person}>
-                                                <Avatar nickname={p.nickname} />
+                                                <Avatar nickname={p.nickname} profileImageUrl={p.profileImageUrl} />
                                                 <Text style={styles.personName}>{p.nickname}</Text>
                                             </View>
                                         ))
@@ -404,9 +411,15 @@ const styles = StyleSheet.create({
         width: 26,
         height: 26,
         borderRadius: Radius.full,
-        backgroundColor: Colors.primaryLight,
+        backgroundColor: Colors.gray200,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: 26,
+        height: 26,
+        borderRadius: Radius.full,
     },
     avatarText: {
         fontSize: Typography.xs,
