@@ -1,6 +1,7 @@
 import MenuGroup from '@/components/ui/MenuGroup';
 import Modal from '@/components/ui/Modal';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useMeetingStore } from '@/store/useMeetingStore';
 import { getDaysUntilDeadline } from '@/utils/date';
 import { CalendarClock, Ellipsis, Pencil, PointerOff, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
@@ -38,6 +39,9 @@ interface VoteCardProps {
 }
 
 export default function VoteCard({ item, onPress, onDelete, onClose, onEdit }: VoteCardProps) {
+    const { myRole } = useMeetingStore();
+    const canManage = item.owner || myRole === 'HOST';
+
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showCloseModal, setShowCloseModal] = useState(false);
     const [popoverVisible, setPopoverVisible] = useState(false);
@@ -73,7 +77,7 @@ export default function VoteCard({ item, onPress, onDelete, onClose, onEdit }: V
                     <View style={{ gap: Spacing.sm }}>
                         <View style={styles.titleRow}>
                             <Text style={styles.title}>Q. {item.title}</Text>
-                            {item.owner && (
+                            {canManage && (
                                 <Popover
                                     isVisible={popoverVisible}
                                     onRequestClose={() => setPopoverVisible(false)}
@@ -120,7 +124,7 @@ export default function VoteCard({ item, onPress, onDelete, onClose, onEdit }: V
                         </View>
                         <View style={styles.titleRow}>
                             <Text style={styles.title}>{item.title}</Text>
-                            {item.owner && (
+                            {canManage && (
                                 <Popover
                                     isVisible={popoverVisible}
                                     onRequestClose={() => setPopoverVisible(false)}
