@@ -41,12 +41,13 @@ export default function HomeScreen() {
   const [searchText, setSearchText] = useState('');
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [serverErrorModal, setServerErrorModal] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
 
   // ───── FCM 토큰 등록 ─────
   useEffect(() => {
     if (userToken) registerAndSendToken();
   }, [userToken]);
-  
+
   // ───── 데이터 fetch ─────
   const fetchMeetings = async () => {
     if (!userToken) return;
@@ -73,9 +74,25 @@ export default function HomeScreen() {
     }
   };
 
+  // ───── 안 읽은 알림 여부 확인 ─────
+  const checkUnreadNotifications = async () => {
+    if (!userToken) return;
+    try {
+      const res = await fetch(API.getNotifications, {
+        headers: { 'Authorization': `Bearer ${userToken}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setHasUnread(data.some((n: { read: boolean }) => !n.read));
+    } catch (e) {
+      // 배지 표시용이라 실패해도 조용히 무시
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       fetchMeetings();
+      checkUnreadNotifications();
     }, [])
   );
 
@@ -101,6 +118,7 @@ export default function HomeScreen() {
           onPress={() => router.push("/notifications")}
         >
           <Bell size={22} color={Colors.primary} />
+          {hasUnread && <View style={styles.unreadDot} />}
         </TouchableOpacity>
       </View>
 
@@ -284,6 +302,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+   unreadDot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.error,
+    borderWidth: 1.5,
+    borderColor: Colors.white,
   },
 
   // 모임 0개

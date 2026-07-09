@@ -8,18 +8,20 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 export type NotificationType = 'schedule' | 'vote' | 'notice';
 
 export interface NotificationItem {
-  id: string;
+  id: number;
   type: NotificationType;
   title: string;
-  groupName: string;
-  isRead: boolean;
+  message: string;
+  meetingName: string;
+  targetId: number;
+  read: boolean;
   createdAt: string;
 }
 
 interface Props {
   item: NotificationItem;
   mode?: 'list' | 'banner';
-  onPress?: (id: string) => void;
+  onPress?: (id: number) => void;
   onDismiss?: () => void;
 }
 
@@ -31,7 +33,7 @@ const TYPE_ICON = {
 
 export default function NotificationCard({ item, mode = 'list', onPress, onDismiss }: Props) {
   const isBanner = mode === 'banner';
-  const isNew = !item.isRead;
+  const isNew = !item.read;
 
   return (
     <TouchableOpacity
@@ -56,8 +58,11 @@ export default function NotificationCard({ item, mode = 'list', onPress, onDismi
         <Text style={[styles.title, isNew && styles.titleNew]} numberOfLines={1}>
           {item.title}
         </Text>
+        <Text style={styles.messageText} numberOfLines={1}>
+          {item.message}
+        </Text>
         <View style={styles.metaRow}>
-          <Text style={styles.meta}>{item.groupName}</Text>
+          <Text style={styles.meta}>{item.meetingName}</Text>
           <Text style={styles.meta}> · </Text>
           <Text style={styles.meta}>{formatTimeAgo(item.createdAt)}</Text>
         </View>
@@ -146,6 +151,10 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: Typography.sm,
     color: Colors.gray500,
+  },
+  messageText: {
+    fontSize: Typography.sm,
+    color: Colors.gray700,
   },
 
   // N 뱃지

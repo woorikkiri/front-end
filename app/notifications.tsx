@@ -24,13 +24,23 @@ export default function Notifications() {
     const fetchNotifications = async () => {
         if (!userToken) return;
         try {
-            const res = await fetch(API.getNotifications, {
+            const response = await fetch(API.getNotifications, {
                 headers: { 'Authorization': `Bearer ${userToken}` },
             });
-            if (!res.ok) return;
-            const data = await res.json();
-            console.log('알림 응답:', data); // 실제 필드명 확인용
-            setNotifications(data);
+            if (!response.ok) return;
+            const data: NotificationItem[] = await response.json();
+            setNotifications(data); // 화면엔 원래 read 상태 그대로 보여줌 (강조 유지)
+
+            // 서버엔 바로 읽음 처리
+            const unreadIds = data.filter(n => !n.read).map(n => n.id);
+            unreadIds.forEach(id => {
+                fetch(API.readNotification(id), {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${userToken}` },
+                }).catch((e) => {
+                    console.error('읽음 처리 실패', id, e);
+                });
+            });
         } catch (e) {
             console.error('알림 목록 조회 실패', e);
         } finally {
@@ -44,13 +54,13 @@ export default function Notifications() {
         }, [])
     );
 
-    const handlePressNotification = async (id: string) => {
+    const handlePressNotification = async (id: number) => {
         setNotifications((prev) =>
-            prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+            prev.map((n) => (n.id === id ? { ...n, read: true } : n))
         );
 
         try {
-            await fetch(API.readNotification(Number(id)), {
+            await fetch(API.readNotification(id), {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${userToken}` },
             });
@@ -81,7 +91,7 @@ export default function Notifications() {
                 ) : (
                     <FlatList
                         data={notifications}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item) => item.id.toString()}
                         renderItem={({ item }) => (
                             <NotificationCard item={item} onPress={handlePressNotification} mode="list" />
                         )}
