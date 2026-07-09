@@ -5,16 +5,19 @@ import Modal from '@/components/ui/Modal';
 import ServerErrorModal from '@/components/ui/ServerErrorModal';
 import { API } from '@/constants/api';
 import { Colors, Spacing, Typography } from '@/constants/theme';
+import useError from '@/hooks/useError';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useMeetingStore } from '@/store/useMeetingStore';
 import { formatFinalScheduleMeta, getDaysUntilDeadline } from '@/utils/date';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { CalendarX2 } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
-    FlatList,
+    ScrollView,
     StyleSheet,
     Text,
+    TouchableOpacity,
     View,
 } from 'react-native';
 
@@ -29,12 +32,16 @@ interface SchedulePoll {
     endDate: string;
     deadlineAt: string;
     status: string;
+    isOwner: boolean;
+    closedAt: string | null;
 }
 
 export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
     // ── 인증 ──
     const router = useRouter();
     const { userToken } = useAuthStore();
+    const { myRole } = useMeetingStore();
+    const { showError } = useError();
 
     // ── 데이터 ──
     const [polls, setPolls] = useState<SchedulePoll[]>([]);
@@ -49,8 +56,28 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
     const [deleteModal, setDeleteModal] = useState(false);
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
+    // ── 마감된 목록 더보기 ──
+    const [showAll, setShowAll] = useState(false);
+
     // ── 파생 값 ──
     const selectedPoll = polls.find(p => p.schedulePollId === selectedId);
+
+    // 마감 여부 (서버 status 기준 - 자동 마감 스케줄러 적용됨)
+    const isClosed = (poll: SchedulePoll) =>
+        poll.status === 'CLOSED';
+
+    // 이 카드에 수정/삭제 버튼을 보여줄지 (방장 또는 작성자)
+    const canManage = (poll: SchedulePoll) =>
+        myRole === 'HOST' || poll.isOwner === true;
+
+    const inProgressPolls = polls.filter(p => !isClosed(p));
+
+    // 마감된 것 중 최근 마감(closedAt 기준) 순으로 정렬
+    const closedPolls = polls
+        .filter(isClosed)
+        .sort((a, b) => new Date(b.closedAt!).getTime() - new Date(a.closedAt!).getTime());
+
+    const visibleClosedPolls = showAll ? closedPolls : closedPolls.slice(0, 3);
 
     // ── 목록 조회 ──
     const fetchPolls = async () => {
@@ -69,17 +96,7 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
                 return;
             }
 
-            const sorted = [...data.schedulePolls].sort((a, b) => {
-                const aIsClosed = getDaysUntilDeadline(a.deadlineAt) === '마감됨';
-                const bIsClosed = getDaysUntilDeadline(b.deadlineAt) === '마감됨';
-
-                if (aIsClosed && !bIsClosed) return 1;
-                if (!aIsClosed && bIsClosed) return -1;
-                if (aIsClosed && bIsClosed) return 0;
-
-                return new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime();
-            });
-            setPolls(sorted);
+            setPolls(data.schedulePolls);
 
         } catch (e) {
             setServerErrorModal(true);
@@ -106,14 +123,21 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
             });
 
             if (!response.ok) {
-                setServerErrorModal(true);
+                const body = await response.json().catch(() => null);
+                if (__DEV__) {
+                    console.error('deleteSchedulePoll failed:', response.status, body);
+                }
+                showError('이 작업을 수행할 권한이 없습니다');
                 return;
             }
 
             fetchPolls();
 
         } catch (e) {
-            setServerErrorModal(true);
+            if (__DEV__) {
+                console.error('deleteSchedulePoll exception:', e);
+            }
+            showError('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요');
         }
     };
 
@@ -121,41 +145,12 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
 
     return (
         <>
-            <FlatList
-                // 1. 데이터
-                data={polls}
-
-                // 2. 각 항목 렌더링
-                keyExtractor={(item) => item.schedulePollId.toString()}
-                renderItem={({ item }) => (
-                    <SchedulePollCard
-                        title={item.title}
-                        meta={formatFinalScheduleMeta(item.startDate, item.endDate)}
-                        deadline={getDaysUntilDeadline(item.deadlineAt)}
-                        status={getDaysUntilDeadline(item.deadlineAt) === '마감됨' ? 'CLOSED' : item.status}
-                        onPress={() => router.push({
-                            pathname: `/group/${meetingId}/schedule/detail` as any,
-                            params: { schedulePollId: item.schedulePollId }
-                        })}
-                        onEdit={() => router.push({
-                            pathname: `/group/${meetingId}/schedule/create-poll` as any,
-                            params: { schedulePollId: item.schedulePollId }
-                        })}
-                        onDelete={() => {
-                            setSelectedId(item.schedulePollId);
-                            setDeleteModal(true);
-                        }}
-                    />
-                )}
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
-
-                // 3. 헤더/빈상태
-                ListHeaderComponent={() => (
-                    polls.length > 0 ? (
-                        <Text style={styles.titleText}>조율중인 일정</Text>
-                    ) : null
-                )}
-                ListEmptyComponent={() => (
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.listContainer}
+            >
+                {/* 빈 상태 */}
+                {polls.length === 0 && (
                     <EmptyState
                         icon={
                             <View style={{ position: 'relative' }}>
@@ -168,10 +163,77 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
                     />
                 )}
 
-                // 4. 스타일/옵션
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.listContainer}
-            />
+                {/* 조율중인 일정 */}
+                {polls.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>조율중인 일정</Text>
+                        {inProgressPolls.length > 0 ? (
+                            <View style={styles.list}>
+                                {inProgressPolls.map((item) => (
+                                    <SchedulePollCard
+                                        key={item.schedulePollId}
+                                        title={item.title}
+                                        meta={formatFinalScheduleMeta(item.startDate, item.endDate)}
+                                        deadline={getDaysUntilDeadline(item.deadlineAt)}
+                                        status={item.status}
+                                        showActions={canManage(item)}
+                                        onPress={() => router.push({
+                                            pathname: `/group/${meetingId}/schedule/detail` as any,
+                                            params: { schedulePollId: item.schedulePollId }
+                                        })}
+                                        onEdit={() => router.push({
+                                            pathname: `/group/${meetingId}/schedule/create-poll` as any,
+                                            params: { schedulePollId: item.schedulePollId }
+                                        })}
+                                        onDelete={() => {
+                                            setSelectedId(item.schedulePollId);
+                                            setDeleteModal(true);
+                                        }}
+                                    />
+                                ))}
+                            </View>
+                        ) : (
+                            <Text style={styles.emptyHint}>조율중인 일정이 없어요</Text>
+                        )}
+                    </View>
+                )}
+
+                {/* 마감된 일정 */}
+                {closedPolls.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>마감된 일정</Text>
+                        <View style={styles.list}>
+                            {visibleClosedPolls.map((item) => (
+                                <SchedulePollCard
+                                    key={item.schedulePollId}
+                                    title={item.title}
+                                    meta={formatFinalScheduleMeta(item.startDate, item.endDate)}
+                                    deadline={getDaysUntilDeadline(item.deadlineAt)}
+                                    status="CLOSED"
+                                    showActions={canManage(item)}
+                                    onPress={() => router.push({
+                                        pathname: `/group/${meetingId}/schedule/detail` as any,
+                                        params: { schedulePollId: item.schedulePollId }
+                                    })}
+                                    onEdit={() => { }}
+                                    onDelete={() => {
+                                        setSelectedId(item.schedulePollId);
+                                        setDeleteModal(true);
+                                    }}
+                                />
+                            ))}
+                        </View>
+                        {closedPolls.length > 3 && (
+                            <TouchableOpacity onPress={() => setShowAll(!showAll)} style={styles.moreButton}>
+                                <Text style={styles.moreText}>
+                                    {showAll ? '접기' : `더보기 (${closedPolls.length - 3}개)`}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
+            </ScrollView>
+
             <Modal
                 visible={deleteModal}
                 message={`"${selectedPoll?.title}" 조율을\n삭제하시겠습니까?`}
@@ -181,7 +243,9 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
                 onLeftBtnPress={() => setDeleteModal(false)}
                 onRightBtnPress={() => {
                     setDeleteModal(false);
-                    handleDelete();
+                    setTimeout(() => {
+                        handleDelete();
+                    }, 300);
                 }}
                 onBackDropPress={() => setDeleteModal(false)}
                 rightBtnVariant="danger"
@@ -197,17 +261,34 @@ export default function SchedulePollsTab({ meetingId }: SchedulePollsTabProps) {
 }
 
 const styles = StyleSheet.create({
-    titleText: {
-        fontSize: Typography.xl,
-        fontWeight: '800',
+    section: {
+        marginBottom: Spacing.xl,
+    },
+    sectionTitle: {
+        fontSize: Typography.sm,
+        fontWeight: '700',
         color: Colors.black,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.md,
+    },
+    emptyHint: {
+        fontSize: Typography.sm,
+        color: Colors.gray500,
+        marginTop: Spacing.xs,
+        textAlign: 'center',
+    },
+    list: {
+        gap: Spacing.md,
+    },
+    moreButton: {
+        alignItems: 'center',
+        paddingVertical: Spacing.md,
+    },
+    moreText: {
+        fontSize: Typography.sm,
+        color: Colors.primary,
+        fontWeight: '600',
     },
     listContainer: {
         flexGrow: 1,
-    },
-
-    separator: {
-        height: Spacing.md,
     },
 });

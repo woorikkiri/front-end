@@ -12,6 +12,7 @@ interface SchedulePollCardProps {
     meta: string;        // 날짜 범위
     deadline: string;    // 몇일 뒤 마감
     status: string;      // OPEN / CLOSED
+    showActions: boolean; // 방장 또는 작성자만 true
     onPress: () => void;
     onEdit: () => void;
     onDelete: () => void;
@@ -32,6 +33,7 @@ export default function SchedulePollCard({
     meta,
     deadline,
     status,
+    showActions,
     onPress,
     onEdit,
     onDelete,
@@ -39,7 +41,7 @@ export default function SchedulePollCard({
     const badge = getStatusBadge(deadline, status);
     const isClosed = status === 'CLOSED';
     const isUrgent = deadline === '내일 마감';
-    
+
 
     return (
         <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
@@ -69,14 +71,19 @@ export default function SchedulePollCard({
                 )}
             </View>
 
-            <View style={styles.buttons}>
-                <TouchableOpacity style={styles.editBtn} onPress={onEdit}>
-                    <Pencil size={18} color={Colors.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
-                    <Trash2 size={18} color={Colors.error} />
-                </TouchableOpacity>
-            </View>
+            {/* 방장/작성자만 버튼 노출. 마감된 카드는 삭제만 */}
+            {showActions && (
+                <View style={styles.buttons}>
+                    {!isClosed && (
+                        <TouchableOpacity style={styles.editBtn} onPress={onEdit}>
+                            <Pencil size={18} color={Colors.primary} />
+                        </TouchableOpacity>
+                    )}
+                    <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
+                        <Trash2 size={18} color={Colors.error} />
+                    </TouchableOpacity>
+                </View>
+            )}
         </TouchableOpacity>
     );
 }

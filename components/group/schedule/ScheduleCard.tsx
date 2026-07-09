@@ -13,6 +13,8 @@ interface ScheduleCardProps {
     meta: string;              // 날짜
     time?: string | null;      // 시간
     location?: string | null;  // 장소
+    isPast: boolean;           // 지난 일정 여부
+    showActions: boolean;      // 방장 또는 작성자만 true
     onEdit: () => void;
     onDelete: () => void;
 }
@@ -22,6 +24,8 @@ export default function ScheduleCard({
     meta,
     time,
     location,
+    isPast,
+    showActions,
     onEdit,
     onDelete,
 }: ScheduleCardProps) {
@@ -29,36 +33,39 @@ export default function ScheduleCard({
         <View style={styles.card}>
             {/* 왼쪽: 제목 + 정보 */}
             <View style={styles.info}>
-                <Text style={styles.title}>{title}</Text>
-                <Text style={styles.subText}>{meta}</Text>
+                <Text style={[styles.title, isPast && styles.titlePast]}>{title}</Text>
+                <Text style={[styles.subText, isPast && styles.subTextPast]}>{meta}</Text>
                 {(time || location) && (
                     <View style={styles.locationRow}>
                         {location && (
                             <>
-                                <MapPin size={12} color={Colors.gray500} />
-                                <Text style={styles.locationText}>{location}</Text>
+                                <MapPin size={12} color={isPast ? Colors.gray300 : Colors.gray500} />
+                                <Text style={[styles.locationText, isPast && styles.subTextPast]}>{location}</Text>
                             </>
                         )}
                         {time && (
                             <>
-                                <Clock size={12} color={Colors.gray500} />
-                                <Text style={styles.locationText}>{time.slice(0, 5)}</Text>
+                                <Clock size={12} color={isPast ? Colors.gray300 : Colors.gray500} />
+                                <Text style={[styles.locationText, isPast && styles.subTextPast]}>{time.slice(0, 5)}</Text>
                             </>
                         )}
                     </View>
                 )}
             </View>
 
-            {/* 오른쪽: 수정 + 삭제 버튼 */}
-            <View style={styles.buttons}>
-                <TouchableOpacity style={styles.editBtn} onPress={onEdit}>
-                    <Pencil size={18} color={Colors.primary} />
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
-                    <Trash2 size={18} color={Colors.error} />
-                </TouchableOpacity>
-            </View>
+            {/* 방장/작성자만 버튼 노출. 지난 일정은 삭제만 */}
+            {showActions && (
+                <View style={styles.buttons}>
+                    {!isPast && (
+                        <TouchableOpacity style={styles.editBtn} onPress={onEdit}>
+                            <Pencil size={18} color={Colors.primary} />
+                        </TouchableOpacity>
+                    )}
+                    <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
+                        <Trash2 size={18} color={Colors.error} />
+                    </TouchableOpacity>
+                </View>
+            )}
         </View>
     );
 }
@@ -82,9 +89,15 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         fontSize: Typography.base,
     },
+    titlePast: {
+        color: Colors.gray500,
+    },
     subText: {
         color: Colors.gray500,
         fontSize: Typography.sm,
+    },
+    subTextPast: {
+        color: Colors.gray300,
     },
     buttons: {
         flexDirection: 'row',
