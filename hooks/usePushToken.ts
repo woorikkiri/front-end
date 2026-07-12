@@ -48,20 +48,24 @@ export default function usePushToken() {
         if (!userToken) return;
 
         const fcmToken = await registerForPushNotificationsAsync();
+        console.log("발급받은 FCM Token:", fcmToken);
         if (!fcmToken) return;
 
         try {
             const response = await fetch(API.saveFcmToken, {
-                method: 'PATCH',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${userToken}`,
                 },
-                body: JSON.stringify({ token: fcmToken }),
+                body: JSON.stringify({ fcmToken: fcmToken }),
             });
 
             if (!response.ok) {
-                console.log('FCM 토큰 저장 실패', response.status);
+                const error = await response.text();
+                console.log('FCM 토큰 저장 실패');
+                console.log('status:', response.status);
+                console.log('response:', error);
                 return;
             }
             console.log('FCM 토큰 저장 성공:', fcmToken);
