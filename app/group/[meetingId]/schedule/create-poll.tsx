@@ -48,6 +48,7 @@ export default function CreateSchedulePollScreen() {
 
     // ── 마감 ──
     const [status, setStatus] = useState<string | null>(null);
+    const [isOwner, setIsOwner] = useState(false);
     const [closeModal, setCloseModal] = useState(false);
     const [closeLoading, setCloseLoading] = useState(false);
     const [popoverVisible, setPopoverVisible] = useState(false);
@@ -83,6 +84,7 @@ export default function CreateSchedulePollScreen() {
                 setEndDate(data.endDate);
                 setDeadlineDate(data.deadlineAt.split('T')[0]);
                 setStatus(data.status);
+                setIsOwner(data.isOwner);
 
             } catch (e) {
                 setServerErrorModal(true);
@@ -167,12 +169,12 @@ export default function CreateSchedulePollScreen() {
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-            {/* 마감 버튼 - 수정 모드 & 방장 & 아직 마감 안 됐을 때만
-                            TODO: 작성자 본인 조건은 owner 필드 오면 추가 (현재는 방장만) */}
+
+            {/* 마감 버튼 - 수정 모드 & 방장 또는 작성자 & 아직 마감 안 됐을 때만 */}
             <Header
                 title={isEdit ? '일정조율 수정' : '일정조율 만들기'}
                 rightElement={
-                    isEdit && myRole === 'HOST' && status !== 'CLOSED' ? (
+                    isEdit && (myRole === 'HOST' || isOwner) && status !== 'CLOSED' ? (
                         <Popover
                             isVisible={popoverVisible}
                             onRequestClose={() => setPopoverVisible(false)}
