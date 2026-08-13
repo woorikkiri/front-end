@@ -79,7 +79,7 @@
 - nvm (Node v20)
 
 # 5. 시스템 아키텍처
-
+```
     React Native 
         │ 
     REST API (HTTPS) 
@@ -95,10 +95,11 @@
     AWS EC2 
         │ 
     AWS S3
-
+```
 # 6. 프로젝트 구조
 
 ## 폴더 트리
+```
     woorikkiri/
     ├── app/                          # Expo Router 기반 화면
     │   ├── (tabs)/                    # 캘린더 · 그룹 · 설정 탭
@@ -113,6 +114,7 @@
     ├── hooks/                         # 커스텀 훅 (useAuth, useVote, useError 등)
     ├── store/                         # Zustand (useAuthStore, useMeetingStore)
     └── utils/                         # date.ts
+```
 
 ## 상태관리
 인증 상태(토큰, 유저ID)는 Zustand(`useAuthStore`)로 전역 관리하며 AsyncStorage에 영속화합니다(AsyncStorage는 암호화를 지원하지 않아 향후 expo-secure-store로 교체 예정). 화면별 데이터(투표, 일정조율, 알림 등)는 각 화면에서 커스텀 훅으로 가져오며, `useFocusEffect`를 사용해 화면 복귀 시 자동으로 최신 데이터를 다시 불러옵니다.
@@ -143,10 +145,10 @@
 전달 역할만 하던 `VoteList`를 제거해 `VoteTab`이 레이아웃을 직접 담당하도록 
 구조를 바꿨다.
 
-\`\`\`
+```
 변경 전: VoteTab → VoteList → VoteCard   (prop drilling)
 변경 후: useVote(API·상태) + VoteTab(레이아웃) → VoteCard(UI만)
-\`\`\`
+```
 
 ```tsx
 // useVote.ts
