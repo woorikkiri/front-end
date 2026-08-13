@@ -62,28 +62,21 @@
 ## State Management
 - Zustand
 
-## UI / Design
-- Figma
-- Procreate (로고 디자인)
-
 ## Key Libraries
 - @gorhom/bottom-sheet
 - react-native-calendars
 - react-native-svg
-- react-native-reanimated
 - react-native-popover-view
-- react-native-toast-message
-- expo-notifications
 
 ## Notification
 - Firebase Cloud Messaging (FCM)
 
+## Backend
+- [백엔드 레포](https://github.com/woorikkiri/back-end) (Spring Boot, MySQL, AWS)
+
 ## Dev Environment
 - Android Studio (Emulator)
 - nvm (Node v20)
-
-## Backend
-- [백엔드 레포](https://github.com/woorikkiri/back-end) (Spring Boot, MySQL, AWS)
 
 # 5. 시스템 아키텍처
 
@@ -122,7 +115,7 @@
     └── utils/                         # date.ts
 
 ## 상태관리
-인증 상태(토큰, 유저ID)는 Zustand(`useAuthStore`)로 전역 관리하며 AsyncStorage에 영속화합니다. 화면별 데이터(투표, 일정조율, 알림 등)는 각 화면에서 커스텀 훅으로 가져오며, `useFocusEffect`를 사용해 화면 복귀 시 자동으로 최신 데이터를 다시 불러옵니다.
+인증 상태(토큰, 유저ID)는 Zustand(`useAuthStore`)로 전역 관리하며 AsyncStorage에 영속화합니다(AsyncStorage는 암호화를 지원하지 않아 향후 expo-secure-store로 교체 예정). 화면별 데이터(투표, 일정조율, 알림 등)는 각 화면에서 커스텀 훅으로 가져오며, `useFocusEffect`를 사용해 화면 복귀 시 자동으로 최신 데이터를 다시 불러옵니다.
 
 <img width="600" alt="state_management_flow" src="https://github.com/user-attachments/assets/547bc560-4d4e-47f7-ada1-5efd1c7505d5" />
 
