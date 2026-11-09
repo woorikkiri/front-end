@@ -198,24 +198,46 @@ useFocusEffect(
 이후 `setNotifications`로 값이 갱신돼도 cleanup 함수는 처음 캡처된 값을 
 계속 참조했다.
 
-**해결**: `useRef`로 최신 값을 별도로 추적해 cleanup에서는 state 대신 
-ref를 참조하도록 수정했다.
+**1차 해결과 새 문제**: `useRef`로 최신 값을 별도로 추적해 cleanup에서 ref를 
+참조하게 바꾸자 읽음 처리는 정상적으로 됐다. 그런데 cleanup에서는 요청을 
+보내기만 하고 기다릴 수 없어서, 홈 화면으로 돌아왔을 때 읽음 처리가 끝나기 
+전에 배지 확인이 먼저 실행되어 배지가 바로 사라지지 않았다.
 
 ```tsx
 const notificationsRef = useRef<NotificationItem[]>([]);
-
-const fetchNotifications = async () => {
-  const data = await res.json();
-  setNotifications(data);
-  notificationsRef.current = data; // ref도 같이 갱신
-};
+// fetchNotifications 안에서
+notificationsRef.current = data;
 
 const markAllAsRead = () => {
   const unreadIds = notificationsRef.current.filter(n => !n.read).map(n => n.id);
-  // ...
+  unreadIds.forEach(id => fetch(API.readNotification(id), { method: 'PATCH', ... }));
+  // 요청을 보내기만 하고 기다리지 않아서, 홈 화면이 먼저 배지를 확인함
+};
+```
+
+**최종 해결**: 뒤로가기 버튼을 바꿔 요청이 끝날 때까지 기다리게 하는 방법도 
+있었지만, 계속 덧대기보다 처음부터 다시 생각해 보니 꼭 "나갈 때" 처리할 
+필요가 없었다. 알림함에 들어오자마자 서버에는 읽음 처리 요청을 보내고, 
+화면에서는 원래 강조 상태를 그대로 보여 주는 방식으로 바꿨다. 클로저 문제와 
+타이밍 문제가 함께 사라졌고, cleanup·useRef 코드도 필요 없어졌다.
+
+```tsx
+const fetchNotifications = async () => {
+  const data: NotificationItem[] = await response.json();
+  setNotifications(data); // 화면엔 원래 read 상태 그대로 보여줌 (강조 유지)
+
+  // 서버엔 바로 읽음 처리
+  const unreadIds = data.filter(n => !n.read).map(n => n.id);
+  unreadIds.forEach(id => {
+    fetch(API.readNotification(id), {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${userToken}` },
+    }).catch((e) => console.error('읽음 처리 실패', id, e));
+  });
 };
 ```
 
 **배운 점**: `useCallback`/`useEffect`의 클로저는 의존성 배열 시점의 값을 
-고정하므로, 콜백 내부에서 이후에 바뀌는 값을 최신으로 읽어야 한다면 
-`useRef`로 우회해야 한다는 걸 실감했다.
+고정한다는 걸 직접 겪으며 이해했다. 그리고 문제를 하나씩 덧대어 막다 보면 
+코드가 점점 복잡해지는데, 한 발 물러나 요구사항을 다시 정의하는 편이 더 
+단순한 답일 때가 있다는 걸 배웠다.
